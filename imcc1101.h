@@ -1,6 +1,6 @@
 
-#ifndef IACC1101_h
-#define IACC1101_h
+#ifndef IMCC1101_h
+#define IMCC1101_h
 
 #if defined(ARDUINO) && ARDUINO >= 100
   #include "Arduino.h"
@@ -18,9 +18,16 @@ enum RFSTATE
 	RFSTATE_TX
 };
 
-#define WRITE_BURST              0x40
-#define READ_SINGLE              0x80
-#define READ_BURST               0xC0
+/*
+* PA TABLE CONFIG
+*/
+byte PaTabel[8] = { 0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 };
+
+
+#define 	WRITE_BURST     	0x40
+#define 	READ_SINGLE     	0x80
+#define 	READ_BURST      	0xC0
+#define 	BYTES_IN_RXFIFO     0x7F
 
 /**
 * Type of register
@@ -130,65 +137,44 @@ enum RFSTATE
 #define GDO0	9
 #define GDO2	7
 //************************************* class **************************************************//
-
-/**
-* Macros
-*/
-// Read CC1101 Config register
-#define readConfigReg(regAddr)    readReg(regAddr, CC1101_CONFIG_REGISTER)
-// Read CC1101 Status register
-#define readStatusReg(regAddr)    readReg(regAddr, CC1101_STATUS_REGISTER)
-// Enter Rx state
-#define setRxState()              SpiStrobe(CC1101_SRX)
-// Enter Tx state
-#define setTxState()              SpiStrobe(CC1101_STX)
-// Enter IDLE state
-#define setIdleState()            SpiStrobe(CC1101_SIDLE)
-// Flush Rx FIFO
-#define flushRxFifo()             SpiStrobe(CC1101_SFRX)
-// Flush Tx FIFO
-#define flushTxFifo()             SpiStrobe(CC1101_SFTX)
-// Disable address check
-#define disableAddressCheck()     SpiWriteReg(CC1101_PKTCTRL1, 0x04)
-// Enable address check
-#define enableAddressCheck()      SpiWriteReg(CC1101_PKTCTRL1, 0x06)
-// Disable CCA
-#define disableCCA()              SpiWriteReg(CC1101_MCSM1, 0)
-// Enable CCA
-#define enableCCA()               SpiWriteReg(CC1101_MCSM1, CC1101_DEFVAL_MCSM1)
-
-class IACC1101
+    
+class IMCC1101
 {
 	private:
-		int failCount;
+		void SetRxState(void);
+		void SetTxState(void);
+		void SetIdleState(void);
+		void FlushRxFifo(void);
+		void FlushTxFifo(void);
+		void FlushFifo(void);
 		void SpiInit(void);
-		void SpiMode(byte config);
+		void SpiMode(void);
 		byte SpiTransfer(byte value);
-		void GDO_Set (void);
-		void Reset (void);
+		void GDO_Set(void);
 		void SpiWriteReg(byte addr, byte value);
 		void SpiWriteBurstReg(byte addr, byte *buffer, byte num);
 		void SpiStrobe(byte strobe);
 		byte SpiReadReg(byte addr);
 		void SpiReadBurstReg(byte addr, byte *buffer, byte num);
 		byte SpiReadStatus(byte addr);
-		void RegConfigSettings();		
+		void RegConfigSettings(void);	
 	public:
-		byte rfState;
-		void Init();
-		void Reinit();
+		void EnableCCA(void);
+		void DisableCCA(void);
+		void EnableAddressCheck(void);
+		void DisableAddressCheck(void);
 		void SetChannel(byte CHANNR);
+		void PowerDown(void);
+		void WakeUp(void);
+		void Reset(void);
+		void Init(void);
+		void Reinit(void);
 		boolean SendData(byte *txBuffer, byte size);
 		void SetReceive(void);
-		void WakeUp(void);
-		void PowerDown(void);
-		void SetIdle(void);
-		void FlushFIFO(void);
 		byte CheckReceiveFlag(void);
 		byte ReceiveData(byte *rxBuffer);
-		byte readReg(byte regAddr, byte regType);
 };
 
-extern IACC1101 iaCC1101;
+extern IMCC1101 imCC1101;
 
 #endif
