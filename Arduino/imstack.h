@@ -8,6 +8,6 @@
 
 struct IMStack
 {
-	byte Device;
-	byte[32] Frame;
+	byte DeviceType;
+	IMFrame Frame;
 } imStack[_stackSize];
