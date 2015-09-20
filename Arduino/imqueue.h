@@ -16,17 +16,18 @@
 #include <imframe.h>
 #include <Arduino.h>
 
-#define _QueueSize 16
-#define _QueueMask 0xF0
+#define _QueueSize 8
+#define _QueueMask 0x7
 
 #define  NodeQueue IMFrame
 class  IMQueue
 {
-  private:
+//  private:
+  public:
      typedef uint8_t address;
      address tail;
       uint8_t head;
-      uint8_t temp;
+      address temp;
       IMFrame tab[_QueueSize];
       NodeQueue getObject(address id );
       void setObject(address id ,const NodeQueue & node);

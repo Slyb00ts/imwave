@@ -2,14 +2,15 @@
 #include <imqueue.h>
 
 
-void IMQueue::setObject(address id ,const NodeQueue & node)
+void IMQueue::setObject(address id ,const  NodeQueue & node)
 {
-  tab[id && _QueueMask] = node;
+  tab[id & _QueueMask] = node ;
+//  tab[1] = node ;
 }
 
 NodeQueue IMQueue::getObject(address id )
 {
-  return tab[id  && _QueueMask];
+  return tab[id  & _QueueMask];
 }
 
 void IMQueue::push(const NodeQueue & node)
@@ -17,12 +18,12 @@ void IMQueue::push(const NodeQueue & node)
   address newTemp;
   address lastTail;
 //  address newTail;
-
-  newTemp=temp+1;
+//  temp++;
+   newTemp= ++temp;
 //  :=interlockedIncrement(temp);
-  lastTail=newTemp-1;
+   lastTail=newTemp-1;
   setObject(lastTail,node);
-  tail=newTemp;
+     tail=newTemp;
 //  repeat
 //    lockedType(newTail):=interlockedCompareExchange(lockedType(tail),lockedType(LastTail+1),lockedType(lastTail));
 //  until (newTail=lastTail);
@@ -37,7 +38,8 @@ bool IMQueue::pop(NodeQueue & node)
   do{
     lastHead=head;
     if (tail!=head){
-       newHead=lastHead+1;
+       head=lastHead+1;
+       newHead=lastHead;
 //      lockedtype(newHead):=interlockedCompareExchange(lockedType(head),lockedType(lastHead+1),lockedType(lasthead));
       if (newHead==lastHead){
          node=getObject(lastHead);
