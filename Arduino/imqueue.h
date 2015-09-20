@@ -14,6 +14,7 @@
 
 
 #include <imframe.h>
+#include <Arduino.h>
 
 #define _QueueSize 16
 #define _QueueMask 0xF0
@@ -25,15 +26,15 @@ class  IMQueue
      typedef uint8_t address;
      address tail;
       uint8_t head;
-      uint8_t integer;
+      uint8_t temp;
       IMFrame tab[_QueueSize];
-      NodeQueue getObject(address lp );
-      void setObject(address id ,NodeQueue & node);
+      NodeQueue getObject(address id );
+      void setObject(address id ,const NodeQueue & node);
 
    public:
-     address Length();
-     NodeQueue pop();
-     void push(NodeQueue & node);
+     unsigned short Length();
+     bool pop(NodeQueue & node);
+     void push(const NodeQueue & node);
 
 } ;
 
