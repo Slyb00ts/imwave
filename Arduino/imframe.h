@@ -23,7 +23,19 @@ typedef struct
 {
 	IMFrameHeader Header;
 	byte Body[_frameBodySize];
-} IMFrame;
 
+byte Put(byte*buf,uint8_t len)
+{
+              byte i;
+              Header.Len = len<_frameBodySize ? len : _frameBodySize;  //length
+              for ( i=0 ; i<Header.Len ; i++ )
+              {
+                    Body[i] = buf[i];
+              }
+              return i;
+
+}
+
+} IMFrame;
 
 #endif

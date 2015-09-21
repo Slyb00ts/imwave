@@ -1,5 +1,4 @@
 #include <imqueue.h>
-#include <imqueue.h>
 
 
 void IMQueue::setObject(address id ,const  NodeQueue & node)
