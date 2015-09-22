@@ -10,11 +10,8 @@
 #ifndef imACK_h
 #define imACK_h
 
-#if defined(ARDUINO) && ARDUINO >= 100
-	#include "Arduino.h"
-#else
-	#include "WProgram.h"
-#endif
+
+#include <Arduino.h>
 
 #define MAXRETRIES 2  //Try so much retransmissions
 
@@ -23,19 +20,19 @@ class TableACK
 {
   private:
 //  int count;
-	byte lastsentseq;
-	byte partnerseqnr;
+  byte lastsentseq;
+  byte partnerseqnr;
   public:
-	byte retrycnt;  //counter for retries
-	uint8_t addr[MAXTableACK];
-	uint8_t seq[MAXTableACK];
-	byte Send(uint8_t Addr, uint8_t Seq);
-	byte Recive(uint8_t Addr, uint8_t Seq);
+  byte retrycnt;  //counter for retries
+  uint8_t addr[MAXTableACK];
+  uint8_t seq[MAXTableACK];
+  byte Send(uint8_t Addr, uint8_t Seq);
+  byte Recive(uint8_t Addr, uint8_t Seq);
 
-	uint8_t Answer(uint8_t Addr);
-	void Accept( uint8_t Seq);
-	bool noack(uint8_t Addr);
-	bool retry();
+  uint8_t Answer(uint8_t Addr);
+  void Accept( uint8_t Seq);
+  bool noack(uint8_t Addr);
+  bool retry();
 };
 
 #endif

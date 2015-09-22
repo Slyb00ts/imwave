@@ -12,10 +12,10 @@ typedef struct
 	byte SourceId;
 	byte DestinationId;
 	byte ReapeterId;
-	byte Sequence;
-	byte Len;
-	byte crc;
-	byte pseq;
+        byte Sequence;
+        byte Len;
+        byte crc;
+        byte pseq;
 } IMFrameHeader;
 
 #define _frameBodySize _frameSize - sizeof(IMFrameHeader)
@@ -24,17 +24,17 @@ typedef struct
 	IMFrameHeader Header;
 	byte Body[_frameBodySize];
 
-	byte Put(byte*buf, uint8_t len)
-	{
-		byte i;
-		Header.Len = len<_frameBodySize ? len : _frameBodySize;  //length
-		for (i = 0; i<Header.Len; i++)
-		{
-			Body[i] = buf[i];
-		}
-		return i;
+byte Put(byte*buf,uint8_t len)
+{
+              byte i;
+              Header.Len = len<_frameBodySize ? len : _frameBodySize;  //length
+              for ( i=0 ; i<Header.Len ; i++ )
+              {
+                    Body[i] = buf[i];
+              }
+              return i;
 
-	}
+}
 
 } IMFrame;
 

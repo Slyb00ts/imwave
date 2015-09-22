@@ -19,11 +19,11 @@
 //
 
 
-void Transceiver::Init(CC1101 & cc)
+void Transceiver::Init(IMCC1101 & cc)
 {
   cc1101=&cc;
   cc1101->Init();
-  cc1101->StartReceive(RECEIVE_TO);
+  cc1101->StartReceive();
         pPacket = &RX_buffer.packet;
         pHeader = &pPacket->Header;
         txPacket = &TX_buffer.packet;
@@ -33,18 +33,17 @@ void Transceiver::Init(CC1101 & cc)
 
 void Transceiver::StartReceive()
 {
-  cc1101->StartReceive(RECEIVE_TO);
+  cc1101->StartReceive();
 }
 
 uint8_t Transceiver::GetData()
 {
-  if (cc1101->GetState() == CCGOTPACKET)
+
+  if (cc1101->rfState == RFGOTPACKET)
   {
     Serial.print("G");
-    rSize=cc1101->GetData((uint8_t*)&RX_buffer);
+    rSize=cc1101->ReceiveData((uint8_t*)&RX_buffer);
     return rSize;
-//  packet_t * pPacket;
-
   } else{
     return 0;
   }
@@ -130,7 +129,7 @@ void Transceiver::PrepareTransmit(uint8_t dst)
 
 unsigned char Transceiver::Transmit()
 {
-   return cc1101->Transmit((uint8_t*)&(TX_buffer.packet),TX_buffer.len); 
+   return cc1101->SendData((uint8_t*)&(TX_buffer.packet),TX_buffer.len);
 }
 
 uint8_t Transceiver::Get(uint8_t* buf)

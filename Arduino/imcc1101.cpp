@@ -1,22 +1,23 @@
 #include <imcc1101.h>
-#include <imframe.h>
+byte PaTabel1[8] = { 0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 };
+
 
 //Private
 void IMCC1101::SetRxState(void)
 {
-	//rfState = RFSTATE_RX;
+	rfState = RFSTATE_RX;
 	SpiStrobe(CC1101_SRX);
 }
 
 void IMCC1101::SetTxState(void)
 {
-	//rfState = RFSTATE_TX;
+	rfState = RFSTATE_TX;
 	SpiStrobe(CC1101_STX);
 }
 
 void IMCC1101::SetIdleState(void)
 {
-	//rfState = RFSTATE_IDLE;
+	rfState = RFSTATE_IDLE;
 	SpiStrobe(CC1101_SIDLE);
 }
 
@@ -53,13 +54,13 @@ void IMCC1101::SpiInit(void)
 
 void IMCC1101::SpiMode(byte config)
 {
-	byte tmp;
+//	byte tmp;
 
 	// enable SPI master with configuration byte specified
 	SPCR = 0;
 	SPCR = (config & 0x7F) | (1 << SPE) | (1 << MSTR);
-	tmp = SPSR;
-	tmp = SPDR;
+//	tmp = SPSR;
+//	tmp = SPDR;
 }
 
 byte IMCC1101::SpiTransfer(byte value)
@@ -253,7 +254,7 @@ void IMCC1101::Init(void)
 	digitalWrite(MOSI_PIN, LOW);
 	Reset();										//CC1101 reset
 	RegConfigSettings();							//CC1101 register config
-	SpiWriteBurstReg(CC1101_PATABLE,PaTabel,8);		//CC1101 PATABLE config
+	SpiWriteBurstReg(CC1101_PATABLE,PaTabel1,8);		//CC1101 PATABLE config
 	EnableCCA();
 }
 
@@ -269,14 +270,6 @@ void IMCC1101::Reinit(void)
 	digitalWrite(SCK_PIN, LOW);
 	digitalWrite(MOSI_PIN, HIGH);
 	Init();
-}
-
-boolean IMCC1101::SendData(IMFrame &frame)
-{
-	//Prepare TX_buffer and send
-	byte TX_buffer[sizeof(frame)];
-	memcpy(TX_buffer, &frame, sizeof(frame));
-	SendData(TX_buffer, sizeof(frame));
 }
 
 boolean IMCC1101::SendData(byte *txBuffer,byte size)
@@ -322,7 +315,7 @@ boolean IMCC1101::SendData(byte *txBuffer,byte size)
 	return res;
 }
 
-void IMCC1101::SetReceive(void)
+void IMCC1101::StartReceive(void)
 {
 	FlushRxFifo();
 	SetRxState();
@@ -351,8 +344,8 @@ byte IMCC1101::ReceiveData(byte *rxBuffer)
 		size=SpiReadReg(CC1101_RXFIFO);
 		SpiReadBurstReg(CC1101_RXFIFO,rxBuffer,size);
 		SpiReadBurstReg(CC1101_RXFIFO,status,2);	
-		//rxBuffer[5] = status[0];
-		//rxBuffer[6] = status[1];
+		rxBuffer[5] = status[0];
+		rxBuffer[6] = status[1];
 		FlushRxFifo();
 		return status[1] & 0x80u;
 	}
@@ -362,3 +355,5 @@ byte IMCC1101::ReceiveData(byte *rxBuffer)
 		return 0;
 	}
 }
+
+IMCC1101 imCC1101;

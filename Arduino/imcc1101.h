@@ -1,14 +1,6 @@
-//
-//    FILE: imcharger.h
-// VERSION: 0.1.00
-// PURPOSE: CC1101 library for Arduino
 
-//
-// HISTORY:
-//
-
-#ifndef imCC1101_h
-#define imCC1101_h
+#ifndef imcc1101_h
+#define imcc1101_h
 
 #if defined(ARDUINO) && ARDUINO >= 100
   #include "Arduino.h"
@@ -16,20 +8,34 @@
   #include "WProgram.h"
 #endif
 
-#include <imframe.h>
-
-/*
-* PA TABLE CONFIG
-*/
-static byte PaTabel[8] = { 0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 };
 
 /**
 * RF STATES
 */
-//#define RFSTATE_IDLE	0x00
-//#define RFSTATE_RX		0x01
-//#define RFSTATE_TX		0x02
-//byte rfState = 0x00;
+enum RFSTATE
+{
+	RFSTATE_IDLE = 0,
+	RFSTATE_RX,
+	RFSTATE_TX,
+        RFGOTPACKET
+};
+
+enum CC_STATE
+{
+  CCIDLE = 0,
+  CCSENDING,
+  CCWAITINGRX,
+  CCRECEIVING,
+  CCGOTPACKET,
+  CCWAITIDLE,
+};
+
+
+/*
+* PA TABLE CONFIG
+*/
+
+
 
 #define 	WRITE_BURST     	0x40
 #define 	READ_SINGLE     	0x80
@@ -155,7 +161,7 @@ class IMCC1101
 		void FlushTxFifo(void);
 		void FlushFifo(void);
 		void SpiInit(void);
-		void SpiMode(byte);
+		void SpiMode(byte config);
 		byte SpiTransfer(byte value);
 		void GDO_Set(void);
 		void SpiWriteReg(byte addr, byte value);
@@ -166,6 +172,7 @@ class IMCC1101
 		byte SpiReadStatus(byte addr);
 		void RegConfigSettings(void);	
 	public:
+               RFSTATE rfState;
 		void EnableCCA(void);
 		void DisableCCA(void);
 		void EnableAddressCheck(void);
@@ -177,10 +184,11 @@ class IMCC1101
 		void Init(void);
 		void Reinit(void);
 		boolean SendData(byte *txBuffer, byte size);
-		boolean SendData(IMFrame &frame);
-		void SetReceive(void);
+		void StartReceive(void);
 		byte CheckReceiveFlag(void);
 		byte ReceiveData(byte *rxBuffer);
 };
+
+//extern IMCC1101 imCC1101;
 
 #endif

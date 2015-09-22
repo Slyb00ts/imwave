@@ -16,7 +16,7 @@
  #include "WProgram.h"
 #endif
 
-#include "CC1101_lib.h"
+#include "imcc1101.h"
 #include "imframe.h"
 #include "imack.h"
 
@@ -66,7 +66,7 @@ typedef struct
 class Transceiver
 {
 private:
-    CC1101 * cc1101;  //The CC1101 device
+    IMCC1101 * cc1101;  //The CC1101 device
     packet_t * pPacket;
     packet_t * txPacket;
 
@@ -82,7 +82,7 @@ public:
     float rssi;
     unsigned short rSize;
     unsigned short crc;
-    void Init(CC1101 & cc);
+    void Init(IMCC1101 & cc);
     void StartReceive();
     bool Valid();
     uint8_t GetData();
