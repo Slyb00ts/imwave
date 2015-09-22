@@ -7,8 +7,8 @@
 // HISTORY:
 //
 
-#ifndef transceiver_h
-#define transceiver_h
+#ifndef imTransceiver_h
+#define imTransceiver_h
 
 #if ARDUINO >= 100
  #include "Arduino.h"
@@ -17,17 +17,19 @@
 #endif
 
 #include "CC1101_lib.h"
+#include "imframe.h"
+#include "imack.h"
 
 #define TRANSCIEVER_LIB_VERSION "0.1.00"
 
 #define RECEIVE_TO 1000  //Wait at max this long in ms for packet arrival
 
 //Buff for radio packet handling
-#define HEADERSIZE 8
-#define PAKETSIZE 61  //CC1101 adds LEN, LQI, RSSI -- stay under fifo size of 64 byte (CC1101 buggy)
-#define MAXDATALEN PAKETSIZE-HEADERSIZE
+// #. define HEADERSIZE 8
+// #. define PAKETSIZE 61  //CC1101 adds LEN, LQI, RSSI -- stay under fifo size of 64 byte (CC1101 buggy)
+// #. define MAXDATALEN PAKETSIZE-HEADERSIZE
 
-
+/*
 typedef struct
 {
   uint8_t nwid;
@@ -39,12 +41,18 @@ typedef struct
   uint8_t len;
   uint8_t crc;
 } header_t;
+*/
 
+/*
 typedef struct
 {
   header_t header;
   uint8_t data[MAXDATALEN];
 } packet_t;
+*/
+
+#define header_t IMFrameHeader
+#define packet_t IMFrame
 
 //Packet format delivered by the CC1101 RX
 typedef struct
@@ -68,6 +76,7 @@ public:
 
     transfer_t RX_buffer ;
     transfer_t TX_buffer ;
+    TableACK  ack;
     unsigned short netID;
     unsigned short myID;
     float rssi;
@@ -83,33 +92,15 @@ public:
     uint8_t CRC(packet_t & p);
     uint8_t GetLen(packet_t & p);
     
-    void PrepareTransmit(uint8_t src,uint8_t dst);
+    void PrepareTransmit(uint8_t dst);
     unsigned char Transmit();
-    int Get(uint8_t* buf);
-    int Put(uint8_t*buf,uint8_t len);
+    uint8_t Get(uint8_t* buf);
+    uint8_t Put(uint8_t*buf,uint8_t len);
 
 private:
 	int read(uint8_t pin);
 };
 
-#define MAXTableACK 16
-class TableACK
-{
-  private:
-  int count;
-  uint8_t lastsentseq;
-  uint8_t partnerseqnr;
-  public:
-
-  uint8_t addr[MAXTableACK];
-  uint8_t seq[MAXTableACK];
-  int Send(uint8_t Addr, uint8_t Seq);
-  int Recive(uint8_t Addr, uint8_t Seq);
-  
-  uint8_t Answer(uint8_t Addr);
-  void Accept( uint8_t Seq);
-  bool noack(uint8_t Addr);
-};
 
 #endif
 //
