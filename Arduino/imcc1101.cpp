@@ -1,28 +1,28 @@
 #include <imcc1101.h>
-#if defined(ARDUINO) && ARDUINO >= 100  
-#include "Arduino.h"  
-#else  
-#include "WProgram.h"  
-#endif 
+#include <imframe.h>
 
-#include <imstack.h>
+#if defined(ARDUINO) && ARDUINO >= 100  
+	#include "Arduino.h"  
+#else  
+	#include "WProgram.h"  
+#endif 
 
 //Private
 void IMCC1101::SetRxState(void)
 {
-	rfState = RFSTATE_RX;
+	//rfState = RFSTATE_RX;
 	SpiStrobe(CC1101_SRX);
 }
 
 void IMCC1101::SetTxState(void)
 {
-	rfState = RFSTATE_TX;
+	//rfState = RFSTATE_TX;
 	SpiStrobe(CC1101_STX);
 }
 
 void IMCC1101::SetIdleState(void)
 {
-	rfState = RFSTATE_IDLE;
+	//rfState = RFSTATE_IDLE;
 	SpiStrobe(CC1101_SIDLE);
 }
 
@@ -260,7 +260,7 @@ void IMCC1101::Init(void)
 	Reset();										//CC1101 reset
 	RegConfigSettings();							//CC1101 register config
 	SpiWriteBurstReg(CC1101_PATABLE,PaTabel,8);		//CC1101 PATABLE config
-	enableCCA();
+	EnableCCA();
 }
 
 void IMCC1101::Reinit(void)
@@ -275,6 +275,14 @@ void IMCC1101::Reinit(void)
 	digitalWrite(SCK_PIN, LOW);
 	digitalWrite(MOSI_PIN, HIGH);
 	Init();
+}
+
+boolean IMCC1101::SendData(IMFrame &frame)
+{
+	//Prepare TX_buffer and send
+	byte TX_buffer[sizeof(frame)];
+	memcpy(TX_buffer, &frame, sizeof(frame));
+	SendData(TX_buffer, sizeof(frame));
 }
 
 boolean IMCC1101::SendData(byte *txBuffer,byte size)
@@ -360,5 +368,3 @@ byte IMCC1101::ReceiveData(byte *rxBuffer)
 		return 0;
 	}
 }
-
-IMCC1101 imCC1101;

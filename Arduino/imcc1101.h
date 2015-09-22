@@ -1,6 +1,6 @@
 
-#ifndef IMCC1101_h
-#define IMCC1101_h
+#ifndef imCC1101_h
+#define imCC1101_h
 
 #if defined(ARDUINO) && ARDUINO >= 100
   #include "Arduino.h"
@@ -8,23 +8,20 @@
   #include "WProgram.h"
 #endif
 
-#include <imstack.h>
-
-/**
-* RF STATES
-*/
-enum RFSTATE
-{
-	RFSTATE_IDLE = 0,
-	RFSTATE_RX,
-	RFSTATE_TX
-};
+#include <imframe.h>
 
 /*
 * PA TABLE CONFIG
 */
-byte PaTabel[8] = { 0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 };
+static byte PaTabel[8] = { 0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 };
 
+/**
+* RF STATES
+*/
+//#define RFSTATE_IDLE	0x00
+//#define RFSTATE_RX		0x01
+//#define RFSTATE_TX		0x02
+//byte rfState = 0x00;
 
 #define 	WRITE_BURST     	0x40
 #define 	READ_SINGLE     	0x80
@@ -150,7 +147,7 @@ class IMCC1101
 		void FlushTxFifo(void);
 		void FlushFifo(void);
 		void SpiInit(void);
-		void SpiMode(void);
+		void SpiMode(byte);
 		byte SpiTransfer(byte value);
 		void GDO_Set(void);
 		void SpiWriteReg(byte addr, byte value);
@@ -172,11 +169,10 @@ class IMCC1101
 		void Init(void);
 		void Reinit(void);
 		boolean SendData(byte *txBuffer, byte size);
+		boolean SendData(IMFrame &frame);
 		void SetReceive(void);
 		byte CheckReceiveFlag(void);
 		byte ReceiveData(byte *rxBuffer);
 };
-
-extern IMCC1101 imCC1101;
 
 #endif
