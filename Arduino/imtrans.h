@@ -92,13 +92,13 @@ public:
     uint8_t CRC(packet_t & p);
     uint8_t GetLen(packet_t & p);
     
-    void PrepareTransmit(uint8_t dst);
-    unsigned char Transmit();
+    unsigned char Transmit(uint8_t dst);
     uint8_t Get(uint8_t* buf);
     uint8_t Put(uint8_t*buf,uint8_t len);
 
 private:
 	int read(uint8_t pin);
+    void PrepareTransmit(uint8_t dst);
 };
 
 

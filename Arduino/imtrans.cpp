@@ -127,8 +127,9 @@ void Transceiver::PrepareTransmit(uint8_t dst)
 
 
 
-unsigned char Transceiver::Transmit()
+unsigned char Transceiver::Transmit(uint8_t dst)
 {
+   PrepareTransmit(dst);
    return cc1101->SendData((uint8_t*)&(TX_buffer.packet),TX_buffer.len);
 }
 
