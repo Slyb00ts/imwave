@@ -1,12 +1,6 @@
 #include <imcc1101.h>
 #include <imframe.h>
 
-#if defined(ARDUINO) && ARDUINO >= 100  
-	#include "Arduino.h"  
-#else  
-	#include "WProgram.h"  
-#endif 
-
 //Private
 void IMCC1101::SetRxState(void)
 {
@@ -357,8 +351,8 @@ byte IMCC1101::ReceiveData(byte *rxBuffer)
 		size=SpiReadReg(CC1101_RXFIFO);
 		SpiReadBurstReg(CC1101_RXFIFO,rxBuffer,size);
 		SpiReadBurstReg(CC1101_RXFIFO,status,2);	
-		rxBuffer[5] = status[0];
-		rxBuffer[6] = status[1];
+		//rxBuffer[5] = status[0];
+		//rxBuffer[6] = status[1];
 		FlushRxFifo();
 		return status[1] & 0x80u;
 	}

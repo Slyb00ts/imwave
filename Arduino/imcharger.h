@@ -1,6 +1,3 @@
-#ifndef imCharger_h
-#define imCharger_h
-
 //
 //    FILE: imcharger.h
 // VERSION: 0.1.00
@@ -9,6 +6,9 @@
 //
 // HISTORY:
 //
+
+#ifndef imCharger_h
+#define imCharger_h
 
 #if defined(ARDUINO) && ARDUINO >= 100
 	#include "Arduino.h"

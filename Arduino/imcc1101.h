@@ -1,3 +1,11 @@
+//
+//    FILE: imcharger.h
+// VERSION: 0.1.00
+// PURPOSE: CC1101 library for Arduino
+
+//
+// HISTORY:
+//
 
 #ifndef imCC1101_h
 #define imCC1101_h
