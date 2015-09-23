@@ -97,7 +97,7 @@ uint8_t Transceiver::CRC(packet_t & p)
  
 }  
 
-float Transciever::Rssi();
+float Transceiver::Rssi()
 {
   return rssi;
 }
@@ -162,6 +162,10 @@ uint8_t Transceiver::Put(uint8_t* buf,uint8_t len)
 }
 
 
+void Transceiver::Push(IMFrame & frame)
+{
+  queue.push(frame);
+}
 
 
 

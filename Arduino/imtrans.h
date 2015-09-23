@@ -19,6 +19,7 @@
 #include "imcc1101.h"
 #include "imframe.h"
 #include "imack.h"
+#include "imqueue.h"
 
 #define TRANSCIEVER_LIB_VERSION "0.1.00"
 
@@ -69,6 +70,7 @@ private:
     IMCC1101 * cc1101;  //The CC1101 device
     packet_t * pPacket;
     packet_t * txPacket;
+    IMQueue queue;
     float rssi;
     void setRssi();
 
@@ -91,11 +93,12 @@ public:
     unsigned short crcCheck();
 
     uint8_t CRC(packet_t & p);
-    uint8_t GetLen(packet_t & p);
+    uint8_t GetLen(IMFrame & p);
     
     unsigned char Transmit(uint8_t dst);
     uint8_t Get(uint8_t* buf);
     uint8_t Put(uint8_t*buf,uint8_t len);
+    void Push(IMFrame & frame);
 
 private:
 	int read(uint8_t pin);
