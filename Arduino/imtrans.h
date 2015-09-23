@@ -69,6 +69,8 @@ private:
     IMCC1101 * cc1101;  //The CC1101 device
     packet_t * pPacket;
     packet_t * txPacket;
+    float rssi;
+    void setRssi();
 
 public:
     header_t * pHeader;
@@ -79,16 +81,15 @@ public:
     TableACK  ack;
     unsigned short netID;
     unsigned short myID;
-    float rssi;
     unsigned short rSize;
     unsigned short crc;
     void Init(IMCC1101 & cc);
     void StartReceive();
     bool Valid();
     uint8_t GetData();
+    float Rssi();
     unsigned short crcCheck();
 
-    float Rssi();
     uint8_t CRC(packet_t & p);
     uint8_t GetLen(packet_t & p);
     

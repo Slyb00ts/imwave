@@ -55,8 +55,10 @@ bool Transceiver::Valid()
         pHeader = &pPacket->Header;
 
       bool io= ((RX_buffer.len>=sizeof(header_t)) && (RX_buffer.len<=sizeof(packet_t)));
-      if (io)
+      if (io) {
+        setRssi();
         io =( (pHeader->DestinationId==myID));
+      }
       return io;
 }
 
@@ -95,8 +97,13 @@ uint8_t Transceiver::CRC(packet_t & p)
  
 }  
 
+float Transciever::Rssi();
+{
+  return rssi;
+}
 
-float Transceiver::Rssi()
+
+void Transceiver::setRssi()
 {
             crc = pPacket->Body[pHeader->Len+1];
             unsigned short c = pPacket->Body[pHeader->Len];
@@ -104,7 +111,6 @@ float Transceiver::Rssi()
             if (c&0x80) rssi -= 256;
             rssi /= 2;
             rssi -= 74;
-            return rssi;
 
 }
 
