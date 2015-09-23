@@ -73,6 +73,7 @@ private:
     IMQueue queue;
     float rssi;
     void setRssi();
+    void Prepare(IMFrame & frame );
 
 public:
     header_t * pHeader;
@@ -95,14 +96,14 @@ public:
     uint8_t CRC(packet_t & p);
     uint8_t GetLen(IMFrame & p);
     
-    unsigned char Transmit(uint8_t dst);
+    byte Transmit();
     uint8_t Get(uint8_t* buf);
     uint8_t Put(uint8_t*buf,uint8_t len);
     void Push(IMFrame & frame);
 
 private:
 	int read(uint8_t pin);
-    void PrepareTransmit(uint8_t dst);
+    void PrepareTransmit();
 };
 
 

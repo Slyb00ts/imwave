@@ -114,18 +114,24 @@ void Transceiver::setRssi()
 
 }
 
-void Transceiver::PrepareTransmit(uint8_t dst)
+void Transceiver::Prepare(IMFrame & frame)
 {
-   TX_buffer.len=GetLen(TX_buffer.packet);
-   
+  frame.Header.SourceId=myID;
+  frame.Header.crc=0;
+  frame.Header.crc=CRC(frame);
+//  frame.Header.DestinationId=dst;
+}
+void Transceiver::PrepareTransmit()
+{
+
+
 //       txHeader->src = MID;
 //    txHeader->dest = TID;
-//   TX_buffer.packet.Header.Sequence=sequence;
-   TX_buffer.packet.Header.SourceId=myID;
-   TX_buffer.packet.Header.DestinationId=dst;
+//   TX_buffer.packet.Header.SourceId=myID;
 //   sizeof(header_t)+txHeader->len;
-   TX_buffer.packet.Header.crc=0;
-   TX_buffer.packet.Header.crc=CRC(TX_buffer.packet);
+
+   TX_buffer.len=GetLen(TX_buffer.packet);
+   byte dst=TX_buffer.packet.Header.DestinationId;
    ack.Send(dst,TX_buffer.packet.Header.Sequence);
    TX_buffer.packet.Header.pseq = ack.Answer(dst);
 
@@ -133,10 +139,15 @@ void Transceiver::PrepareTransmit(uint8_t dst)
 
 
 
-unsigned char Transceiver::Transmit(uint8_t dst)
+byte Transceiver::Transmit()
 {
-   PrepareTransmit(dst);
-   return cc1101->SendData((uint8_t*)&(TX_buffer.packet),TX_buffer.len);
+  byte io=0;
+   while (queue.pop(TX_buffer.packet))  {
+     PrepareTransmit();
+     if (cc1101->SendData((uint8_t*)&(TX_buffer.packet),TX_buffer.len))
+       io++;
+   }
+   return io;
 }
 
 uint8_t Transceiver::Get(uint8_t* buf)
