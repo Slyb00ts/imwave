@@ -355,5 +355,3 @@ byte IMCC1101::ReceiveData(byte *rxBuffer)
 		return 0;
 	}
 }
-
-IMCC1101 imCC1101;

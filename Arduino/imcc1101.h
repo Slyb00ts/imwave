@@ -172,7 +172,7 @@ class IMCC1101
 		byte SpiReadStatus(byte addr);
 		void RegConfigSettings(void);	
 	public:
-               RFSTATE rfState;
+        RFSTATE rfState;
 		void EnableCCA(void);
 		void DisableCCA(void);
 		void EnableAddressCheck(void);
