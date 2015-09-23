@@ -16,7 +16,7 @@
 #include "WProgram.h"
 #endif
 
-struct IMConfig
+static struct IMConfig
 {
 	uint64_t MacAddress;
 }imConfig;
