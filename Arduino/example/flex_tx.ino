@@ -56,10 +56,11 @@ void loop()
 	IMFrameBody imFrameBody;
 	imFrameBody.temperature = imSht2x.GetTemperature();
 	imFrameBody.humidity = imSht2x.GetHumidity();
-
 	memcpy(imFrame.Body, &imFrameBody, sizeof(imFrameBody));	
-
-	imCC1101.SendData(imFrame);
+	
+	byte TX_buffer[sizeof(imFrame)];
+	memcpy(TX_buffer, &imFrame, sizeof(imFrame));
+	imCC1101.SendData(TX_buffer, sizeof(imFrame));
 
 	//Serial.print("mac: ");
 	//Serial.print(imConfig.MacAddress);

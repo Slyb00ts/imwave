@@ -20,7 +20,7 @@ void setup()
 	pinMode(13, OUTPUT);
 
 	imCC1101.Init();
-	imCC1101.SetReceive();
+	imCC1101.CheckReceiveFlag();
 }
 
 void loop()
@@ -47,6 +47,6 @@ void loop()
 		Serial.print(" Hum: ");
 		Serial.println(imFrameBody.humidity);
 
-		imCC1101.SetReceive();
+		imCC1101.CheckReceiveFlag();
 	}
 }
