@@ -1,13 +1,11 @@
-
-#ifndef imcc1101_h
-#define imcc1101_h
+#ifndef imCC1101_h
+#define imCC1101_h
 
 #if defined(ARDUINO) && ARDUINO >= 100
-  #include "Arduino.h"
+	#include "Arduino.h"
 #else
-  #include "WProgram.h"
+	#include "WProgram.h"
 #endif
-
 
 /**
 * RF STATES
@@ -17,25 +15,23 @@ enum RFSTATE
 	RFSTATE_IDLE = 0,
 	RFSTATE_RX,
 	RFSTATE_TX,
-        RFGOTPACKET
+	RFGOTPACKET
 };
 
 enum CC_STATE
 {
-  CCIDLE = 0,
-  CCSENDING,
-  CCWAITINGRX,
-  CCRECEIVING,
-  CCGOTPACKET,
-  CCWAITIDLE,
+	CCIDLE = 0,
+	CCSENDING,
+	CCWAITINGRX,
+	CCRECEIVING,
+	CCGOTPACKET,
+	CCWAITIDLE,
 };
-
 
 /*
 * PA TABLE CONFIG
 */
-
-
+static byte PaTabel[8] = { 0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 };
 
 #define 	WRITE_BURST     	0x40
 #define 	READ_SINGLE     	0x80
@@ -101,18 +97,18 @@ enum CC_STATE
 //CC1101 Strobe commands
 #define CC1101_SRES         0x30        // Reset chip.
 #define CC1101_SFSTXON      0x31        // Enable and calibrate frequency synthesizer (if MCSM0.FS_AUTOCAL=1).
-                                        // If in RX/TX: Go to a wait state where only the synthesizer is
-                                        // running (for quick RX / TX turnaround).
+										// If in RX/TX: Go to a wait state where only the synthesizer is
+										// running (for quick RX / TX turnaround).
 #define CC1101_SXOFF        0x32        // Turn off crystal oscillator.
 #define CC1101_SCAL         0x33        // Calibrate frequency synthesizer and turn it off
-                                        // (enables quick start).
+										// (enables quick start).
 #define CC1101_SRX          0x34        // Enable RX. Perform calibration first if coming from IDLE and
-                                        // MCSM0.FS_AUTOCAL=1.
+										// MCSM0.FS_AUTOCAL=1.
 #define CC1101_STX          0x35        // In IDLE state: Enable TX. Perform calibration first if
-                                        // MCSM0.FS_AUTOCAL=1. If in RX state and CCA is enabled:
-                                        // Only go to TX if channel is clear.
+										// MCSM0.FS_AUTOCAL=1. If in RX state and CCA is enabled:
+										// Only go to TX if channel is clear.
 #define CC1101_SIDLE        0x36        // Exit RX / TX, turn off frequency synthesizer and exit
-                                        // Wake-On-Radio mode if applicable.
+										// Wake-On-Radio mode if applicable.
 #define CC1101_SAFC         0x37        // Perform AFC adjustment of the frequency synthesizer
 #define CC1101_SWOR         0x38        // Start automatic RX polling sequence (Wake-on-Radio)
 #define CC1101_SPWD         0x39        // Enter power down mode when CSn goes high.
@@ -120,7 +116,7 @@ enum CC_STATE
 #define CC1101_SFTX         0x3B        // Flush the TX FIFO buffer.
 #define CC1101_SWORRST      0x3C        // Reset real time clock.
 #define CC1101_SNOP         0x3D        // No operation. May be used to pad strobe commands to two
-                                        // INT8Us for simpler software.
+										// INT8Us for simpler software.
 //CC1101 STATUS REGSITER
 #define CC1101_PARTNUM      0x30
 #define CC1101_VERSION      0x31
@@ -150,45 +146,42 @@ enum CC_STATE
 #define GDO0	9
 #define GDO2	7
 //************************************* class **************************************************//
-    
+
 class IMCC1101
 {
-	private:
-		void SetRxState(void);
-		void SetTxState(void);
-		void SetIdleState(void);
-		void FlushRxFifo(void);
-		void FlushTxFifo(void);
-		void FlushFifo(void);
-		void SpiInit(void);
-		void SpiMode(byte config);
-		byte SpiTransfer(byte value);
-		void GDO_Set(void);
-		void SpiWriteReg(byte addr, byte value);
-		void SpiWriteBurstReg(byte addr, byte *buffer, byte num);
-		void SpiStrobe(byte strobe);
-		byte SpiReadReg(byte addr);
-		void SpiReadBurstReg(byte addr, byte *buffer, byte num);
-		byte SpiReadStatus(byte addr);
-		void RegConfigSettings(void);	
-	public:
-        RFSTATE rfState;
-		void EnableCCA(void);
-		void DisableCCA(void);
-		void EnableAddressCheck(void);
-		void DisableAddressCheck(void);
-		void SetChannel(byte CHANNR);
-		void PowerDown(void);
-		void WakeUp(void);
-		void Reset(void);
-		void Init(void);
-		void Reinit(void);
-		boolean SendData(byte *txBuffer, byte size);
-		void StartReceive(void);
-		byte CheckReceiveFlag(void);
-		byte ReceiveData(byte *rxBuffer);
+private:
+	void SetRxState(void);
+	void SetTxState(void);
+	void SetIdleState(void);
+	void FlushRxFifo(void);
+	void FlushTxFifo(void);
+	void FlushFifo(void);
+	void SpiInit(void);
+	void SpiMode(byte);
+	byte SpiTransfer(byte value);
+	void GDO_Set(void);
+	void SpiWriteReg(byte addr, byte value);
+	void SpiWriteBurstReg(byte addr, byte *buffer, byte num);
+	void SpiStrobe(byte strobe);
+	byte SpiReadReg(byte addr);
+	void SpiReadBurstReg(byte addr, byte *buffer, byte num);
+	byte SpiReadStatus(byte addr);
+	void RegConfigSettings(void);
+public:
+	void EnableCCA(void);
+	void DisableCCA(void);
+	void EnableAddressCheck(void);
+	void DisableAddressCheck(void);
+	void SetChannel(byte CHANNR);
+	void PowerDown(void);
+	void WakeUp(void);
+	void Reset(void);
+	void Init(void);
+	void Reinit(void);
+	boolean SendData(byte *txBuffer, byte size);
+	void StartReceive(void);
+	byte CheckReceiveFlag(void);
+	byte ReceiveData(byte *rxBuffer);
 };
-
-//extern IMCC1101 imCC1101;
 
 #endif
