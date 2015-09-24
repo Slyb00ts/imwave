@@ -136,7 +136,7 @@ boolean IMCharger::Init(void)
 	//EnableStatLED();  //  Enable STAT LED to display Charging status
 	DisableTS();  // Disable temperature monitoring
 	SetVbat(CHRG_VBATREG_4_2V);  //  4.2V Charge voltage
-	//EnableStatLED();
+	EnableStatLED();
 	SetTerminationLimit(CHRG_TERM_CURRENT_50MA);  //  50mA Termination current limit
 	SetCurrentLimit(CHRG_CURRENT_550MA);  //  500 mA Charge current
 	SetUSBLimit(CHRG_USB_500MA);  // 500mA USB limit
