@@ -16,11 +16,11 @@ void setup()
 	Serial.begin(115000);
 	delay(5000);
 	Serial.println("IM RX Starting....");
-	
+
 	pinMode(13, OUTPUT);
 
 	imCC1101.Init();
-	imCC1101.CheckReceiveFlag();
+	imCC1101.StartReceive();
 }
 
 void loop()
@@ -36,7 +36,7 @@ void loop()
 		IMFrameBody imFrameBody;
 		memcpy(&imFrame, RX_buffer, sizeof(imFrame));
 		memcpy(&imFrameBody, imFrame.Body, sizeof(imFrameBody));
-		
+
 
 		Serial.print("SourceId: ");
 		Serial.print(imFrame.Header.SourceId);
@@ -47,6 +47,6 @@ void loop()
 		Serial.print(" Hum: ");
 		Serial.println(imFrameBody.humidity);
 
-		imCC1101.CheckReceiveFlag();
+		imCC1101.StartReceive();
 	}
 }

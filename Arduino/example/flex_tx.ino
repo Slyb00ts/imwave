@@ -1,11 +1,9 @@
 #include <Wire.h>
-#include <EEPROM.h>
 #include <avr/power.h>
 #include <imframe.h>
 #include <imcc1101.h>
 #include <imsht.h>
 #include <imcharger.h>
-#include <imeeprom.h>
 
 #define PinAkku A2
 #define EnableI2C A3
@@ -14,12 +12,9 @@
 #define EnableAkku A1
 #define EnableRS485 5
 
-#define DefaultMacAddress 0xA0A0A0A0A0A0A0A0
-
 IMCharger	imCharger;
 IMCC1101	imCC1101;
 IMSht2x		imSht2x;
-IMEeprom	imEeprom;
 
 typedef struct {
 	float temperature;
@@ -28,9 +23,6 @@ typedef struct {
 
 void setup()
 {
-	imConfig.MacAddress = DefaultMacAddress;
-	imEeprom.WriteConfigIfNotExists();
-
 	Serial.begin(115000);
 	delay(5000);
 	Serial.println("IM TX Starting....");
@@ -39,32 +31,30 @@ void setup()
 	pinMode(EnableSHT, OUTPUT);
 	//pinMode(EnableRS485, OUTPUT);
 	digitalWrite(EnableSHT, HIGH);
-	digitalWrite(EnableI2C, HIGH);	
+	digitalWrite(EnableI2C, HIGH);
 	//digitalWrite(EnableRS485, LOW);
 
 	imCharger.Init();
-	imCC1101.Init();	
+	imCC1101.Init();
 }
 
 void loop()
 {
 	IMFrame imFrame;
+	IMFrameBody imFrameBody;
+	byte TX_buffer[61] = { 0 };
+
 	imFrame.Header.SourceId = 100;
 	imFrame.Header.Function = 1;
-	imFrame.Header.DestinationId = 1;
-
-	IMFrameBody imFrameBody;
+	imFrame.Header.DestinationId = 1;	
 	imFrameBody.temperature = imSht2x.GetTemperature();
 	imFrameBody.humidity = imSht2x.GetHumidity();
-	memcpy(imFrame.Body, &imFrameBody, sizeof(imFrameBody));	
-	
-	byte TX_buffer[sizeof(imFrame)];
+
+	memcpy(imFrame.Body, &imFrameBody, sizeof(imFrameBody));
 	memcpy(TX_buffer, &imFrame, sizeof(imFrame));
 	imCC1101.SendData(TX_buffer, sizeof(imFrame));
 
-	//Serial.print("mac: ");
-	//Serial.print(imConfig.MacAddress);
-	Serial.print(" temp: ");
+	Serial.print("temp: ");
 	Serial.print(imFrameBody.temperature);
 	Serial.print(" hum: ");
 	Serial.println(imFrameBody.humidity);
@@ -72,7 +62,7 @@ void loop()
 	//Check charger stat and keepalive charging
 	/*byte VinStat = imCharger.GetVinStat();
 	if (VinStat != 0b00) {
-		imCharger.KeepAlive();
+	imCharger.KeepAlive();
 	}*/
 
 	delay(1000);
