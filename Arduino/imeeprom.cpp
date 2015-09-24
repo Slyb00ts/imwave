@@ -16,7 +16,7 @@ void IMEeprom::WriteConfig(void) {
 
 void IMEeprom::WriteConfigIfNotExists(void) {
 	ReadConfig();
-	if (imConfig.MacAddress == 0 || imConfig.MacAddress == 0xFFFFFFFFFFFFFFFF) {
+	if (imConfig.MacAddress1 == 0 || imConfig.MacAddress1 == 0xFFFFFFFFFFFFFFFF) {
 		WriteConfig();
 	}
 }
