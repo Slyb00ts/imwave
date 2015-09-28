@@ -16,8 +16,8 @@
 #include <imframe.h>
 #include <Arduino.h>
 
-#define _QueueSize 8
-#define _QueueMask 0x7
+#define _QueueSize 4
+#define _QueueMask 0x3
 
 #define  NodeQueue IMFrame
 class  IMQueue
@@ -25,7 +25,7 @@ class  IMQueue
 //  private:
   public:
      typedef uint8_t address;
-     address tail;
+      address tail;
       uint8_t head;
       address temp;
       IMFrame tab[_QueueSize];
