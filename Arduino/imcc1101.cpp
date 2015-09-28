@@ -1,23 +1,27 @@
-#include <imcc1101.h>
-byte PaTabel1[8] = { 0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 ,0xC0 };
+ï»¿#include <imcc1101.h>
 
+#if defined(ARDUINO) && ARDUINO >= 100  
+#include "Arduino.h"  
+#else  
+#include "WProgram.h"  
+#endif 
 
 //Private
 void IMCC1101::SetRxState(void)
 {
-	rfState = RFSTATE_RX;
+	//rfState = RFSTATE_RX;
 	SpiStrobe(CC1101_SRX);
 }
 
 void IMCC1101::SetTxState(void)
 {
-	rfState = RFSTATE_TX;
+	//rfState = RFSTATE_TX;
 	SpiStrobe(CC1101_STX);
 }
 
 void IMCC1101::SetIdleState(void)
 {
-	rfState = RFSTATE_IDLE;
+	//rfState = RFSTATE_IDLE;
 	SpiStrobe(CC1101_SIDLE);
 }
 
@@ -54,13 +58,13 @@ void IMCC1101::SpiInit(void)
 
 void IMCC1101::SpiMode(byte config)
 {
-//	byte tmp;
+	//byte tmp;
 
 	// enable SPI master with configuration byte specified
 	SPCR = 0;
 	SPCR = (config & 0x7F) | (1 << SPE) | (1 << MSTR);
-//	tmp = SPSR;
-//	tmp = SPDR;
+	//tmp = SPSR;
+	//tmp = SPDR;
 }
 
 byte IMCC1101::SpiTransfer(byte value)
@@ -185,7 +189,7 @@ void IMCC1101::RegConfigSettings(void)
 	SpiWriteReg(CC1101_IOCFG0, 0x06);  	//asserts when sync word has been sent/received, and de-asserts at the end of the packet 
 	SpiWriteReg(CC1101_PKTCTRL1, 0x04);		//two status bytes will be appended to the payload of the packet,including RSSI LQI and CRC OK
 											//No address check
-	SpiWriteReg(CC1101_PKTCTRL0, 0x05);		//whitening off;CRC Enable£»variable length packets, packet length configured by the first byte after sync word
+	SpiWriteReg(CC1101_PKTCTRL0, 0x05);		//whitening off;CRC Enable variable length packets, packet length configured by the first byte after sync word
 	SpiWriteReg(CC1101_ADDR, 0x00);		//address used for packet filtration.
 	SpiWriteReg(CC1101_PKTLEN, 0x3D); 	//61 bytes max length
 
@@ -239,9 +243,9 @@ void IMCC1101::Reset(void)
 	digitalWrite(SS_PIN, HIGH);
 	delay(1);
 	digitalWrite(SS_PIN, LOW);
-	while(digitalRead(MISO_PIN));
+	while (digitalRead(MISO_PIN));
 	SpiTransfer(CC1101_SRES);
-	while(digitalRead(MISO_PIN));
+	while (digitalRead(MISO_PIN));
 	digitalWrite(SS_PIN, HIGH);
 }
 
@@ -254,7 +258,7 @@ void IMCC1101::Init(void)
 	digitalWrite(MOSI_PIN, LOW);
 	Reset();										//CC1101 reset
 	RegConfigSettings();							//CC1101 register config
-	SpiWriteBurstReg(CC1101_PATABLE,PaTabel1,8);		//CC1101 PATABLE config
+	SpiWriteBurstReg(CC1101_PATABLE, PaTabel, 8);		//CC1101 PATABLE config
 	EnableCCA();
 }
 
@@ -272,7 +276,7 @@ void IMCC1101::Reinit(void)
 	Init();
 }
 
-boolean IMCC1101::SendData(byte *txBuffer,byte size)
+boolean IMCC1101::SendData(byte *txBuffer, byte size)
 {
 	byte marcState;
 	bool res = false;
@@ -290,10 +294,10 @@ boolean IMCC1101::SendData(byte *txBuffer,byte size)
 
 	delayMicroseconds(500);
 
-	SpiWriteReg(CC1101_TXFIFO,size);
-	SpiWriteBurstReg(CC1101_TXFIFO,txBuffer,size); //write data to send
+	SpiWriteReg(CC1101_TXFIFO, size);
+	SpiWriteBurstReg(CC1101_TXFIFO, txBuffer, size); //write data to send
 	SetTxState(); //start send	
-															
+
 	marcState = SpiReadStatus(CC1101_MARCSTATE) & 0x1F;
 	if ((marcState != 0x13) && (marcState != 0x14) && (marcState != 0x15))
 	{
@@ -306,7 +310,7 @@ boolean IMCC1101::SendData(byte *txBuffer,byte size)
 	while (!digitalRead(GDO0));	// Wait for GDO0 to be set -> sync transmitted  
 	while (digitalRead(GDO0));	// Wait for GDO0 to be cleared -> end of packet
 
-	// Check that the TX FIFO is empty
+								// Check that the TX FIFO is empty
 	if ((SpiReadStatus(CC1101_TXBYTES) & 0x7F) == 0)
 		res = true;
 
@@ -323,7 +327,7 @@ void IMCC1101::StartReceive(void)
 
 byte IMCC1101::CheckReceiveFlag(void)
 {
-	if(digitalRead(GDO0))			//receive data
+	if (digitalRead(GDO0))			//receive data
 	{
 		while (digitalRead(GDO0));
 		return 1;
@@ -339,11 +343,11 @@ byte IMCC1101::ReceiveData(byte *rxBuffer)
 	byte size;
 	byte status[2];
 
-	if(SpiReadStatus(CC1101_RXBYTES) & BYTES_IN_RXFIFO)
+	if (SpiReadStatus(CC1101_RXBYTES) & BYTES_IN_RXFIFO)
 	{
-		size=SpiReadReg(CC1101_RXFIFO);
-		SpiReadBurstReg(CC1101_RXFIFO,rxBuffer,size);
-		SpiReadBurstReg(CC1101_RXFIFO,status,2);	
+		size = SpiReadReg(CC1101_RXFIFO);
+		SpiReadBurstReg(CC1101_RXFIFO, rxBuffer, size);
+		SpiReadBurstReg(CC1101_RXFIFO, status, 2);
 		rxBuffer[5] = status[0];
 		rxBuffer[6] = status[1];
 		FlushRxFifo();

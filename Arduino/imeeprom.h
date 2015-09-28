@@ -18,7 +18,8 @@
 
 static struct IMConfig
 {
-	uint64_t MacAddress;
+	uint32_t MacAddress1;
+	uint32_t MacAddress2;
 }imConfig;
 
 class IMEeprom
