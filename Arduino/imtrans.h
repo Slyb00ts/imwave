@@ -20,6 +20,7 @@
 #include "imframe.h"
 #include "imack.h"
 #include "imqueue.h"
+#include "imdebug.h"
 
 #define TRANSCIEVER_LIB_VERSION "0.1.00"
 
@@ -30,27 +31,8 @@
 // #. define PAKETSIZE 61  //CC1101 adds LEN, LQI, RSSI -- stay under fifo size of 64 byte (CC1101 buggy)
 // #. define MAXDATALEN PAKETSIZE-HEADERSIZE
 
-/*
-typedef struct
-{
-  uint8_t nwid;
-  uint8_t src;
-  uint8_t dest;
-  uint8_t seq;
-  uint8_t pseq;
-  uint8_t hopc;
-  uint8_t len;
-  uint8_t crc;
-} header_t;
-*/
 
-/*
-typedef struct
-{
-  header_t header;
-  uint8_t data[MAXDATALEN];
-} packet_t;
-*/
+
 
 #define header_t IMFrameHeader
 #define packet_t IMFrame
@@ -100,6 +82,8 @@ public:
     uint8_t Get(uint8_t* buf);
     uint8_t Put(uint8_t*buf,uint8_t len);
     void Push(IMFrame & frame);
+    bool toRetry(IMFrame & frame);
+    bool toRoute(IMFrame & frame);
 
 private:
 	int read(uint8_t pin);

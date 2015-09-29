@@ -1,21 +1,20 @@
 #include <imack.h>
 
-
-byte TableACK::Send(uint8_t Addr, uint8_t Seq)
+byte TableACK::find()
 {
-   lastsentseq=Seq;
-   for(byte i =0 ;i<MAXTableACK;i++)
-     if (addr[i]==0){
-       addr[i]=Addr;
-       seq[i]=Seq;
-       return i;
-     };
-   return -1;
+  return 0;
+}
+
+byte TableACK::Send(IMFrame & frame)
+{
+   byte i = empty();
+   tab[i]=frame;
+   return i;
+//   retry[i]=0;
 
 }
 void TableACK::Accept( uint8_t Seq)
 {
-   lastsentseq=0;
 }
 
 
@@ -39,6 +38,22 @@ bool TableACK::noack(uint8_t Addr)
 
 }
 
+byte TableACK::empty()
+{
+  byte x=0xFF;
+  for (byte i=0; i<MAXTableACK;i++)
+  {
+    if (tab[i].Header.Function==0)
+      return i;
+    x=  (x <tab[i].Header.Sequence) ? x : tab[i].Header.Sequence;
+  }
+  for (byte i=0; i<MAXTableACK;i++)
+  {
+    if (tab[i].Header.Sequence==x)
+        return i;
+  }
+  return 0;
+}
 
 bool TableACK::retry()
 {

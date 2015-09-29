@@ -5,6 +5,10 @@
 // #.define DBGLVL 2
 
 /***************************** Debug messages ***********************/
+#ifndef imDebug_h
+#define imDebug_h
+
+#include "Arduino.h"
 
 //Write out errors on dbgSerial
 #if DBGLVL>=1
@@ -33,9 +37,13 @@
 
 
 
-
+#if DBGLVL>=1
 void initDebug(){
   dbgSerial.begin(dbgSerialSpeed);
   dbgSerial.print("\r\n\r\nHello\r\n\r\n");
 
 }
+#endif
+
+
+#endif

@@ -9,6 +9,7 @@
 
 
 #include <Arduino.h>
+#include "imframe.h"
 
 
 #define MAXTableRouting 8
@@ -22,8 +23,9 @@ class IMRouting
   uint8_t addr[MAXTableRouting];
   uint32_t time[MAXTableRouting];
 
-  byte Send(uint8_t Addr, uint8_t Seq);
-  byte Recive(uint8_t Addr, uint8_t Seq);
+  byte Send(IMFrame & frame);
+  byte Recive(IMFrame & frame);
+  byte find();
 
 };
 

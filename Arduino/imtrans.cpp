@@ -39,14 +39,21 @@ void Transceiver::StartReceive()
 uint8_t Transceiver::GetData()
 {
 
-  if (cc1101->rfState == RFGOTPACKET)
+//  if (cc1101->rfState == RFGOTPACKET)
+  if (1)
   {
-    Serial.print("G");
+    DBGINFO("G");
     rSize=cc1101->ReceiveData((uint8_t*)&RX_buffer);
     return rSize;
   } else{
     return 0;
   }
+}
+
+bool Transceiver::toRoute(IMFrame & frame)
+{
+    DBGINFO("G");
+    return 0;
 }
 
 bool Transceiver::Valid()
@@ -132,7 +139,6 @@ void Transceiver::PrepareTransmit()
 
    TX_buffer.len=GetLen(TX_buffer.packet);
    byte dst=TX_buffer.packet.Header.DestinationId;
-   ack.Send(dst,TX_buffer.packet.Header.Sequence);
    TX_buffer.packet.Header.pseq = ack.Answer(dst);
 
 }   
@@ -145,7 +151,10 @@ byte Transceiver::Transmit()
    while (queue.pop(TX_buffer.packet))  {
      PrepareTransmit();
      if (cc1101->SendData((uint8_t*)&(TX_buffer.packet),TX_buffer.len))
-       io++;
+     {
+        ack.Send(TX_buffer.packet);
+        io++;
+     }
    }
    return io;
 }
@@ -178,6 +187,13 @@ void Transceiver::Push(IMFrame & frame)
   queue.push(frame);
 }
 
+
+bool Transceiver::toRetry(IMFrame & frame)
+{
+     byte io=ack.retry();
+     return io;
+
+}
 
 
 //

@@ -7,19 +7,14 @@ byte IMRouting::find()
 
 byte IMRouting::Send(IMFrame & frame)
 {
-   lastsentseq=Seq;
 //   byte i = empty();
+  return 0;
 
 }
-void IMRouting::Accept( uint8_t Seq)
-{
-   lastsentseq=0;
-}
 
 
-byte IMRouting::Recive(uint8_t Addr, uint8_t Seq)
+byte IMRouting::Recive(IMFrame & frame)
 {
-  partnerseqnr=Seq;
   return 0;
 }
 
