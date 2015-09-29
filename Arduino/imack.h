@@ -37,7 +37,7 @@ class TableACK
   uint8_t Answer(uint8_t Addr);
   void Accept( uint8_t Seq);
   bool noack(uint8_t Addr);
-  bool retry();
+  IMFrame * toRetry();
 };
 
 #endif

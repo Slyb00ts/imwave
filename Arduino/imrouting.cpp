@@ -1,9 +1,5 @@
 #include <imrouting.h>
 
-byte IMRouting::find()
-{
-  return 0;
-}
 
 byte IMRouting::Send(IMFrame & frame)
 {
@@ -13,8 +9,13 @@ byte IMRouting::Send(IMFrame & frame)
 }
 
 
-byte IMRouting::Recive(IMFrame & frame)
+IMAddress IMRouting::Forward(IMAddress addr)
 {
-  return 0;
+  for(byte i=0;i<count;i++)
+  {
+    if (Source[i]==addr)
+      return Destination[i];
+  }
+  return 0xFF;
 }
 

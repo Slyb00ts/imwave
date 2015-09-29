@@ -21,6 +21,7 @@
 #include "imack.h"
 #include "imqueue.h"
 #include "imdebug.h"
+#include "imrouting.h"
 
 #define TRANSCIEVER_LIB_VERSION "0.1.00"
 
@@ -41,7 +42,7 @@
 typedef struct
 {
   uint8_t len;
-  packet_t packet;
+  IMFrame packet;
   uint16_t appended;
 } transfer_t;
 
@@ -50,12 +51,15 @@ class Transceiver
 {
 private:
     IMCC1101 * cc1101;  //The CC1101 device
-    packet_t * pPacket;
+    IMFrame * pPacket;
     packet_t * txPacket;
     IMQueue queue;
+    IMRouting routing;
     float rssi;
     void setRssi();
     void Prepare(IMFrame & frame );
+    unsigned short netID;
+    bool Routing(IMFrame & frame);
 
 public:
     header_t * pHeader;
@@ -64,7 +68,6 @@ public:
     transfer_t RX_buffer ;
     transfer_t TX_buffer ;
     TableACK  ack;
-    unsigned short netID;
     unsigned short myID;
     unsigned short rSize;
     unsigned short crc;
@@ -82,8 +85,9 @@ public:
     uint8_t Get(uint8_t* buf);
     uint8_t Put(uint8_t*buf,uint8_t len);
     void Push(IMFrame & frame);
-    bool toRetry(IMFrame & frame);
-    bool toRoute(IMFrame & frame);
+    bool Retry();
+    bool Routing();
+
 
 private:
 	int read(uint8_t pin);

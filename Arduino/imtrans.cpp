@@ -49,12 +49,28 @@ uint8_t Transceiver::GetData()
     return 0;
   }
 }
-
-bool Transceiver::toRoute(IMFrame & frame)
+bool Transceiver::Routing()
 {
-    DBGINFO("G");
-    return 0;
+  return Routing(RX_buffer.packet);
 }
+
+bool Transceiver::Routing(IMFrame & frame)
+{
+  if (frame.Header.DestinationId!=myID)
+  {
+    IMAddress a=routing.Forward(frame.Header.DestinationId);
+    if (a!=0xFF)
+    {
+      frame.Header.RepeaterId=a;
+      Push(frame);
+    } else
+      DBGERR("ERR Routing");
+    return true;
+
+  }
+  return false;
+}
+
 
 bool Transceiver::Valid()
 {
@@ -188,10 +204,16 @@ void Transceiver::Push(IMFrame & frame)
 }
 
 
-bool Transceiver::toRetry(IMFrame & frame)
+bool Transceiver::Retry()
 {
-     byte io=ack.retry();
-     return io;
+     IMFrame * pf;
+     pf=ack.toRetry();
+     if (pf)
+     {
+        Push(*pf);
+        return true;
+     }
+     return false;
 
 }
 

@@ -17,15 +17,14 @@ class IMRouting
 {
   private:
   int count;
-  IMFrame tab[MAXTableRouting];
+  IMAddress Source[MAXTableRouting];
+  IMAddress Destination[MAXTableRouting];
+
   public:
-  byte retrycnt;  //counter for retries
-  uint8_t addr[MAXTableRouting];
   uint32_t time[MAXTableRouting];
 
   byte Send(IMFrame & frame);
-  byte Recive(IMFrame & frame);
-  byte find();
+  IMAddress Forward(IMAddress addr);
 
 };
 

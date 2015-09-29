@@ -55,14 +55,14 @@ byte TableACK::empty()
   return 0;
 }
 
-bool TableACK::retry()
+IMFrame * TableACK::toRetry()
 {
-      bool io= (retrycnt>=MAXRETRIES);
-      if (io){
-        retrycnt = 0;  //reset retries
-      } else{
-        retrycnt++;
-      }
-      return io;
+  for (byte i=0; i<MAXTableACK;i++)
+  {
+    if (tab[i].Header.Function!=0)
+     return &(tab[i]);
+  }
+
+  return NULL;
 }
 

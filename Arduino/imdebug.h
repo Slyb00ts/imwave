@@ -2,7 +2,7 @@
 //0:none
 //1:Errors
 //2:Information
-// #.define DBGLVL 2
+#define DBGLVL 2
 
 /***************************** Debug messages ***********************/
 #ifndef imDebug_h
