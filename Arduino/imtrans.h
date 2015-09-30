@@ -53,28 +53,28 @@ private:
     packet_t * txPacket;
     IMQueue queue;
     IMRouting routing;
+    header_t * pHeader;
+    header_t * txHeader;
     float rssi;
+    unsigned short rSize;
+    unsigned short crc;
     void setRssi();
     void Prepare(IMFrame & frame );
     unsigned short netID;
     bool Routing(IMFrame & frame);
     bool broadcast();
+    unsigned short crcCheck();
 
 public:
-    header_t * pHeader;
-    header_t * txHeader;
     transfer_t RX_buffer ;
     transfer_t TX_buffer ;
     TableACK  ack;
     unsigned short myID;
-    unsigned short rSize;
-    unsigned short crc;
     void Init(IMCC1101 & cc);
     void StartReceive();
     bool Valid();
     uint8_t GetData();
     float Rssi();
-    unsigned short crcCheck();
 
     uint8_t CRC(packet_t & p);
     uint8_t GetLen(IMFrame & p);
@@ -85,6 +85,7 @@ public:
     void Push(IMFrame & frame);
     bool Retry();
     bool Routing();
+    void printReceive();
 
 
 private:

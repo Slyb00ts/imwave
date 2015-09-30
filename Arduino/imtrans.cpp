@@ -222,10 +222,27 @@ bool Transceiver::Retry()
      return false;
 }
 
+void Transceiver::printReceive()
+{
+      DBGINFO("Receive(");
+      DBGINFO(rSize);
+      DBGINFO("): ");
+      for (unsigned short i=0;i<rSize ;i++)
+      {
+        DBGINFO2(((uint8_t*)&RX_buffer)[i],HEX);
+        DBGWRITE(' ');
+      }
+      DBGINFO("-> ");
+}
+
+
 bool Transceiver::broadcast()
 {
+ // if broadcast.listen
   return false;
 }
+
+
 
 
 //

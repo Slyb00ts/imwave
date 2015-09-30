@@ -63,9 +63,7 @@
   #define bridgeSpeed 9600
   #define bridgeBurst 10  //Chars written out per call
   #define bridgeDelay 3000  //Time between calls - Let hardware serial write out async
-//  #define bridgeDelay ((bridgeBurst*1000)/(bridgeSpeed/8))  //Time between calls - Let hardware serial write out async
-//  #define TXEN_PIN 2  //Which pin to use for RS485 functionality - comment to disable
-  
+
 
 
 
@@ -74,7 +72,6 @@
 #define INDEX_SRC  1  //Source ID
 #define INDEX_DEST 2  //Target ID
 #define INDEX_SEQ  3  //Senders current sequence number
-#define INDEX_PSEQ 4  //Last sequence number heard from target
 
 
 
@@ -88,8 +85,8 @@ unsigned short radio_writeout = 0xFFFF;
 unsigned long radioOut_delay = 0;
 
 
-Transceiver trx;
 IMCC1101  cc1101;
+Transceiver trx;
 IMBroadcast broadcast(cc1101);
 /************************* Functions **********************/
 
@@ -105,18 +102,6 @@ void printRadio()
     DBGINFO(";");
 
 }
-void printReceive()
-{
-      DBGINFO("Receive(");
-      DBGINFO(trx.rSize);
-      DBGINFO("): ");
-      for (unsigned short i=0;i<trx.rSize ;i++)
-      {
-        DBGINFO2(((uint8_t*)&trx.RX_buffer)[i],HEX);
-        DBGWRITE(' ');
-      }
-      DBGINFO("-> ");
-} 
 
 
 
@@ -146,7 +131,6 @@ void setup()
 //  wdt_enable(WDTO_8S);  //Watchdog 8s
   initDebug();
 
-//  bridge.begin(bridgeSpeed);
   ERRLEDINIT(); ERRLEDOFF();
   trx.Init(cc1101);
   trx.myID= MID;
@@ -176,7 +160,7 @@ void loop()
   delay(500);
   if (trx.GetData()  )
     {
-      printReceive();
+      trx.printReceive();
       if (trx.Routing())
       {
         DBGINFO(" Route ");
