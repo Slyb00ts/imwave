@@ -81,7 +81,23 @@ bool Transceiver::Valid()
       if (io) {
         setRssi();
         io =( (pHeader->DestinationId==myID));
+      } else{
+        DBGERR("!LEN");
       }
+      if (io)
+      {
+        io=crcCheck();
+      } else {
+        DBGINFO("!destination");
+      }
+
+      if (io) {
+            ack.Recive(pHeader->SourceId,  pHeader->Sequence);
+            ack.Accept(pHeader->pseq);
+       } else {
+          DBGERR("!CRC");
+       };
+
       return io;
 }
 
@@ -95,12 +111,7 @@ unsigned short Transceiver::crcCheck()
 
           //valid packet crc
 
-          bool io= (CRC(*pPacket)-cnt);
-          if (io) {
-            ack.Recive(pHeader->SourceId,  pHeader->Sequence);
-            ack.Accept(pHeader->pseq);
-          };
-          return io;
+          return (CRC(*pPacket)-cnt);
 
 }
 
@@ -146,10 +157,6 @@ void Transceiver::Prepare(IMFrame & frame)
 }
 void Transceiver::PrepareTransmit()
 {
-
-
-//       txHeader->src = MID;
-//    txHeader->dest = TID;
 //   TX_buffer.packet.Header.SourceId=myID;
 //   sizeof(header_t)+txHeader->len;
 
@@ -203,7 +210,6 @@ void Transceiver::Push(IMFrame & frame)
   queue.push(frame);
 }
 
-
 bool Transceiver::Retry()
 {
      IMFrame * pf;
@@ -214,7 +220,11 @@ bool Transceiver::Retry()
         return true;
      }
      return false;
+}
 
+bool Transceiver::broadcast()
+{
+  return false;
 }
 
 

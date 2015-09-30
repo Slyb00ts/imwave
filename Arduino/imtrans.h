@@ -16,21 +16,19 @@
  #include "WProgram.h"
 #endif
 
+#include "imdebug.h"
 #include "imcc1101.h"
 #include "imframe.h"
 #include "imack.h"
 #include "imqueue.h"
-#include "imdebug.h"
 #include "imrouting.h"
 
-#define TRANSCIEVER_LIB_VERSION "0.1.00"
 
 #define RECEIVE_TO 1000  //Wait at max this long in ms for packet arrival
 
 //Buff for radio packet handling
 // #. define HEADERSIZE 8
 // #. define PAKETSIZE 61  //CC1101 adds LEN, LQI, RSSI -- stay under fifo size of 64 byte (CC1101 buggy)
-// #. define MAXDATALEN PAKETSIZE-HEADERSIZE
 
 
 
@@ -60,11 +58,11 @@ private:
     void Prepare(IMFrame & frame );
     unsigned short netID;
     bool Routing(IMFrame & frame);
+    bool broadcast();
 
 public:
     header_t * pHeader;
     header_t * txHeader;
-
     transfer_t RX_buffer ;
     transfer_t TX_buffer ;
     TableACK  ack;

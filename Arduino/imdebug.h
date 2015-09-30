@@ -2,11 +2,13 @@
 //0:none
 //1:Errors
 //2:Information
-#define DBGLVL 2
 
 /***************************** Debug messages ***********************/
 #ifndef imDebug_h
 #define imDebug_h
+
+#define DBGLVL 0
+
 
 #include "Arduino.h"
 
@@ -43,7 +45,12 @@ void initDebug(){
   dbgSerial.print("\r\n\r\nHello\r\n\r\n");
 
 }
+#else
+
+  #define initDebug() do{}while(0)
+
 #endif
 
 
 #endif
+
