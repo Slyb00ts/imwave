@@ -36,6 +36,7 @@ class  IMQueue
      unsigned short Length();
      bool pop(NodeQueue & node);
      void push(const NodeQueue & node);
+     static short ClassTest();
 
 } ;
 

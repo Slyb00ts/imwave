@@ -242,7 +242,16 @@ bool Transceiver::broadcast()
   return false;
 }
 
-
+short Transceiver::ClassTest()
+{
+  short x=IMQueue::ClassTest();
+  if (x)
+  {
+     DBGERR("IMQueue");
+     DBGERR(x);
+     return x+100;
+  }
+}
 
 
 //

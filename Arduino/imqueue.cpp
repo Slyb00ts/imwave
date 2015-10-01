@@ -56,3 +56,20 @@ unsigned short IMQueue::Length()
 }
 
 
+short IMQueue::ClassTest()
+{
+  IMQueue queue;
+  IMFrame fr1;
+  IMFrame fr2;
+  fr1.Header.Function=11;
+  queue.push(fr1);
+  if ( !queue.pop(fr2))
+   return 1;
+  if (fr2.Header.Function!=11)
+    return 2;
+  if ( queue.pop(fr2))
+   return 3;
+
+
+
+}

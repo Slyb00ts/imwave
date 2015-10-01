@@ -55,6 +55,7 @@ private:
     IMRouting routing;
     header_t * pHeader;
     header_t * txHeader;
+    TableACK  ack;
     float rssi;
     unsigned short rSize;
     unsigned short crc;
@@ -64,11 +65,11 @@ private:
     bool Routing(IMFrame & frame);
     bool broadcast();
     unsigned short crcCheck();
+    byte GetLen(IMFrame & p);
 
 public:
     transfer_t RX_buffer ;
     transfer_t TX_buffer ;
-    TableACK  ack;
     unsigned short myID;
     void Init(IMCC1101 & cc);
     void StartReceive();
@@ -77,8 +78,7 @@ public:
     float Rssi();
 
     uint8_t CRC(packet_t & p);
-    uint8_t GetLen(IMFrame & p);
-    
+
     byte Transmit();
     uint8_t Get(uint8_t* buf);
     uint8_t Put(uint8_t*buf,uint8_t len);
@@ -86,7 +86,7 @@ public:
     bool Retry();
     bool Routing();
     void printReceive();
-
+    static short ClassTest();
 
 private:
 	int read(uint8_t pin);
