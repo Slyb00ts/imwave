@@ -2,7 +2,7 @@
         mesh CC1101 example
         for more information: www.imwave
 
-	Copyright (c) 2015 In-Circuit GmbH
+	Copyright (c) 2015 Dariusz Mazur
         
         v0.1 - 2015.09.01
 	    Basic implementation - functions and comments are subject to change
@@ -53,16 +53,14 @@
 
 
 /******************************* Module specific settings **********************/
-#undef TXEN_PIN
 
 
 
 
   
-  #define bridge Serial1
   #define bridgeSpeed 9600
   #define bridgeBurst 10  //Chars written out per call
-  #define bridgeDelay 3000  //Time between calls - Let hardware serial write out async
+  #define radioDelay 3000  //Time between calls - Let hardware serial write out async
 
 
 
@@ -93,85 +91,70 @@ IMBroadcast broadcast(cc1101);
 
 void printRadio()
 {
-    DBGINFO("UART");
+    DBGINFO("Radio:");
     DBGINFO(radioBufLen);
     for (int i=0 ; i<bridgeBurst && (radio_writeout<radioBufLen) ; radio_writeout++, i++ )
     {
-      Serial.write(radioBuf[radio_writeout]);
+      DBGINFO(radioBuf[radio_writeout]);
     }
-    DBGINFO(";");
+    DBGINFO(";\r\n");
 
 }
 
 
 
-void testQueue()
-{
-    IMQueue queue;
-  static IMFrame fr1;
-  static IMFrame fr2;
-  fr1.Header.Function=radioOut_delay;
-  queue.push(fr1);
-  Serial.print(radioOut_delay);
-  Serial.print("::");
-  Serial.print(queue.temp);
-  Serial.print("=");
-//  Serial.print(queue.tab[1].Header.Function);
-//  Serial.print(queue.tab[(queue.temp-1) & _QueueMask);
-
-  Serial.print("Queue");
-  Serial.print(queue.pop(fr2) );
-  Serial.print("=");
-  Serial.print(fr2.Header.Function );
-}  
 
 //Initialize the system
 void setup()
 {
 //  wdt_enable(WDTO_8S);  //Watchdog 8s
-  initDebug();
+  INITDBG();
 
   ERRLEDINIT(); ERRLEDOFF();
   trx.Init(cc1101);
   trx.myID= MID;
+  DBGINFO("classtest");
+  DBGINFO(Transceiver::ClassTest());
 }
 
 //Main loop is called over and over again
-void loop()
+
+byte GetData()
 {
-  ERRLEDON();         delay(50);         ERRLEDOFF();
-  static IMFrame frame;
-
-  if (broadcast.Listen())
-  {
-
-  } else {
-//  testQueue();
-  trx.StartReceive();
-  /************** radio to UART ************************/
-  if ( radioOut_delay<millis())
-  {
-    radioOut_delay = millis()+bridgeDelay;
-    printRadio();
-    radio_writeout = 0xFFFF;  //signal write complete to radio reception
-    radioBufLen = 0;
-  }
-
-  delay(500);
+  static IMFrame rxFrame;
   if (trx.GetData()  )
     {
       trx.printReceive();
-      if (trx.Routing())
+      if (trx.GetFrame(rxFrame))
       {
-        DBGINFO(" Route ");
-      }
-      else if( trx.Valid())
-      {
-          DBGINFO(" RSSI: ");           DBGINFO(trx.Rssi());            DBGINFO("dBm");
-          DBGINFO(" CRC: ");            DBGINFO(trx.crc);             DBGINFO(" rr: ");
+        DBGINFO(" RSSI: ");           DBGINFO(trx.Rssi());            DBGINFO("dBm");
+//        DBGINFO(" CRC: ");            DBGINFO(trx.crc);             DBGINFO(" rr: ");
+        if (rxFrame.Knock())
+           DBGINFO(" Knock ");
+        else if (rxFrame.Welcome())
+           DBGINFO(" Welcome ");
+//          trx.parseKnock()
+        else if (rxFrame.ACK())
+        {
+           trx.ReceiveACK(rxFrame);
 
-          radioBufLen+=trx.Get((uint8_t*)&(radioBuf[radioBufLen]));
-          if (radio_writeout == 0xFFFF) radio_writeout = 0;  //signal the uart handler to start writing out
+           DBGINFO(" ACK ");
+        } else{
+          if (rxFrame.NeedACK())
+             trx.SendACK(rxFrame);
+          if  (rxFrame.Destination()!=MID)
+          {
+             if (trx.Routing(rxFrame))
+             DBGINFO(" Route ");
+          }
+          else
+          {
+            radioBufLen+=rxFrame.Get((uint8_t*)&(radioBuf[radioBufLen]));
+            if (radio_writeout == 0xFFFF) radio_writeout = 0;  //signal the uart handler to start writing out
+          }
+          if (rxFrame.Repeat())
+              return 1;
+        }
       }
       else
       {
@@ -179,8 +162,35 @@ void loop()
       }
       DBGINFO("\r\n");
   }
+  return 0;
+
+}
+
+
+void loop()
+{
+  ERRLEDON();         delay(50);         ERRLEDOFF();
+  static IMFrame frame;
+
+
+
+
+  trx.StartReceive();
+  /************** radio to UART ************************/
+  if ( radioOut_delay<millis())
+  {
+    radioOut_delay = millis()+radioDelay;
+    printRadio();
+    radio_writeout = 0xFFFF;  //signal write complete to radio reception
+    radioBufLen = 0;
+  }
+
+  delay(500);
+
+  do {} while (GetData());
+
   // prepare data
-  generatorUart();    Serial.println(" R  ");
+  generatorUart();    DBGINFO(" R  ");
 
 
   if ((millis() %10) <7)
@@ -189,6 +199,7 @@ void loop()
       trx.Push(frame);
       DBGINFO("PUSH (");
   }
+
   if (trx.Retry())
   {
       DBGINFO("Retry");
@@ -201,7 +212,7 @@ void loop()
       DBGINFO(trx.TX_buffer.len);    DBGINFO(",");
   }
   DBGINFO(")\r\n");
-  }
+
   
 //  Serial.flush();
 

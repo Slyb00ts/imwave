@@ -18,7 +18,7 @@ void TableACK::Accept( uint8_t Seq)
 }
 
 
-byte TableACK::Recive(IMFrame & frame)
+byte TableACK::Receive(IMFrame & frame)
 {
   partnerseqnr=frame.Header.Sequence;
   Accept(partnerseqnr);

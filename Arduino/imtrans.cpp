@@ -158,7 +158,13 @@ void Transceiver::PrepareTransmit()
 }   
 
 
+byte Transceiver::Send(IMFrame & frame)
+{
+  TX_buffer.packet=frame;
+  PrepareTransmit();
+  return (cc1101->SendData((uint8_t*)&(TX_buffer.packet),TX_buffer.len)) ;
 
+}
 byte Transceiver::Transmit()
 {
   byte io=0;
@@ -212,6 +218,20 @@ bool Transceiver::Retry()
         return true;
      }
      return false;
+}
+
+void Transceiver::ReceiveACK(IMFrame & frame)
+{
+  ack.Receive(frame);
+}
+
+void Transceiver::SendACK(IMFrame & frame)
+{
+ IMFrame f =frame;
+ f.Header.Function=IMF_ACK  ;
+ f.Header.DestinationId=frame.Header.SourceId;
+ f.Header.SourceId=myID;
+
 }
 
 void Transceiver::printReceive()

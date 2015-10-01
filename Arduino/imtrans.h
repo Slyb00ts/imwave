@@ -64,6 +64,7 @@ private:
     unsigned short crcCheck();
     byte GetLen(IMFrame & p);
     uint8_t CRC(packet_t & p);
+    byte Send(IMFrame & frame);
 
 public:
     transfer_t RX_buffer ;
@@ -80,6 +81,9 @@ public:
 //    uint8_t Get(uint8_t* buf);
 //    uint8_t Put(uint8_t*buf,uint8_t len);
     void Push(IMFrame & frame);
+    void ReceiveACK(IMFrame & frame);
+    void SendACK(IMFrame & frame);
+
     bool Retry();
     bool Routing(IMFrame & frame);
     void printReceive();

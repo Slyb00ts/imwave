@@ -6,6 +6,7 @@
 
 #define IMF_KNOCK     0x04        // Packet automation control
 #define IMF_WELCOME   0x05
+#define IMF_ACK       0x06
 #define IMF_DATA      0x10
 #define _frameSize  32
 
@@ -60,6 +61,10 @@ typedef struct
         bool Welcome()
         {
           return Header.Function==IMF_WELCOME;
+        }
+        bool ACK()
+        {
+          return Header.Function==IMF_ACK;
         }
         bool NeedACK()
         {
