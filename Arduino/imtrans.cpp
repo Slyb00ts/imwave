@@ -49,56 +49,50 @@ uint8_t Transceiver::GetData()
     return 0;
   }
 }
-bool Transceiver::Routing()
-{
-  return Routing(RX_buffer.packet);
-}
 
 bool Transceiver::Routing(IMFrame & frame)
 {
-  if (frame.Header.DestinationId!=myID)
-  {
     IMAddress a=routing.Forward(frame.Header.DestinationId);
     if (a!=0xFF)
     {
       frame.Header.RepeaterId=a;
       Push(frame);
-    } else
+      return true;
+    } else{
       DBGERR("ERR Routing");
-    return true;
+      return false;
+    }
 
-  }
-  return false;
 }
 
 
-bool Transceiver::Valid()
+bool Transceiver::GetFrame(IMFrame & frame)
 {
-        pPacket = &RX_buffer.packet;
-        pHeader = &pPacket->Header;
-
       bool io= ((RX_buffer.len>=sizeof(header_t)) && (RX_buffer.len<=sizeof(packet_t)));
-      if (io) {
-        setRssi();
-        io =( (pHeader->DestinationId==myID));
-      } else{
-        DBGERR("!LEN");
-      }
       if (io)
       {
         io=crcCheck();
       } else {
-        DBGINFO("!destination");
+        DBGINFO("!LEN");
+        return io;
       }
+      if (io){
+         io =( (pHeader->RepeaterId==myID));
+      } else {
+          DBGERR("!CRC");
+          return io;
+      };
 
       if (io) {
-            ack.Recive(pHeader->SourceId,  pHeader->Sequence);
-            ack.Accept(pHeader->pseq);
-       } else {
-          DBGERR("!CRC");
-       };
+        frame=RX_buffer.packet;
+        setRssi();
+      } else {
+          DBGERR("Address");
+          return io;
+      };
 
       return io;
+
 }
 
 
@@ -106,12 +100,9 @@ unsigned short Transceiver::crcCheck()
 {
           unsigned short cnt = pHeader->crc;
           pHeader->crc = 0;
-//          unsigned short c=42;
-//          for(unsigned short i=0 ; i<RX_buffer.len ; i++) c+=((uint8_t*)pPacket)[i];
-
           //valid packet crc
 
-          return (CRC(*pPacket)-cnt);
+          return (CRC(RX_buffer.packet)-cnt);
 
 }
 
@@ -181,7 +172,7 @@ byte Transceiver::Transmit()
    }
    return io;
 }
-
+  /*
 uint8_t Transceiver::Get(uint8_t* buf)
 {
               uint8_t i;
@@ -203,6 +194,7 @@ uint8_t Transceiver::Put(uint8_t* buf,uint8_t len)
               return i;      
 
 }
+*/
 
 
 void Transceiver::Push(IMFrame & frame)
@@ -236,11 +228,6 @@ void Transceiver::printReceive()
 }
 
 
-bool Transceiver::broadcast()
-{
- // if broadcast.listen
-  return false;
-}
 
 short Transceiver::ClassTest()
 {
@@ -251,6 +238,7 @@ short Transceiver::ClassTest()
      DBGERR(x);
      return x+100;
   }
+  return 0;
 }
 
 

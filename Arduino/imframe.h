@@ -3,6 +3,10 @@
 
 #include <Arduino.h>
 
+
+#define IMF_KNOCK     0x04        // Packet automation control
+#define IMF_WELCOME   0x05
+#define IMF_DATA      0x10
 #define _frameSize  32
 
 typedef uint8_t IMAddress;
@@ -26,17 +30,50 @@ typedef struct
 	IMFrameHeader Header;
 	byte Body[_frameBodySize];
 
-byte Put(byte*buf,uint8_t len)
-{
-              byte i;
-              Header.Len = len<_frameBodySize ? len : _frameBodySize;  //length
-              for ( i=0 ; i<Header.Len ; i++ )
-              {
-                    Body[i] = buf[i];
-              }
-              return i;
+        byte Put(byte*buf,byte len)
+        {
+                      byte i;
+                      Header.Len = len<_frameBodySize ? len : _frameBodySize;  //length
+                      for ( i=0 ; i<Header.Len ; i++ )
+                      {
+                            Body[i] = buf[i];
+                      }
+                      return i;
 
-}
+        }
+        byte Get(byte* buf)
+        {
+                      byte i;
+                      for(i=0; i<Header.Len  ;i++)  //fill uart buffer
+                      {
+                        buf[i] = Body[i];
+                      }
+                      return i;
+
+        }
+
+        bool Knock()
+        {
+          return Header.Function==IMF_KNOCK;
+        }
+
+        bool Welcome()
+        {
+          return Header.Function==IMF_WELCOME;
+        }
+        bool NeedACK()
+        {
+          return (Header.Function & 0xC0) !=0;
+        }
+        bool Repeat()
+        {
+          return (Header.Function & 0x80) !=0;
+        }
+
+        IMAddress Destination()
+        {
+          return Header.DestinationId;
+        }
 
 } IMFrame;
 

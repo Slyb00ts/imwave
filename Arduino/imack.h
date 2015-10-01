@@ -26,16 +26,16 @@ class TableACK
   byte partnerseqnr;
   byte empty();
   byte find();
+  void Accept( uint8_t Seq);
 
   public:
   byte retrycnt;  //counter for retries
   uint8_t addr[MAXTableACK];
 
   byte Send(IMFrame & frame);
-  byte Recive(uint8_t Addr, uint8_t Seq);
+  byte Recive(IMFrame & frame);
 
   uint8_t Answer(uint8_t Addr);
-  void Accept( uint8_t Seq);
   bool noack(uint8_t Addr);
   IMFrame * toRetry();
 };

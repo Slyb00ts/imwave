@@ -50,7 +50,7 @@ class Transceiver
 private:
     IMCC1101 * cc1101;  //The CC1101 device
     IMFrame * pPacket;
-    packet_t * txPacket;
+    IMFrame * txPacket;
     IMQueue queue;
     IMRouting routing;
     header_t * pHeader;
@@ -61,11 +61,9 @@ private:
     unsigned short crc;
     void setRssi();
     void Prepare(IMFrame & frame );
-    unsigned short netID;
-    bool Routing(IMFrame & frame);
-    bool broadcast();
     unsigned short crcCheck();
     byte GetLen(IMFrame & p);
+    uint8_t CRC(packet_t & p);
 
 public:
     transfer_t RX_buffer ;
@@ -73,18 +71,17 @@ public:
     unsigned short myID;
     void Init(IMCC1101 & cc);
     void StartReceive();
-    bool Valid();
+    bool GetFrame(IMFrame&frame);
     uint8_t GetData();
     float Rssi();
 
-    uint8_t CRC(packet_t & p);
 
     byte Transmit();
-    uint8_t Get(uint8_t* buf);
-    uint8_t Put(uint8_t*buf,uint8_t len);
+//    uint8_t Get(uint8_t* buf);
+//    uint8_t Put(uint8_t*buf,uint8_t len);
     void Push(IMFrame & frame);
     bool Retry();
-    bool Routing();
+    bool Routing(IMFrame & frame);
     void printReceive();
     static short ClassTest();
 

@@ -69,6 +69,7 @@ short IMQueue::ClassTest()
     return 2;
   if ( queue.pop(fr2))
    return 3;
+  return 0;
 
 
 

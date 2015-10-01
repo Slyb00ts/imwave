@@ -23,6 +23,7 @@
   #define DBGERR(x) do{}while(0)
   #define DBGERR2(x,y) do{}while(0)
   #define DBGERRWRITE(x) do{}while(0)
+  #define INITDBG() do{}while(0)
 #endif
 
 //Write out information on dbgSerial
@@ -40,14 +41,9 @@
 
 
 #if DBGLVL>=1
-void initDebug(){
-  dbgSerial.begin(dbgSerialSpeed);
-  dbgSerial.print("\r\n\r\nHello\r\n\r\n");
+#define INITDBG()      dbgSerial.begin(dbgSerialSpeed);\
+                     dbgSerial.print("\r\n\r\nHello\r\n\r\n")
 
-}
-#else
-
-  #define initDebug() do{}while(0)
 
 #endif
 
