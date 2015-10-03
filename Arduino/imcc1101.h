@@ -165,9 +165,10 @@ private:
 	void SpiStrobe(byte strobe);
 	byte SpiReadReg(byte addr);
 	void SpiReadBurstReg(byte addr, byte *buffer, byte num);
-	byte SpiReadStatus(byte addr);
 	void RegConfigSettings(void);
 public:
+	byte SpiReadStatus(byte addr);
+        byte RXBytes();
 	void EnableCCA(void);
 	void DisableCCA(void);
 	void EnableAddressCheck(void);

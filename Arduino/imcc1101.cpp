@@ -337,21 +337,29 @@ byte IMCC1101::CheckReceiveFlag(void)
 		return 0;
 	}
 }
+byte IMCC1101::RXBytes()
+{
+        return (SpiReadStatus(CC1101_RXBYTES) & BYTES_IN_RXFIFO);
+}
 
 byte IMCC1101::ReceiveData(byte *rxBuffer)
 {
 	byte size;
 	byte status[2];
 
-	if (SpiReadStatus(CC1101_RXBYTES) & BYTES_IN_RXFIFO)
+
+
+        size=(SpiReadStatus(CC1101_RXBYTES) & BYTES_IN_RXFIFO);
+        if (size)
 	{
-		size = SpiReadReg(CC1101_RXFIFO);
+//		size = SpiReadReg(CC1101_RXFIFO);
 		SpiReadBurstReg(CC1101_RXFIFO, rxBuffer, size);
-		SpiReadBurstReg(CC1101_RXFIFO, status, 2);
-		rxBuffer[5] = status[0];
-		rxBuffer[6] = status[1];
+//		SpiReadBurstReg(CC1101_RXFIFO, status, 2);
+//		rxBuffer[5] = status[0];
+//		rxBuffer[6] = status[1];
 		FlushRxFifo();
-		return status[1] & 0x80u;
+//		return status[1] & 0x80u;
+                return size;
 	}
 	else
 	{
