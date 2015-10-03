@@ -26,10 +26,10 @@ static uint8_t lasthop=0;//counter for retries
 
 void shiftUartBuffer(unsigned short x)
 {
-    Serial.print("Shift");
-    Serial.print(uartBufLen);
-    Serial.print(" ");
-    Serial.println(x);
+    DBGINFO("ShiftUart");
+    DBGINFO(uartBufLen);
+    DBGINFO(" ");
+//    DBGINFO(x);
 
      uartBufLen -= x;
       for (unsigned short i=0 ; i<uartBufLen ; i++ )

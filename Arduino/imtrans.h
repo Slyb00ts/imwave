@@ -17,7 +17,8 @@
 #endif
 
 #include "imdebug.h"
-#include "imcc1101.h"
+// # include "imcc1101.h"
+#include "CC1101_lib.h"
 #include "imframe.h"
 #include "imack.h"
 #include "imqueue.h"
@@ -35,6 +36,7 @@
 
 #define header_t IMFrameHeader
 #define packet_t IMFrame
+#define IMCC1101 CC1101
 
 //Packet format delivered by the CC1101 RX
 typedef struct
@@ -50,11 +52,11 @@ class Transceiver
 private:
     IMCC1101 * cc1101;  //The CC1101 device
     IMFrame * pPacket;
-    IMFrame * txPacket;
+//    IMFrame * txPacket;
     IMQueue queue;
     IMRouting routing;
     header_t * pHeader;
-    header_t * txHeader;
+//    header_t * txHeader;
     TableACK  ack;
     float rssi;
     unsigned short rSize;
@@ -64,7 +66,7 @@ private:
     unsigned short crcCheck();
     byte GetLen(IMFrame & p);
     uint8_t CRC(packet_t & p);
-    byte Send(IMFrame & frame);
+    byte Send();
 
 public:
     transfer_t RX_buffer ;
@@ -78,11 +80,10 @@ public:
 
 
     byte Transmit();
-//    uint8_t Get(uint8_t* buf);
-//    uint8_t Put(uint8_t*buf,uint8_t len);
     void Push(IMFrame & frame);
     void ReceiveACK(IMFrame & frame);
     void SendACK(IMFrame & frame);
+    byte Send(IMFrame & frame);
 
     bool Retry();
     bool Routing(IMFrame & frame);

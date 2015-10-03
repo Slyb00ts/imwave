@@ -6,8 +6,7 @@
 // DATASHEET: 
 //
 // HISTORY:
-// 0.2 by Dariusz Mazur (01/09/201)
-// inspired by DHT11 library
+// 0.2 by Dariusz Mazur (01/09/2015)
 //
 
 #include "imtrans.h"
@@ -26,8 +25,8 @@ void Transceiver::Init(IMCC1101 & cc)
   cc1101->StartReceive();
         pPacket = &RX_buffer.packet;
         pHeader = &pPacket->Header;
-        txPacket = &TX_buffer.packet;
-        txHeader = &txPacket->Header;
+//        txPacket = &TX_buffer.packet;
+//        txHeader = &txPacket->Header;
 
 }
 
@@ -39,11 +38,12 @@ void Transceiver::StartReceive()
 uint8_t Transceiver::GetData()
 {
 
-//  if (cc1101->rfState == RFGOTPACKET)
-  if (1)
+  if (cc1101->GetState() == CCGOTPACKET)
+//  if (1)
   {
     DBGINFO("G");
-    rSize=cc1101->ReceiveData((uint8_t*)&RX_buffer);
+//    rSize=cc1101->ReceiveData((uint8_t*)&RX_buffer);
+    rSize=cc1101->GetData((uint8_t*)&RX_buffer);
     return rSize;
   } else{
     return 0;
@@ -157,12 +157,22 @@ void Transceiver::PrepareTransmit()
 
 }   
 
+byte Transceiver::Send()
+{
+//  return (cc1101->SendData((uint8_t*)&(TX_buffer.packet),TX_buffer.len)) ;
+  if (cc1101->StopReceive())
+    return cc1101->Transmit((uint8_t*)&(TX_buffer.packet),TX_buffer.len);
+  else{
+    DBGERR("error stopreceive");
+    return 0;
+  }
+}
 
 byte Transceiver::Send(IMFrame & frame)
 {
   TX_buffer.packet=frame;
   PrepareTransmit();
-  return (cc1101->SendData((uint8_t*)&(TX_buffer.packet),TX_buffer.len)) ;
+  return Send();
 
 }
 byte Transceiver::Transmit()
@@ -170,7 +180,7 @@ byte Transceiver::Transmit()
   byte io=0;
    while (queue.pop(TX_buffer.packet))  {
      PrepareTransmit();
-     if (cc1101->SendData((uint8_t*)&(TX_buffer.packet),TX_buffer.len))
+     if (Send())
      {
         ack.Send(TX_buffer.packet);
         io++;
@@ -178,29 +188,6 @@ byte Transceiver::Transmit()
    }
    return io;
 }
-  /*
-uint8_t Transceiver::Get(uint8_t* buf)
-{
-              uint8_t i;
-              for(i=0; i<pHeader->Len  ;i++)  //fill uart buffer
-              {
-                buf[i] = pPacket->Body[i];
-              }
-              return i;
-
-}
-uint8_t Transceiver::Put(uint8_t* buf,uint8_t len)
-{
-              uint8_t i;
-              txHeader->Len = len<_frameBodySize ? len : _frameBodySize;  //length
-              for ( i=0 ; i<txHeader->Len ; i++ )
-              {
-                    txPacket->Body[i] = buf[i];
-              }
-              return i;      
-
-}
-*/
 
 
 void Transceiver::Push(IMFrame & frame)

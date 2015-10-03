@@ -19,14 +19,11 @@
 	WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-//#include <SoftwareSerial.h>
-//#include <avr/wdt.h>
 //#.define DBGLVL 2
 #include "imdebug.h"
 
 
 #include "imtrans.h"
-#include "imbroadcast.h"
 #include "uart.h"
 
 
@@ -35,7 +32,6 @@
 
 #define MID  0x00  //My ID
 #define TID  0x00  //Default target ID
-// #define HOPS 0x01  //Max hops - currently unused
 
 
 
@@ -43,7 +39,6 @@
 #define RADIO_SENDTHRES 710  //Start writing when this full
 
 #define RESEND_TIMEOUT 75  //Wait this time in ms for an radio ack
-#define PACKET_GAP 10 //Delay between receive and outgoing ack
 
 //Used for error signaling (ON when restransmitting, OFF on receive success)
 #define ERRLEDON() digitalWrite(13,HIGH)
@@ -85,7 +80,7 @@ unsigned long radioOut_delay = 0;
 
 IMCC1101  cc1101;
 Transceiver trx;
-IMBroadcast broadcast(cc1101);
+
 /************************* Functions **********************/
 
 
@@ -107,14 +102,11 @@ void printRadio()
 //Initialize the system
 void setup()
 {
-//  wdt_enable(WDTO_8S);  //Watchdog 8s
   INITDBG();
-
   ERRLEDINIT(); ERRLEDOFF();
   trx.Init(cc1101);
   trx.myID= MID;
-  DBGINFO("classtest");
-  DBGINFO(Transceiver::ClassTest());
+//  DBGINFO("classtest");  DBGINFO(Transceiver::ClassTest());
 }
 
 //Main loop is called over and over again
@@ -128,7 +120,6 @@ byte GetData()
       if (trx.GetFrame(rxFrame))
       {
         DBGINFO(" RSSI: ");           DBGINFO(trx.Rssi());            DBGINFO("dBm");
-//        DBGINFO(" CRC: ");            DBGINFO(trx.crc);             DBGINFO(" rr: ");
         if (rxFrame.Knock())
            DBGINFO(" Knock ");
         else if (rxFrame.Welcome())
@@ -172,9 +163,6 @@ void loop()
   ERRLEDON();         delay(50);         ERRLEDOFF();
   static IMFrame frame;
 
-
-
-
   trx.StartReceive();
   /************** radio to UART ************************/
   if ( radioOut_delay<millis())
@@ -190,16 +178,18 @@ void loop()
   do {} while (GetData());
 
   // prepare data
-  generatorUart();    DBGINFO(" R  ");
+  generatorUart();    DBGINFO(" R  (");
 
-
+ 
+  
   if ((millis() %10) <7)
   {
       UartPrepareData(frame);
-      trx.Push(frame);
-      DBGINFO("PUSH (");
+      trx.Send(frame);
+      DBGINFO("PUSH ");
   }
 
+  
   if (trx.Retry())
   {
       DBGINFO("Retry");
@@ -211,10 +201,8 @@ void loop()
       DBGINFO("transmit:");  DBGINFO(millis());    DBGINFO(" ");
       DBGINFO(trx.TX_buffer.len);    DBGINFO(",");
   }
-  DBGINFO(")\r\n");
-
   
-//  Serial.flush();
+  DBGINFO(")\r\n");
 
 }
 
