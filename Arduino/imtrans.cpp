@@ -25,8 +25,6 @@ void Transceiver::Init(IMCC1101 & cc)
   cc1101->StartReceive();
         pPacket = &RX_buffer.packet;
         pHeader = &pPacket->Header;
-//        txPacket = &TX_buffer.packet;
-//        txHeader = &txPacket->Header;
 
 }
 
@@ -38,14 +36,20 @@ void Transceiver::StartReceive()
 uint8_t Transceiver::GetData()
 {
 
-  if (cc1101->GetState() == CCGOTPACKET)
-//  if (1)
+//  if (cc1101->GetState() == CCGOTPACKET)
+  if (cc1101->RXBytes()>10)
   {
-    DBGINFO("G");
-//    rSize=cc1101->ReceiveData((uint8_t*)&RX_buffer);
-    rSize=cc1101->GetData((uint8_t*)&RX_buffer);
+    if (cc1101->CheckReceiveFlag())
+    {
+       DBGINFO("G");
+    }
+    DBGINFO("rx");
+    rSize=cc1101->ReceiveData((uint8_t*)&RX_buffer);
+//    rSize=cc1101->GetData((uint8_t*)&RX_buffer);
     return rSize;
   } else{
+    DBGINFO(">");
+    DBGINFO(cc1101-> SpiReadStatus(CC1101_MARCSTATE));
     return 0;
   }
 }
@@ -151,31 +155,39 @@ void Transceiver::PrepareTransmit()
 //   TX_buffer.packet.Header.SourceId=myID;
 //   sizeof(header_t)+txHeader->len;
 
-   TX_buffer.len=GetLen(TX_buffer.packet);
+//   TX_buffer.len=GetLen(TX_buffer.packet);
+   TX_buffer.len=sizeof(TX_buffer.packet);
    byte dst=TX_buffer.packet.Header.DestinationId;
    TX_buffer.packet.Header.pseq = ack.Answer(dst);
 
 }   
 
-byte Transceiver::Send()
+bool Transceiver::Send()
 {
-//  return (cc1101->SendData((uint8_t*)&(TX_buffer.packet),TX_buffer.len)) ;
-  if (cc1101->StopReceive())
-    return cc1101->Transmit((uint8_t*)&(TX_buffer.packet),TX_buffer.len);
-  else{
-    DBGERR("error stopreceive");
-    return 0;
+  if  (cc1101->SendData((uint8_t*)&(TX_buffer.packet),TX_buffer.len))
+    return true;
+  else
+  {
+    DBGERR("! SEND");
+    return false;
   }
+
+//  if (cc1101->StopReceive())
+//    return cc1101->Transmit((uint8_t*)&(TX_buffer.packet),TX_buffer.len);
+//  else{
+//    DBGERR("error stopreceive");
+//    return 0;
+//  }
 }
 
-byte Transceiver::Send(IMFrame & frame)
+bool Transceiver::Send(IMFrame & frame)
 {
   TX_buffer.packet=frame;
   PrepareTransmit();
   return Send();
 
 }
-byte Transceiver::Transmit()
+bool Transceiver::Transmit()
 {
   byte io=0;
    while (queue.pop(TX_buffer.packet))  {
