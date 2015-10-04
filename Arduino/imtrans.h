@@ -39,6 +39,13 @@
 //.#.define IMCC1101 CC1101
 
 //Packet format delivered by the CC1101 RX
+
+
+typedef struct {
+    uint32_t MAC;
+    uint32_t salt;
+} IMFrameSetup;
+
 typedef struct
 {
   uint8_t len;
@@ -84,6 +91,8 @@ public:
     bool Send(IMFrame & frame);
 
     bool Retry();
+    bool Knock();
+    bool ResponseKnock(IMFrame & frame);
     bool Routing(IMFrame & frame);
     void printReceive();
     static short ClassTest();

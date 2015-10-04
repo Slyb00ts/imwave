@@ -5,8 +5,9 @@
 
 
 #define IMF_KNOCK     0x04        // Packet automation control
-#define IMF_WELCOME   0x05
-#define IMF_ACK       0x06
+#define IMF_HELLO     0x05
+#define IMF_WELCOME   0x06
+#define IMF_ACK       0x07
 #define IMF_DATA      0x10
 #define _frameSize  32
 
@@ -50,6 +51,16 @@ typedef struct
                         buf[i] = Body[i];
                       }
                       return i;
+
+        }
+        void Reset()
+        {
+                      Header.Len = 0;//length
+                      Header.Retry = 0;
+                      for (byte i=0 ; i<_frameBodySize ; i++ )
+                      {
+                            Body[i] = 0;
+                      }
 
         }
 

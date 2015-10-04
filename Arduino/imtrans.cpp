@@ -156,6 +156,7 @@ void Transceiver::PrepareTransmit()
 //   sizeof(header_t)+txHeader->len;
 
 //   TX_buffer.len=GetLen(TX_buffer.packet);
+   Prepare(TX_buffer.packet);
    TX_buffer.len=sizeof(TX_buffer.packet);
    byte dst=TX_buffer.packet.Header.DestinationId;
    TX_buffer.packet.Header.pseq = ack.Answer(dst);
@@ -219,6 +220,31 @@ bool Transceiver::Retry()
      return false;
 }
 
+bool Transceiver::Knock()
+{
+   IMFrame _frame;
+   IMFrameSetup setup;
+   _frame.Reset();
+   _frame.Header.Function=IMF_KNOCK;
+   _frame.Header.DestinationId=0;
+   setup.salt=2;
+   setup.MAC= 12345;
+   _frame.Put((uint8_t*)&setup,sizeof(setup));
+   return Send(_frame);
+}
+
+bool Transceiver::ResponseKnock(IMFrame & frame)
+{
+   IMFrame _frame;
+   IMFrameSetup *setup =(IMFrameSetup *)&_frame.Body;
+   _frame.Header.DestinationId=frame.Header.SourceId;
+   _frame.Header.Function=IMF_HELLO;
+   setup->MAC=3245;
+   setup->salt=99;
+   return Send(_frame);
+}
+
+
 void Transceiver::ReceiveACK(IMFrame & frame)
 {
   ack.Receive(frame);
@@ -226,10 +252,11 @@ void Transceiver::ReceiveACK(IMFrame & frame)
 
 void Transceiver::SendACK(IMFrame & frame)
 {
- IMFrame f =frame;
- f.Header.Function=IMF_ACK  ;
- f.Header.DestinationId=frame.Header.SourceId;
- f.Header.SourceId=myID;
+ IMFrame _f = frame;
+ _f.Header.Function=IMF_ACK  ;
+ _f.Header.DestinationId=frame.Header.SourceId;
+ _f.Header.SourceId=myID;
+ Send(_f);
 
 }
 
