@@ -67,6 +67,8 @@
 #define INDEX_SEQ  3  //Senders current sequence number
 
 
+#define knockDelay 10000
+#define listenDelay 2000
 
 /****************** Vars *******************************/
 
@@ -76,10 +78,14 @@ char radioBuf[RADIO_BUFFSIZE] = {0,};
 unsigned short radioBufLen = 0;
 unsigned short radio_writeout = 0xFFFF;
 unsigned long radioOut_delay = 0;
+unsigned long knockTimeOut =0;
+unsigned long listenTimeOut = 0;
 
 
 IMCC1101  cc1101;
 Transceiver trx;
+volatile byte ReadState = 0;
+volatile byte WriteState= 0;
 
 /************************* Functions **********************/
 
@@ -96,20 +102,77 @@ void printRadio()
 
 }
 
+void pciSetup(byte pin)
+{
+    *digitalPinToPCMSK(pin) |= bit (digitalPinToPCMSKbit(pin));  // enable pin
+    PCIFR  |= bit (digitalPinToPCICRbit(pin)); // clear any outstanding interrupt
+    PCICR  |= bit (digitalPinToPCICRbit(pin)); // enable interrupt for the group
+}
+
+ISR (PCINT0_vect) // handle pin change interrupt for D8 to D13 here
+ {
+   if (trx.state==TransceiverRead)
+   {
+     ReadState++;
+   } else {
+     WriteState++;
+   }
+
+ }
+
+ bool CheckReadState()
+ {
+   if (ReadState>1){
+     DBGINFO("<");
+     DBGINFO(ReadState);
+     DBGINFO("+");
+     DBGINFO(WriteState);
+     DBGINFO(">");
+      ReadState=0;
+
+      return true;
+   }
+   return false;
+ }
+
+ bool CheckWriteState()
+ {
+   if (WriteState>0){
+      WriteState=0;
+      return true;
+   }
+   return false;
+ }
+
+ 
+// ISR (PCINT2_vect) // handle pin change interrupt for D8 to D13 here
+// { 
+// ReadState=3;  
+// } 
 
 
+void OnRead()
+{
+ ReadState=1;
+}
 
 //Initialize the system
 void setup()
 {
   INITDBG();
+  interrupts ();
+//  attachInterrupt(4, OnRead, FALLING );
   ERRLEDINIT(); ERRLEDOFF();
   trx.Init(cc1101);
   trx.myID= MID;
+//  pciSetup(7);
+  pciSetup(9);
 //  DBGINFO("classtest");  DBGINFO(Transceiver::ClassTest());
 }
 
 //Main loop is called over and over again
+
+
 
 byte GetData()
 {
@@ -121,7 +184,11 @@ byte GetData()
       {
         DBGINFO(" RSSI: ");           DBGINFO(trx.Rssi());            DBGINFO("dBm");
         if (rxFrame.Knock())
+        {
            DBGINFO(" Knock ");
+           if (trx.ResponseKnock(rxFrame))
+             return 1;
+        }
         else if (rxFrame.Welcome())
            DBGINFO(" Welcome ");
 //          trx.parseKnock()
@@ -151,6 +218,7 @@ byte GetData()
       {
         DBGERR("!VALID");
       }
+      DBGINFO(millis());
       DBGINFO("\r\n");
   }
   return 0;
@@ -173,9 +241,29 @@ void loop()
     radioBufLen = 0;
   }
 
-  delay(500);
+  /*delay(500);
+  if (ReadState || WriteState)
+  {
+    DBGINFO(ReadState);
+    DBGINFO("+");
+    DBGINFO(WriteState);
+    DBGINFO("++");
+  }  
+  ReadState=0;
+  WriteState=0;
+  */
+  listenTimeOut=millis()+listenDelay;
+   do{
+     if (CheckReadState())
+     {
 
-  do {} while (GetData());
+        while (GetData()){
+          trx.StartReceive();
+        }
+        trx.StartReceive();
+     };
+  }while (listenTimeOut>millis());
+  DBGINFO(millis());
 
   // prepare data
   generatorUart();    DBGINFO(" R  (");
@@ -189,7 +277,6 @@ void loop()
       DBGINFO("PUSH ");
   }
 
-  
   if (trx.Retry())
   {
       DBGINFO("Retry");
@@ -201,7 +288,15 @@ void loop()
       DBGINFO("transmit:");  DBGINFO(millis());    DBGINFO(" ");
       DBGINFO(trx.TX_buffer.len);    DBGINFO(",");
   }
-  
+  if (millis()>knockTimeOut)
+  {
+    if (trx.Knock())
+    {
+      DBGINFO("Knock");
+      knockTimeOut=knockTimeOut+knockDelay;
+    }
+  }
+
   DBGINFO(")\r\n");
 
 }

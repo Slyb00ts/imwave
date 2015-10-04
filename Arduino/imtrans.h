@@ -40,6 +40,9 @@
 
 //Packet format delivered by the CC1101 RX
 
+#define TransceiverIddle  0
+#define TransceiverRead  1
+#define TransceiverWrite  2
 
 typedef struct {
     uint32_t MAC;
@@ -74,6 +77,8 @@ private:
     bool Send();
 
 public:
+    volatile  byte state;
+
     transfer_t RX_buffer ;
     transfer_t TX_buffer ;
     unsigned short myID;

@@ -31,6 +31,7 @@ void Transceiver::Init(IMCC1101 & cc)
 void Transceiver::StartReceive()
 {
   cc1101->StartReceive();
+  state=TransceiverRead;
 }
 
 uint8_t Transceiver::GetData()
@@ -48,7 +49,7 @@ uint8_t Transceiver::GetData()
 //    rSize=cc1101->GetData((uint8_t*)&RX_buffer);
     return rSize;
   } else{
-    DBGINFO(">");
+    DBGINFO("[");
     DBGINFO(cc1101-> SpiReadStatus(CC1101_MARCSTATE));
     return 0;
   }
@@ -165,6 +166,7 @@ void Transceiver::PrepareTransmit()
 
 bool Transceiver::Send()
 {
+  state=TransceiverWrite;
   if  (cc1101->SendData((uint8_t*)&(TX_buffer.packet),TX_buffer.len))
     return true;
   else
@@ -172,6 +174,7 @@ bool Transceiver::Send()
     DBGERR("! SEND");
     return false;
   }
+  state=TransceiverIddle;
 
 //  if (cc1101->StopReceive())
 //    return cc1101->Transmit((uint8_t*)&(TX_buffer.packet),TX_buffer.len);
