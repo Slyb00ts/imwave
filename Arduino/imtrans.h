@@ -72,9 +72,9 @@ private:
     void setRssi();
     void Prepare(IMFrame & frame );
     unsigned short crcCheck();
-    byte GetLen(IMFrame & p);
-    uint8_t CRC(packet_t & p);
+    uint8_t CRC(IMFrame & p);
     bool Send();
+    void PrepareTransmit();
 
 public:
     volatile  byte state;
@@ -103,8 +103,6 @@ public:
     static short ClassTest();
 
 private:
-	int read(uint8_t pin);
-    void PrepareTransmit();
 };
 
 

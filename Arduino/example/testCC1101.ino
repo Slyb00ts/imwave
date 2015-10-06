@@ -263,15 +263,17 @@ void loop()
         trx.StartReceive();
      };
   }while (listenTimeOut>millis());
-  DBGINFO(millis());
+//  DBGINFO(millis());
 
   // prepare data
-  generatorUart();    DBGINFO(" R  (");
+  generatorUart();    
+//  DBGINFO(" R  (");
 
  
   
   if ((millis() %10) <7)
-  {
+  {   
+      frame.Reset();
       UartPrepareData(frame);
       trx.Send(frame);
       DBGINFO("PUSH ");

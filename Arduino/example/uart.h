@@ -53,6 +53,7 @@ void UartPrepareData(IMFrame &frame)
 {
       seqnr++;  //new data -> increase sequence number
       frame.Header.Sequence = seqnr;
+      frame.Header.Function = IMF_DATA;
       byte x=frame.Put((uint8_t *)uartBuf,uartBufLen);
 
       shiftUartBuffer(x);

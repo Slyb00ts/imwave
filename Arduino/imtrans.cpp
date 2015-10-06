@@ -44,7 +44,7 @@ uint8_t Transceiver::GetData()
     {
        DBGINFO("G");
     }
-    DBGINFO("rx");
+//    DBGINFO("rx");
     rSize=cc1101->ReceiveData((uint8_t*)&RX_buffer);
 //    rSize=cc1101->GetData((uint8_t*)&RX_buffer);
     return rSize;
@@ -78,11 +78,11 @@ bool Transceiver::GetFrame(IMFrame & frame)
       {
         io=crcCheck();
       } else {
-        DBGINFO("!LEN");
+        DBGERR("!LEN");
         return io;
       }
       if (io){
-         io =( (pHeader->RepeaterId==myID));
+         io =( (pHeader->RepeaterId==myID) || myID==0 || (pHeader->RepeaterId==0));
       } else {
           DBGERR("!CRC");
           return io;
@@ -93,6 +93,7 @@ bool Transceiver::GetFrame(IMFrame & frame)
         setRssi();
       } else {
           DBGERR("Address");
+          DBGERR(RX_buffer.packet.Header.RepeaterId);
           return io;
       };
 
@@ -103,25 +104,23 @@ bool Transceiver::GetFrame(IMFrame & frame)
 
 unsigned short Transceiver::crcCheck()
 {
-          unsigned short cnt = pHeader->crc;
-          pHeader->crc = 0;
-          //valid packet crc
+          unsigned short cnt = RX_buffer.packet.Header.crc;
+          RX_buffer.packet.Header.crc = 0;
+          unsigned short cne=CRC(RX_buffer.packet);
+//          DBGINFO(cnt);
+//          DBGINFO('?');
+//          DBGINFO(cne);
 
-          return (CRC(RX_buffer.packet)-cnt);
-
+          return (cne==cnt);
 }
 
-uint8_t Transceiver::GetLen(packet_t & p)
-{
-  return (sizeof(header_t)+p.Header.Len);
-}
 
-uint8_t Transceiver::CRC(packet_t & p)
+uint8_t Transceiver::CRC(IMFrame & f)
 {
     unsigned short c=42;
-    for(unsigned short i=0 ; i<(sizeof(header_t)+p.Header.Len) ; i++)
+    for(unsigned short i=0 ; i<(sizeof(header_t)+f.Header.Len) ; i++)
     {
-      c+=((uint8_t*)&p)[i];
+      c+=((uint8_t*)&f)[i];
     }
     return c;
  
@@ -147,20 +146,16 @@ void Transceiver::setRssi()
 void Transceiver::Prepare(IMFrame & frame)
 {
   frame.Header.SourceId=myID;
+  byte dst=frame.Header.DestinationId;
+  frame.Header.pseq = ack.Answer(dst);
+  frame.Header.RepeaterId=routing.Repeater(frame.Header.DestinationId);
   frame.Header.crc=0;
   frame.Header.crc=CRC(frame);
-//  frame.Header.DestinationId=dst;
 }
 void Transceiver::PrepareTransmit()
 {
-//   TX_buffer.packet.Header.SourceId=myID;
-//   sizeof(header_t)+txHeader->len;
-
-//   TX_buffer.len=GetLen(TX_buffer.packet);
    Prepare(TX_buffer.packet);
    TX_buffer.len=sizeof(TX_buffer.packet);
-   byte dst=TX_buffer.packet.Header.DestinationId;
-   TX_buffer.packet.Header.pseq = ack.Answer(dst);
 
 }   
 
@@ -189,11 +184,11 @@ bool Transceiver::Send(IMFrame & frame)
   TX_buffer.packet=frame;
   PrepareTransmit();
   return Send();
-
 }
+
 bool Transceiver::Transmit()
 {
-  byte io=0;
+   byte io=0;
    while (queue.pop(TX_buffer.packet))  {
      PrepareTransmit();
      if (Send())
@@ -208,7 +203,7 @@ bool Transceiver::Transmit()
 
 void Transceiver::Push(IMFrame & frame)
 {
-  queue.push(frame);
+   queue.push(frame);
 }
 
 bool Transceiver::Retry()

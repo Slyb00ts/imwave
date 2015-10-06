@@ -19,3 +19,9 @@ IMAddress IMRouting::Forward(IMAddress addr)
   return 0xFF;
 }
 
+IMAddress IMRouting::Repeater(IMAddress addr)
+{
+  return 0;
+}
+
+

@@ -25,6 +25,7 @@ class IMRouting
 
   byte Send(IMFrame & frame);
   IMAddress Forward(IMAddress addr);
+  IMAddress Repeater(IMAddress addr);
 
 };
 
