@@ -26,6 +26,16 @@ typedef struct
         byte pseq;
 } IMFrameHeader;
 
+typedef struct {
+	uint32_t MAC1;
+        uint32_t MAC2;
+	uint16_t device1;
+        uint16_t device2;
+        uint16_t salt;
+        uint8_t address;
+        uint8_t shift;
+} IMFrameSetup;
+
 #define _frameBodySize _frameSize - sizeof(IMFrameHeader)
 typedef struct
 {
@@ -53,14 +63,37 @@ typedef struct
                       return i;
 
         }
+
+        byte Put(IMFrameSetup*buf)
+        {
+                      byte i;
+                      Header.Len = sizeof(IMFrameSetup);  //length
+                      for ( i=0 ; i<Header.Len ; i++ )
+                      {
+                            Body[i] = ((byte *)buf)[i];
+                      }
+                      return i;
+
+        }
+        byte Get(IMFrameSetup* buf)
+        {
+                      if (Header.Len!=sizeof(IMFrameSetup))
+                          return 0;
+                      memcpy(buf,&Body,sizeof(IMFrameSetup));
+                      return 1;
+
+        }
+
         void Reset()
         {
                       Header.Len = 0;//length
                       Header.Retry = 0;
-                      for (byte i=0 ; i<_frameBodySize ; i++ )
-                      {
-                            Body[i] = 0;
-                      }
+                      memset(&Header,0,_frameSize);
+
+//                      for (byte i=0 ; i<_frameBodySize ; i++ )
+//                      {
+//                            Body[i] = 0;
+//                      }
 
         }
 
@@ -69,6 +102,10 @@ typedef struct
           return Header.Function==IMF_KNOCK;
         }
 
+        bool Hello()
+        {
+          return Header.Function==IMF_HELLO;
+        }
         bool Welcome()
         {
           return Header.Function==IMF_WELCOME;

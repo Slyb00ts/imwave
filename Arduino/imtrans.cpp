@@ -49,8 +49,8 @@ uint8_t Transceiver::GetData()
 //    rSize=cc1101->GetData((uint8_t*)&RX_buffer);
     return rSize;
   } else{
-    DBGINFO("[");
-    DBGINFO(cc1101-> SpiReadStatus(CC1101_MARCSTATE));
+//    DBGINFO("[");
+//    DBGINFO(cc1101-> SpiReadStatus(CC1101_MARCSTATE));
     return 0;
   }
 }
@@ -225,23 +225,55 @@ bool Transceiver::Knock()
    _frame.Reset();
    _frame.Header.Function=IMF_KNOCK;
    _frame.Header.DestinationId=0;
-   setup.salt=2;
-   setup.MAC= 12345;
-   _frame.Put((uint8_t*)&setup,sizeof(setup));
+   _frame.Header.Sequence=ksequence++;
+   setup.salt=0x77;
+   setup.MAC1= 0x11111;
+   setup.device1= 5;
+   _frame.Put(&setup);
+   DBGINFO("%");
+   DBGINFO(_frame.Header.Sequence);
    return Send(_frame);
 }
 
 bool Transceiver::ResponseKnock(IMFrame & frame)
 {
    IMFrame _frame;
-   IMFrameSetup *setup =(IMFrameSetup *)&_frame.Body;
-   _frame.Header.DestinationId=frame.Header.SourceId;
+   IMFrameSetup setup;
+   _frame.Reset();
    _frame.Header.Function=IMF_HELLO;
-   setup->MAC=3245;
-   setup->salt=99;
+   _frame.Header.DestinationId=frame.Header.SourceId;
+   _frame.Header.Sequence=ksequence++;
+   setup.salt=0x82;
+   setup.MAC1= 0x77777;
+   setup.device1= 6;
+   _frame.Put(&setup);
+   DBGINFO("%");
+   DBGINFO(_frame.Header.Sequence);
    return Send(_frame);
 }
 
+
+/*bool Transceiver::ResponseKnock(IMFrame & frame)
+{
+   IMFrame _frame;
+   _frame.Reset();
+   IMFrameSetup *setup =(IMFrameSetup *)&_frame.Body;
+   _frame.Header.Sequence=ksequence++;
+   _frame.Header.DestinationId=frame.Header.SourceId;
+   _frame.Header.Function=IMF_HELLO;
+   _frame.Header.Len=sizeof(IMFrameSetup);
+
+   setup->MAC1=0x77777;
+   setup->salt=0xAA;
+   DBGINFO("%");
+   DBGINFO(_frame.Header.Sequence);
+   DBGINFO("+");
+   DBGINFO(_frame.Header.SourceId);
+
+   return Send(_frame);
+}
+
+*/
 
 void Transceiver::ReceiveACK(IMFrame & frame)
 {

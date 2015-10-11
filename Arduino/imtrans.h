@@ -43,11 +43,12 @@
 #define TransceiverIddle  0
 #define TransceiverRead  1
 #define TransceiverWrite  2
-
+/*
 typedef struct {
     uint32_t MAC;
     uint32_t salt;
 } IMFrameSetup;
+*/
 
 typedef struct
 {
@@ -78,6 +79,7 @@ private:
 
 public:
     volatile  byte state;
+    byte ksequence;
 
     transfer_t RX_buffer ;
     transfer_t TX_buffer ;
