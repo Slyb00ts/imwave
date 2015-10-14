@@ -12,6 +12,7 @@
 #define _frameSize  32
 
 typedef uint8_t IMAddress;
+typedef uint32_t IMMAC;
 
 typedef struct
 {
@@ -27,7 +28,7 @@ typedef struct
 } IMFrameHeader;
 
 typedef struct {
-	uint32_t MAC1;
+	IMMAC MAC;
         uint32_t MAC2;
 	uint16_t device1;
         uint16_t device2;
@@ -83,6 +84,7 @@ typedef struct
                       return 1;
 
         }
+
 
         void Reset()
         {

@@ -30,15 +30,16 @@
 
 /******************************** Configuration *************************************/
 
-#define MID  0x00  //My ID
-#define TID  0x00  //Default target ID
+#define MID  0x02  //My ID
+#define MMAC 0x100001; // My MAC
+
 
 
 
 #define RADIO_BUFFSIZE 725  //Buffer for radio
-#define RADIO_SENDTHRES 710  //Start writing when this full
+#define RADIO_SENDTHRES1 710  //Start writing when this full
 
-#define RESEND_TIMEOUT 75  //Wait this time in ms for an radio ack
+#define RESEND_TIMEOUT1 75  //Wait this time in ms for an radio ack
 
 //Used for error signaling (ON when restransmitting, OFF on receive success)
 #define ERRLEDON() digitalWrite(13,HIGH)
@@ -53,7 +54,7 @@
 
 
   
-  #define bridgeSpeed 9600
+  #define bridgeSpeed1 9600
   #define bridgeBurst 10  //Chars written out per call
   #define radioDelay 3000  //Time between calls - Let hardware serial write out async
 
@@ -123,11 +124,11 @@ ISR (PCINT0_vect) // handle pin change interrupt for D8 to D13 here
  bool CheckReadState()
  {
    if (ReadState>1){
-     DBGINFO("<");
-     DBGINFO(ReadState);
-     DBGINFO("+");
-     DBGINFO(WriteState);
-     DBGINFO(">");
+//     DBGINFO("<");
+//     DBGINFO(ReadState);
+//     DBGINFO("+");
+//     DBGINFO(WriteState);
+//     DBGINFO(">");
       ReadState=0;
 
       return true;
@@ -165,6 +166,7 @@ void setup()
   ERRLEDINIT(); ERRLEDOFF();
   trx.Init(cc1101);
   trx.myID= MID;
+  trx.myMAC=MMAC;
 //  pciSetup(7);
   pciSetup(9);
 //  DBGINFO("classtest");  DBGINFO(Transceiver::ClassTest());
@@ -185,12 +187,17 @@ byte GetData()
         DBGINFO(" RSSI: ");           DBGINFO(trx.Rssi());            DBGINFO("dBm");
         if (rxFrame.Knock())
         {
-           DBGINFO(" Knock ");
+           DBGINFO(" ResponseKnock ");
            if (trx.ResponseKnock(rxFrame))
              return 1;
         }
         else if (rxFrame.Welcome())
-           DBGINFO(" Welcome ");
+        {
+           if (trx.ReceiveWelcome(rxFrame))
+              DBGINFO(" Welcome ");
+        }
+        else if (rxFrame.Hello())
+           DBGINFO(" Hello ");
 //          trx.parseKnock()
         else if (rxFrame.ACK())
         {
@@ -267,18 +274,17 @@ void loop()
 
   // prepare data
   generatorUart();    
-//  DBGINFO(" R  (");
 
  
-  
-  if ((millis() %10) <7)
-  {   
-      frame.Reset();
-      UartPrepareData(frame);
-      trx.Send(frame);
-      DBGINFO("PUSH ");
+  if (trx.Connected()){
+    if ((millis() %10) <7)
+    {
+        frame.Reset();
+        UartPrepareData(frame);
+        trx.Send(frame);
+        DBGINFO("PUSH ");
+    }
   }
-
   if (trx.Retry())
   {
       DBGINFO("Retry");
@@ -290,11 +296,11 @@ void loop()
       DBGINFO("transmit:");  DBGINFO(millis());    DBGINFO(" ");
       DBGINFO(trx.TX_buffer.len);    DBGINFO(",");
   }
-  if (millis()>knockTimeOut)
+  if (millis()==knockTimeOut)
   {
     if (trx.Knock())
     {
-      DBGINFO("Knock");
+      DBGINFO("[Knock]");
       knockTimeOut=knockTimeOut+knockDelay;
     }
   }

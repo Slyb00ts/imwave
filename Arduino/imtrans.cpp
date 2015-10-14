@@ -143,6 +143,11 @@ void Transceiver::setRssi()
 
 }
 
+bool Transceiver::Connected()
+{
+  return connected;
+}
+
 void Transceiver::Prepare(IMFrame & frame)
 {
   frame.Header.SourceId=myID;
@@ -227,7 +232,7 @@ bool Transceiver::Knock()
    _frame.Header.DestinationId=0;
    _frame.Header.Sequence=ksequence++;
    setup.salt=0x77;
-   setup.MAC1= 0x11111;
+   setup.MAC= 0x11111;
    setup.device1= 5;
    _frame.Put(&setup);
    DBGINFO("%");
@@ -244,7 +249,7 @@ bool Transceiver::ResponseKnock(IMFrame & frame)
    _frame.Header.DestinationId=frame.Header.SourceId;
    _frame.Header.Sequence=ksequence++;
    setup.salt=0x82;
-   setup.MAC1= 0x77777;
+   setup.MAC= myMAC;
    setup.device1= 6;
    _frame.Put(&setup);
    DBGINFO("%");
@@ -274,6 +279,22 @@ bool Transceiver::ResponseKnock(IMFrame & frame)
 }
 
 */
+
+bool Transceiver::ReceiveWelcome(IMFrame & frame)
+{
+   IMFrameSetup setup;
+   frame.Get(&setup);
+   DBGINFO("%");
+   DBGINFO(setup.MAC);
+   if  (setup.MAC!=myMAC)
+     return false;
+
+    myID=setup.address;
+    connected=1;
+}
+
+
+
 
 void Transceiver::ReceiveACK(IMFrame & frame)
 {

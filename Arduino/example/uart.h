@@ -10,7 +10,7 @@
 #ifndef imUart_h
 #define imUart_h
 
- #include "Arduino.h"
+#include "Arduino.h"
 #include "imframe.h"
 #include "imdebug.h"
 
@@ -26,9 +26,9 @@ static uint8_t lasthop=0;//counter for retries
 
 void shiftUartBuffer(unsigned short x)
 {
-    DBGINFO("ShiftUart");
-    DBGINFO(uartBufLen);
-    DBGINFO(" ");
+//    DBGINFO("ShiftUart");
+//    DBGINFO(uartBufLen);
+//    DBGINFO(" ");
 //    DBGINFO(x);
 
      uartBufLen -= x;

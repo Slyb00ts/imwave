@@ -67,6 +67,7 @@ private:
     IMRouting routing;
     header_t * pHeader;
     TableACK  ack;
+    byte connected;
     float rssi;
     unsigned short rSize;
     unsigned short crc;
@@ -83,7 +84,8 @@ public:
 
     transfer_t RX_buffer ;
     transfer_t TX_buffer ;
-    unsigned short myID;
+    IMAddress myID;
+    IMMAC myMAC;
     void Init(IMCC1101 & cc);
     void StartReceive();
     bool GetFrame(IMFrame&frame);
@@ -94,6 +96,7 @@ public:
     bool Transmit();
     void Push(IMFrame & frame);
     void ReceiveACK(IMFrame & frame);
+    bool ReceiveWelcome(IMFrame & frame);
     void SendACK(IMFrame & frame);
     bool Send(IMFrame & frame);
 
@@ -101,6 +104,7 @@ public:
     bool Knock();
     bool ResponseKnock(IMFrame & frame);
     bool Routing(IMFrame & frame);
+    bool Connected();
     void printReceive();
     static short ClassTest();
 
