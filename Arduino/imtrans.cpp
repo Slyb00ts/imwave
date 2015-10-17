@@ -235,7 +235,7 @@ bool Transceiver::Knock()
    setup.MAC= 0x11111;
    setup.device1= 5;
    _frame.Put(&setup);
-   DBGINFO("%");
+   DBGINFO("[Knock:");
    DBGINFO(_frame.Header.Sequence);
    return Send(_frame);
 }
@@ -283,6 +283,7 @@ bool Transceiver::ResponseKnock(IMFrame & frame)
 bool Transceiver::ReceiveWelcome(IMFrame & frame)
 {
    IMFrameSetup setup;
+
    frame.Get(&setup);
    DBGINFO("%MAC");
    DBGINFO(setup.MAC);

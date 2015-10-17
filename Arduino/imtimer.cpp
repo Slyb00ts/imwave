@@ -8,6 +8,10 @@ IMTimer::IMTimer()
 
 }
 
+long IMTimer::Cycle()
+{
+  return cycle;
+}
 void IMTimer::Next(byte stage, unsigned long waittime)
 {
   delays[stage]=waittime;
@@ -51,6 +55,21 @@ byte IMTimer::Find(unsigned long _next)
   }
   return 0;
 
+}
+
+void IMTimer::setStage(byte stage)
+{
+  current=stage;
+}
+
+void IMTimer::Wait()
+{
+  current=IDDLESTAGE;
+}
+
+void IMTimer::doCycle()
+{
+  cycle++;
 }
 
 byte IMTimer::WaitStage()
