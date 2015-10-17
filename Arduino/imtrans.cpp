@@ -284,13 +284,15 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
 {
    IMFrameSetup setup;
    frame.Get(&setup);
-   DBGINFO("%");
+   DBGINFO("%MAC");
    DBGINFO(setup.MAC);
    if  (setup.MAC!=myMAC)
      return false;
 
-    myID=setup.address;
-    connected=1;
+   myID=setup.address;
+   connected=1;
+   return true;
+
 }
 
 

@@ -86,6 +86,7 @@ public:
     transfer_t TX_buffer ;
     IMAddress myID;
     IMMAC myMAC;
+    byte  myChannel;
     void Init(IMCC1101 & cc);
     void StartReceive();
     bool GetFrame(IMFrame&frame);
