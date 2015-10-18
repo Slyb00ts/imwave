@@ -153,7 +153,6 @@ private:
 	void SetRxState(void);
 	void SetTxState(void);
 	void SetIdleState(void);
-	void FlushRxFifo(void);
 	void FlushTxFifo(void);
 	void FlushFifo(void);
 	void SpiInit(void);
@@ -169,6 +168,7 @@ private:
 public:
 	byte SpiReadStatus(byte addr);
         byte RXBytes();
+	void FlushRxFifo(void);
 	void EnableCCA(void);
 	void DisableCCA(void);
 	void EnableAddressCheck(void);

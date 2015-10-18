@@ -345,7 +345,7 @@ byte IMCC1101::RXBytes()
 byte IMCC1101::ReceiveData(byte *rxBuffer)
 {
 	byte size;
-	byte status[2];
+//	byte status[2];
 
 
 

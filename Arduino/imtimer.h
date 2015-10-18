@@ -17,6 +17,8 @@
 
 
 #include <Arduino.h>
+#include "imdebug.h"
+
 
 typedef void( * funIMTimer )( byte );
 
@@ -28,42 +30,44 @@ class  IMTimer
 {
   private:
     static IMTimer* ptrr; //static ptr to Sleep class for the ISR
+//     static volatile byte State;
     long waiting;
     long cycle;
-    unsigned long nearStage;
+    unsigned long start;
+//    long period;
+    byte current;
+    volatile byte _listen;
+    unsigned short nearStage;
+    unsigned long nearTime;
     static const int maxStages = 8;
     unsigned long stages[maxStages];
-    unsigned long delays[maxStages];
-    byte ruptures[maxStages];
+//    unsigned long delays[maxStages];
     void compute();
-    void Next(byte stage);
-    byte Find(unsigned long _next);
-    void doCycle();
+//    byte Find(unsigned long _next);
+    unsigned long getTime();
+    unsigned long getTime(unsigned long time);
 
 
   public:
         IMTimer();
         funIMTimer onStage;
-        byte current;
-        static const byte IDDLESTAGE = 0;
-        static const byte CYCLELOOP = 1;
+        funIMTimer onListen;
+        static const byte IDDLESTAGE = 100;
+        static const byte PERIOD = 0;
 
 
 	friend void PCINT0_vect(void);
-//	friend void sleepHandler(void);
 
         static short ClassTest();
-        static volatile byte State;
-        void Next(byte stage, unsigned long waittime);
-        bool Arrived(byte stage);
-        void doRupture(byte state);
+        void Setup(byte stage, unsigned long waittime);
         byte WaitStage();
-        void Wait();
         void setStage(byte stage);
+        void doListen();
         long Cycle();
+        void Calibrate();
+
 
   private:
-//    static IMTimer* pTimer; //static ptr to Sleep class for the ISR
 
 } ;
 

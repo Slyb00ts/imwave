@@ -1,4 +1,4 @@
-//
+;//
 //    FILE: transceiver.cpp
 // VERSION: 0.1.00
 // PURPOSE: DTransceiver library for Arduino
@@ -17,6 +17,14 @@
 // PUBLIC
 //
 
+Transceiver* Transceiver::ptr = 0;
+
+Transceiver::Transceiver()
+{
+  ptr = this;	//the ptr points to this object
+  state = 0;
+
+}
 
 void Transceiver::Init(IMCC1101 & cc)
 {
@@ -34,6 +42,12 @@ void Transceiver::StartReceive()
   state=TransceiverRead;
 }
 
+void Transceiver::Idle()
+{
+  cc1101->FlushRxFifo();
+  state=TransceiverIdle;
+
+}
 uint8_t Transceiver::GetData()
 {
 
@@ -174,7 +188,7 @@ bool Transceiver::Send()
     DBGERR("! SEND");
     return false;
   }
-  state=TransceiverIddle;
+  state=TransceiverIdle;
 
 //  if (cc1101->StopReceive())
 //    return cc1101->Transmit((uint8_t*)&(TX_buffer.packet),TX_buffer.len);
@@ -339,6 +353,26 @@ short Transceiver::ClassTest()
      return x+100;
   }
   return 0;
+}
+
+
+void Transceiver::Rupture()
+{
+  DBGERR("Rupture");
+  ruptures[state]++;
+  if (ruptures[state]>1)
+  {
+     ruptures[state]=0;
+     if (onEvent)
+       onEvent(state);
+  }
+
+}
+
+ISR(PCINT0_vect) // handle pin change interrupt for D8 to D13 here
+{
+   Transceiver::ptr->Rupture();
+
 }
 
 

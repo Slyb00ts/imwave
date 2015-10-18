@@ -1,23 +1,47 @@
 #include <imtimer.h>
 
 IMTimer* IMTimer::ptrr = 0;
+//volatile byte IMTimer::State = 0;
 
 IMTimer::IMTimer()
 {
 	ptrr = this;	//the ptr points to this object
+//  State = 0;
 
 }
+
+void IMTimer::Calibrate()
+{
+   start=millis();
+}
+
+unsigned long IMTimer::getTime()
+{
+//  unsigned long x=millis();
+
+  return getTime(millis());
+}
+
+unsigned long IMTimer::getTime(unsigned long time)
+{
+
+  return ((time-start) %stages[PERIOD]);
+}
+
 
 long IMTimer::Cycle()
 {
   return cycle;
 }
-void IMTimer::Next(byte stage, unsigned long waittime)
+
+
+void IMTimer::Setup(byte stage, unsigned long waittime)
 {
-  delays[stage]=waittime;
-  stages[stage]=millis()+waittime;
+//  delays[stage]=waittime;
+  stages[stage]=waittime;
   compute();
 }
+/*
 
 void IMTimer::Next(byte stage)
 {
@@ -29,23 +53,27 @@ void IMTimer::Next(byte stage)
   }
   compute();
 }
+*/
 
-bool IMTimer::Arrived(byte stage)
-{
- return (stages[stage]>millis());
-}
 
 void IMTimer::compute()
 {
-  for(byte i=0 ;i<maxStages;i++)
+  unsigned long last=nearTime;
+  if (last>=(stages[PERIOD]-10))
+      last=1;
+  nearTime=stages[PERIOD]-10;
+  nearStage=PERIOD;
+  for(byte i=1 ;i<maxStages;i++)
   {
-    if (nearStage>stages[i])
+    if ((nearTime>stages[i])&&(stages[i]>last))
       {
-        nearStage=stages[i];
+        nearTime=stages[i];
+        nearStage=i;
       }
   }
 
 }
+/*
 byte IMTimer::Find(unsigned long _next)
 {
   for(byte i=0 ;i<maxStages;i++)
@@ -56,55 +84,67 @@ byte IMTimer::Find(unsigned long _next)
   return 0;
 
 }
+*/
 
 void IMTimer::setStage(byte stage)
 {
   current=stage;
 }
 
-void IMTimer::Wait()
-{
-  current=IDDLESTAGE;
-}
 
-void IMTimer::doCycle()
-{
-  cycle++;
-}
 
 byte IMTimer::WaitStage()
 {
-  while(nearStage <millis())
+/*  DBGINFO("{\r\n");
+  DBGINFO(nearTime);
+  DBGINFO('%');
+  DBGINFO(waiting);
+  DBGINFO('%');
+  DBGINFO(getTime());
+  DBGINFO('%');
+  DBGINFO(cycle);
+*/
+  while(nearTime >getTime())
   {
    waiting++;
+   delay(1);
+   if (_listen){
+     _listen=0;
+     return current;
+   }
+   if ((waiting % 2000)==2)
+   {
+     return 8;
+   }
 
   }
-  byte r= Find(nearStage);
-  if (r){
-    Next(r);
+  byte r= nearStage;
+  if (r==PERIOD)
+     cycle++;
+  compute();
 
 
-  }
   return r;
 
 }
-
-void IMTimer::doRupture(byte state)
+void IMTimer::doListen()
 {
-  ruptures[state]++;
+   _listen++;
 }
+
 
 short IMTimer::ClassTest()
 {
     IMTimer t;
-    t.Next(1,3000);
-    if ( t.nearStage!=t.stages[1])
+    t.Setup(t.PERIOD,10000);
+    t.Setup(1,3000);
+    if ( t.nearTime!=t.stages[1])
        return 1;
-    t.Next(2,1000);
-    if ( t.nearStage!=t.stages[2])
+    t.Setup(2,1000);
+    if ( t.nearTime!=t.stages[2])
        return 2;
-    t.Next(2,6000);
-    if ( t.nearStage!=t.stages[1])
+    t.Setup(2,6000);
+    if ( t.nearTime!=t.stages[1])
        return 3;
     return 0;
 }
@@ -115,13 +155,6 @@ short IMTimer::ClassTest()
 
 //http://www.engblaze.com/microcontroller-tutorial-avr-and-arduino-timer-interrupts/
 
-  /*
-ISR(PCINT0_vect) // handle pin change interrupt for D8 to D13 here
-{
-   IMTimer::ptrr->doRupture(IMTimer::State);
-
-}
-*/
 
 
 /*

@@ -25,10 +25,8 @@
 #include "imrouting.h"
 
 
-#define RECEIVE_TO 1000  //Wait at max this long in ms for packet arrival
 
 //Buff for radio packet handling
-// #. define HEADERSIZE 8
 // #. define PAKETSIZE 61  //CC1101 adds LEN, LQI, RSSI -- stay under fifo size of 64 byte (CC1101 buggy)
 
 
@@ -40,15 +38,10 @@
 
 //Packet format delivered by the CC1101 RX
 
-#define TransceiverIddle  0
+#define TransceiverIdle  0
 #define TransceiverRead  1
 #define TransceiverWrite  2
-/*
-typedef struct {
-    uint32_t MAC;
-    uint32_t salt;
-} IMFrameSetup;
-*/
+
 
 typedef struct
 {
@@ -58,9 +51,14 @@ typedef struct
 } transfer_t;
 
 
+extern "C" void PCINT0_vect(void)__attribute__ ((signal)); // handle pin change interrupt for D8 to D13 here
+typedef void( * funTransceiver )(byte );
+
+
 class Transceiver
 {
 private:
+    static Transceiver* ptr; //static ptr to Sleep class for the ISR
     IMCC1101 * cc1101;  //The CC1101 device
     IMFrame * pPacket;
     IMQueue queue;
@@ -68,6 +66,7 @@ private:
     header_t * pHeader;
     TableACK  ack;
     byte connected;
+    volatile byte ruptures[2];
     float rssi;
     unsigned short rSize;
     unsigned short crc;
@@ -77,8 +76,10 @@ private:
     uint8_t CRC(IMFrame & p);
     bool Send();
     void PrepareTransmit();
+    void Rupture();
 
 public:
+    Transceiver();
     volatile  byte state;
     byte ksequence;
 
@@ -87,7 +88,9 @@ public:
     IMAddress myID;
     IMMAC myMAC;
     byte  myChannel;
+    funTransceiver onEvent;
     void Init(IMCC1101 & cc);
+    friend void PCINT0_vect(void);
     void StartReceive();
     bool GetFrame(IMFrame&frame);
     uint8_t GetData();
@@ -100,7 +103,7 @@ public:
     bool ReceiveWelcome(IMFrame & frame);
     void SendACK(IMFrame & frame);
     bool Send(IMFrame & frame);
-
+    void Idle();
     bool Retry();
     bool Knock();
     bool ResponseKnock(IMFrame & frame);
