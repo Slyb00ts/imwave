@@ -24,4 +24,9 @@ IMAddress IMRouting::Repeater(IMAddress addr)
   return 0;
 }
 
+byte IMRouting::addMAC(IMMAC mac)
+{
+  _mac=mac;
+}
+
 

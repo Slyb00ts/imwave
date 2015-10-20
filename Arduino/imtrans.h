@@ -85,23 +85,30 @@ public:
 
     transfer_t RX_buffer ;
     transfer_t TX_buffer ;
-    IMAddress myID;
+    IMAddress myId;
+    IMAddress hostId;
     IMMAC myMAC;
-    byte  myChannel;
+    byte HostChannel;
+    byte SlaveChannel;
+    byte BroadcastChannel;
     funTransceiver onEvent;
     void Init(IMCC1101 & cc);
     friend void PCINT0_vect(void);
     void StartReceive();
+    void setChannel(byte channel);
     bool GetFrame(IMFrame&frame);
     uint8_t GetData();
     float Rssi();
+    bool CheckReadState();
 
 
     bool Transmit();
     void Push(IMFrame & frame);
     void ReceiveACK(IMFrame & frame);
     bool ReceiveWelcome(IMFrame & frame);
+    bool ReceiveHello(IMFrame & frame);
     void SendACK(IMFrame & frame);
+    bool Forward(IMFrame & frame);
     bool Send(IMFrame & frame);
     void Idle();
     bool Retry();
@@ -110,6 +117,7 @@ public:
     bool Routing(IMFrame & frame);
     bool Connected();
     void printReceive();
+    void printSend();
     static short ClassTest();
 
 private:

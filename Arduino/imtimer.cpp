@@ -6,8 +6,6 @@ IMTimer* IMTimer::ptrr = 0;
 IMTimer::IMTimer()
 {
 	ptrr = this;	//the ptr points to this object
-//  State = 0;
-
 }
 
 void IMTimer::Calibrate()
@@ -17,8 +15,6 @@ void IMTimer::Calibrate()
 
 unsigned long IMTimer::getTime()
 {
-//  unsigned long x=millis();
-
   return getTime(millis());
 }
 
@@ -37,23 +33,9 @@ long IMTimer::Cycle()
 
 void IMTimer::Setup(byte stage, unsigned long waittime)
 {
-//  delays[stage]=waittime;
   stages[stage]=waittime;
   compute();
 }
-/*
-
-void IMTimer::Next(byte stage)
-{
-  if (delays[stage])
-  {
-    stages[stage]=millis()+delays[stage];
-  } else {
-    stages[stage]=0;
-  }
-  compute();
-}
-*/
 
 
 void IMTimer::compute()
@@ -127,10 +109,14 @@ byte IMTimer::WaitStage()
   return r;
 
 }
-void IMTimer::doListen()
+void IMTimer::doneListen()
 {
    _listen++;
 }
+void IMTimer::doneWrite()
+{
+}
+
 
 
 short IMTimer::ClassTest()

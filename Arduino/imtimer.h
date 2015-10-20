@@ -1,9 +1,6 @@
-
 //
 //    FILE: imtime.h
 // VERSION: 0.1.00
-// PURPOSE: Low power for Arduino
-// based on lock free queue
 //https://github.com/n0m1/Sleep_n0m1/blob/master/Sleep_n0m1.h
 
 
@@ -30,20 +27,16 @@ class  IMTimer
 {
   private:
     static IMTimer* ptrr; //static ptr to Sleep class for the ISR
-//     static volatile byte State;
     long waiting;
     long cycle;
     unsigned long start;
-//    long period;
     byte current;
     volatile byte _listen;
     unsigned short nearStage;
     unsigned long nearTime;
     static const int maxStages = 8;
     unsigned long stages[maxStages];
-//    unsigned long delays[maxStages];
     void compute();
-//    byte Find(unsigned long _next);
     unsigned long getTime();
     unsigned long getTime(unsigned long time);
 
@@ -62,7 +55,8 @@ class  IMTimer
         void Setup(byte stage, unsigned long waittime);
         byte WaitStage();
         void setStage(byte stage);
-        void doListen();
+        void doneListen();
+        void doneWrite();
         long Cycle();
         void Calibrate();
 

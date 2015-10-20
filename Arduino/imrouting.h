@@ -19,6 +19,7 @@ class IMRouting
   int count;
   IMAddress Source[MAXTableRouting];
   IMAddress Destination[MAXTableRouting];
+  IMMAC _mac;
 
   public:
   uint32_t time[MAXTableRouting];
@@ -26,6 +27,7 @@ class IMRouting
   byte Send(IMFrame & frame);
   IMAddress Forward(IMAddress addr);
   IMAddress Repeater(IMAddress addr);
+  byte addMAC(IMMAC mac);
 
 };
 

@@ -9,6 +9,8 @@
 #define IMF_WELCOME   0x06
 #define IMF_ACK       0x07
 #define IMF_DATA      0x10
+#define IMF_REPEAT    0x80
+#define IMF_FORWARD   0x20
 #define _frameSize  32
 
 typedef uint8_t IMAddress;
@@ -18,8 +20,9 @@ typedef struct
 {
 	byte Function;
 	IMAddress SourceId;
+	IMAddress SenderId;
+	IMAddress ReceiverId;
 	IMAddress DestinationId;
-	IMAddress RepeaterId;
         byte Sequence;
         byte Len;
         byte Retry;
@@ -35,8 +38,13 @@ typedef struct {
         uint16_t salt;
         uint8_t address;
         uint8_t shift;
+        uint8_t hostchannel;
+        uint8_t slavechannel;
+
 } IMFrameSetup;
 
+
+static const  IMFrameSetup EmptyIMFrameSetup={0};
 #define _frameBodySize _frameSize - sizeof(IMFrameHeader)
 typedef struct
 {
@@ -101,7 +109,7 @@ typedef struct
 
         bool Knock()
         {
-          return Header.Function==IMF_KNOCK;
+          return (Header.Function & 0x0F)==IMF_KNOCK;
         }
 
         bool Hello()
