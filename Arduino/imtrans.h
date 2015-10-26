@@ -74,7 +74,6 @@ private:
     void Prepare(IMFrame & frame );
     unsigned short crcCheck();
     uint8_t CRC(IMFrame & p);
-    bool Send();
     void PrepareTransmit();
     void Rupture();
 
@@ -109,6 +108,7 @@ public:
     bool ReceiveHello(IMFrame & frame);
     void SendACK(IMFrame & frame);
     bool Forward(IMFrame & frame);
+    bool Send();
     bool Send(IMFrame & frame);
     void Idle();
     bool Retry();

@@ -51,6 +51,18 @@ typedef struct
 	IMFrameHeader Header;
 	byte Body[_frameBodySize];
 
+        byte CRC()
+        {
+            unsigned short c=42;
+            for(unsigned short i=0 ; i<(sizeof(IMFrameHeader )+Header.Len) ; i++)
+            {
+              c+=((uint8_t*)&Header)[i];
+            }
+            return c;
+
+        }
+
+
         byte Put(byte*buf,byte len)
         {
                       byte i;

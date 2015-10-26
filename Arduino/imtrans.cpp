@@ -24,7 +24,8 @@ Transceiver::Transceiver()
   ptr = this;	//the ptr points to this object
   state = 0;
   HostChannel=0;
-  BroadcastChannel=2;
+  SlaveChannel=0;
+  BroadcastChannel=0;
 
 }
 
@@ -136,12 +137,15 @@ unsigned short Transceiver::crcCheck()
 {
           unsigned short cnt = RX_buffer.packet.Header.crc;
           RX_buffer.packet.Header.crc = 0;
-          unsigned short cne=CRC(RX_buffer.packet);
-//          DBGINFO(cnt);
-//          DBGINFO('?');
+//          unsigned short cne=CRC(RX_buffer.packet);
+          unsigned short cnf=RX_buffer.packet.CRC();
 //          DBGINFO(cne);
+//         DBGINFO('?');
+//          DBGINFO(cnf);
+//          DBGINFO('?');
+//          DBGINFO(cnt);
 
-          return (cne==cnt);
+          return (cnf==cnt);
 }
 
 
@@ -175,6 +179,8 @@ void Transceiver::setRssi()
 
 void Transceiver::setChannel(byte channel)
 {
+  DBGINFO("CHN");
+  DBGINFO(channel);
   cc1101->SetChannel(channel);
 }
 
@@ -371,6 +377,7 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    myId=setup.address;
    HostChannel=setup.hostchannel;
    SlaveChannel=setup.slavechannel;
+//   HostChannel=0;
    connected=1;
    DBGINFO("CONNECT%");
    return true;

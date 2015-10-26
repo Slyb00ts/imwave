@@ -8,9 +8,11 @@ IMTimer::IMTimer()
 	ptrr = this;	//the ptr points to this object
 }
 
-void IMTimer::Calibrate()
+void IMTimer::Calibrate(unsigned long time)
 {
-   start=millis();
+   start=time;
+   DBGINFO("cl%");
+   DBGINFO(start);
 }
 
 unsigned long IMTimer::getTime()
@@ -89,7 +91,9 @@ byte IMTimer::WaitStage()
   while(nearTime >getTime())
   {
    waiting++;
-   delay(1);
+   if ((nearTime+3) > getTime()) {
+     delay(2);
+   }
    if (_listen){
      _listen=0;
      return current;

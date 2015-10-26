@@ -58,7 +58,7 @@ class  IMTimer
         void doneListen();
         void doneWrite();
         long Cycle();
-        void Calibrate();
+        void Calibrate(unsigned long time);
 
 
   private:
