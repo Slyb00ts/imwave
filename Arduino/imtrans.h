@@ -87,6 +87,8 @@ public:
     IMAddress myId;
     IMAddress hostId;
     IMMAC myMAC;
+    IMMAC hostMAC;
+
     byte HostChannel;
     byte SlaveChannel;
     byte BroadcastChannel;
@@ -102,18 +104,22 @@ public:
 
 
     bool Transmit();
+    bool Local(IMFrame & frame);
     void Push(IMFrame & frame);
     void ReceiveACK(IMFrame & frame);
     bool ReceiveWelcome(IMFrame & frame);
-    bool ReceiveHello(IMFrame & frame);
+    bool ResponseHello(IMFrame & frame);
     void SendACK(IMFrame & frame);
     bool Forward(IMFrame & frame);
+    bool Backward(IMFrame & frame);
     bool Send();
     bool Send(IMFrame & frame);
     void Idle();
     bool Retry();
     bool Knock();
-    bool ResponseKnock(IMFrame & frame);
+    bool SendData(IMFrame & frame);
+    bool ForwardHello(IMFrame & frame);
+    bool BackwardWelcome(IMFrame & frame);
     bool Routing(IMFrame & frame);
     bool Connected();
     void printReceive();

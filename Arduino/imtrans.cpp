@@ -190,9 +190,14 @@ bool Transceiver::Connected()
   return connected;
 }
 
+bool Transceiver::Local(IMFrame & frame)
+{
+ return frame.Destination()==myId;
+}
+
 void Transceiver::Prepare(IMFrame & frame)
 {
-  frame.Header.SourceId=myId;
+//  frame.Header.SourceId=myId;
   byte dst=frame.Header.DestinationId;
   frame.Header.pseq = ack.Answer(dst);
   frame.Header.SenderId=myId;
@@ -251,6 +256,7 @@ bool Transceiver::Transmit()
 }
 
 
+
 void Transceiver::Push(IMFrame & frame)
 {
    queue.push(frame);
@@ -268,6 +274,15 @@ bool Transceiver::Retry()
      return false;
 }
 
+
+bool Transceiver::SendData(IMFrame & frame)
+{
+   setChannel(HostChannel);
+   DBGINFO("[Data:");
+   frame.Header.SourceId=myId;
+   return Send(frame);
+
+}
 bool Transceiver::Knock()
 {
    setChannel(BroadcastChannel);
@@ -278,22 +293,25 @@ bool Transceiver::Knock()
    _frame.Header.Function=IMF_KNOCK;
    _frame.Header.DestinationId=0;
    _frame.Header.Sequence=ksequence++;
-   setup.salt=0x77;
-   setup.MAC= 0x11111;
-   setup.device1= 5;
+   _frame.Header.SourceId=myId;
+   //setup.salt=0x77;
+   setup.MAC= 0x111111;
+   //setup.device1= 5;
    _frame.Put(&setup);
    DBGINFO("[Knock:");
    DBGINFO(_frame.Header.Sequence);
    return Send(_frame);
 }
 
-bool Transceiver::ResponseKnock(IMFrame & frame)
+bool Transceiver::ResponseHello(IMFrame & frame)
 {
    IMFrame _frame;
    IMFrameSetup setup;
 //    frame.Get(&setup);
 //   DBGINFO("#");
 //   DBGERR2(setup.address,HEX);
+   frame.Get(&setup);
+   hostMAC=setup.MAC;
 
    setup=EmptyIMFrameSetup;
    _frame.Reset();
@@ -305,6 +323,7 @@ bool Transceiver::ResponseKnock(IMFrame & frame)
 //   _frame.Header.
    setup.salt=0x82;
    setup.MAC= myMAC;
+   setup.MAC2=hostMAC;
    setup.device1= 6;
    _frame.Put(&setup);
    DBGINFO("%");
@@ -336,6 +355,20 @@ bool Transceiver::ResponseKnock(IMFrame & frame)
 
 */
 
+bool Transceiver::Backward(IMFrame & frame)
+{
+   IMFrame _frame;
+   _frame=frame;
+   DBGINFO("BACKWARD");
+   _frame.Header.Function=frame.Header.Function | IMF_FORWARD;
+   _frame.Header.DestinationId=frame.Header.DestinationId;
+   _frame.Header.ReceiverId=routing.Forward(frame.Header.DestinationId);
+   _frame.Header.SenderId=myId;
+   _frame.Header.SourceId=frame.Header.SourceId;
+   setChannel(SlaveChannel);
+   return Send(_frame);
+
+}
 
 bool Transceiver::Forward(IMFrame & frame)
 {
@@ -344,6 +377,8 @@ bool Transceiver::Forward(IMFrame & frame)
    DBGINFO("FORWARD");
    _frame.Header.Function=frame.Header.Function | IMF_FORWARD;
    _frame.Header.DestinationId=frame.Header.DestinationId;
+   _frame.Header.ReceiverId=routing.Forward(frame.Header.DestinationId);
+   _frame.Header.SenderId=myId;
    _frame.Header.SourceId=frame.Header.SourceId;
 //   _frame.Header.SenderId=myId;
 //   _frame.Header.ReceiverId=hostId;
@@ -353,14 +388,22 @@ bool Transceiver::Forward(IMFrame & frame)
 
 }
 
-bool Transceiver::ReceiveHello(IMFrame & frame)
+bool Transceiver::ForwardHello(IMFrame & frame)
 {
-//   IMFrameSetup setup;
-   IMFrameSetup setup_recv=EmptyIMFrameSetup;
+    IMFrameSetup setup_recv;
     frame.Get(&setup_recv);
     routing.addMAC(setup_recv.MAC);
     return Forward(frame);
 }
+
+bool Transceiver::BackwardWelcome(IMFrame & frame)
+{
+    IMFrameSetup setup_recv;
+    frame.Get(&setup_recv);
+    routing.addMAC(setup_recv.MAC);
+    return Backward(frame);
+}
+
 
 
 bool Transceiver::ReceiveWelcome(IMFrame & frame)
@@ -369,15 +412,21 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
 
    setup=EmptyIMFrameSetup;
    frame.Get(&setup);
+
    DBGINFO("%MAC");
    DBGINFO(setup.MAC);
-   if  (setup.MAC!=myMAC)
-     return false;
+   DBGINFO(":");
+   DBGINFO(setup.MAC2);
+   if  (setup.MAC!=myMAC) {
+     DBGINFO("NOT FOR ME");
+     return BackwardWelcome(frame);
+
+   }
 
    myId=setup.address;
    HostChannel=setup.hostchannel;
    SlaveChannel=setup.slavechannel;
-//   HostChannel=0;
+   HostChannel=0;
    connected=1;
    DBGINFO("CONNECT%");
    return true;
@@ -425,7 +474,7 @@ void Transceiver::printSend()
         DBGINFO2(((uint8_t*)&TX_buffer)[i],HEX);
         DBGWRITE(' ');
       }
-      DBGINFO("-> ");
+      DBGINFO("\r\n ");
 }
 
 

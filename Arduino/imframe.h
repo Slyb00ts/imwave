@@ -7,8 +7,8 @@
 #define IMF_KNOCK     0x04        // Packet automation control
 #define IMF_HELLO     0x05
 #define IMF_WELCOME   0x06
-#define IMF_ACK       0x07
-#define IMF_DATA      0x10
+#define IMF_ACK       0x08
+#define IMF_DATA      0x09
 #define IMF_REPEAT    0x80
 #define IMF_FORWARD   0x20
 #define _frameSize  32
@@ -32,7 +32,7 @@ typedef struct
 
 typedef struct {
 	IMMAC MAC;
-        uint32_t MAC2;
+        IMMAC MAC2;
 	uint16_t device1;
         uint16_t device2;
         uint16_t salt;
@@ -140,6 +140,17 @@ typedef struct
         {
           return (Header.Function & 0xC0) !=0;
         }
+        bool Forward()
+        {
+          byte x=(Header.Function & 0xC0);
+          return (x==IMF_HELLO)||(IMF_DATA);
+        }
+        bool Backward()
+        {
+          byte x=(Header.Function & 0xC0);
+          return (x==IMF_WELCOME)||(IMF_ACK);
+        }
+
         bool Repeat()
         {
           return (Header.Function & 0x80) !=0;
