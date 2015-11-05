@@ -26,7 +26,13 @@ IMAddress IMRouting::Repeater(IMAddress addr)
 
 byte IMRouting::addMAC(IMMAC mac)
 {
+
   _mac=mac;
+}
+
+byte addAddress(IMMAC mac,IMAddress addr)
+{
+  _addr=addr;
 }
 
 

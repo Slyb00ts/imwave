@@ -285,7 +285,6 @@ bool Transceiver::Retry()
 bool Transceiver::SendData(IMFrame & frame)
 {
    setChannel(HostChannel);
-   DBGINFO("[Data:");
    frame.Header.SourceId=myId;
    return Send(frame);
 
@@ -301,14 +300,12 @@ bool Transceiver::Knock()
    _frame.Header.DestinationId=0;
    _frame.Header.Sequence=ksequence++;
    _frame.Header.SourceId=myId;
-   //setup.salt=0x77;
    setup.MAC= myMAC;
    setup.MAC2=serverMAC;
    //setup.device1= 5;
    _frame.Put(&setup);
-   DBGINFO("[Knock:");
-   DBGINFO(_frame.Header.Sequence);
    return Send(_frame);
+
 }
 
 bool Transceiver::ResponseHello(IMFrame & frame)
@@ -419,7 +416,7 @@ bool Transceiver::BackwardWelcome(IMFrame & frame)
 {
     IMFrameSetup setup_recv;
     frame.Get(&setup_recv);
-//    routing.addMAC(setup_recv.MAC);
+    routing.addAddress(setup_recv.MAC,setup_recv.address);
     setup_recv.hostchannel=SlaveChannel;
     frame.Put(&setup_recv);
     return Backward(frame);
@@ -449,6 +446,7 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    HostChannel=setup.hostchannel;
    SlaveChannel=setup.slavechannel;
    HostChannel=0;
+   SlaveChannel=0;
    connected=1;
    DBGINFO(myId);
    DBGINFO("CONNECT%");
@@ -497,7 +495,6 @@ void Transceiver::printSend()
         DBGINFO2(((uint8_t*)&TX_buffer)[i],HEX);
         DBGWRITE(' ');
       }
-      DBGINFO("\r\n ");
 }
 
 

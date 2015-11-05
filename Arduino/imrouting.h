@@ -28,6 +28,7 @@ class IMRouting
   IMAddress Forward(IMAddress addr);
   IMAddress Repeater(IMAddress addr);
   byte addMAC(IMMAC mac);
+  byte addAddress(IMMAC mac,IMAddress addr);
 
 };
 
