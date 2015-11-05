@@ -156,9 +156,9 @@ typedef struct
           return (Header.Function & 0x80) !=0;
         }
 
-        IMAddress Destination()
+        bool Onward()
         {
-          return Header.DestinationId;
+          return (Header.Function & IMF_FORWARD) !=0;
         }
 
 } IMFrame;

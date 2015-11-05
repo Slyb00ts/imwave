@@ -1,4 +1,4 @@
-;//
+//
 //    FILE: transceiver.cpp
 // VERSION: 0.1.00
 // PURPOSE: DTransceiver library for Arduino
@@ -190,10 +190,17 @@ bool Transceiver::Connected()
   return connected;
 }
 
-bool Transceiver::Local(IMFrame & frame)
+
+bool Transceiver::myHost(IMFrame & frame)
 {
- return frame.Destination()==myId;
+  if (Connected()){
+     IMFrameSetup setup;
+     frame.Get(&setup);
+     return hostMAC==setup.MAC;
+  } else
+     return true;
 }
+
 
 void Transceiver::Prepare(IMFrame & frame)
 {
@@ -295,7 +302,8 @@ bool Transceiver::Knock()
    _frame.Header.Sequence=ksequence++;
    _frame.Header.SourceId=myId;
    //setup.salt=0x77;
-   setup.MAC= 0x111111;
+   setup.MAC= myMAC;
+   setup.MAC2=serverMAC;
    //setup.device1= 5;
    _frame.Put(&setup);
    DBGINFO("[Knock:");
@@ -305,6 +313,10 @@ bool Transceiver::Knock()
 
 bool Transceiver::ResponseHello(IMFrame & frame)
 {
+    knocked++;
+    if (Connected() && !(knocked % 5))
+     return false;
+
    IMFrame _frame;
    IMFrameSetup setup;
 //    frame.Get(&setup);
@@ -312,6 +324,8 @@ bool Transceiver::ResponseHello(IMFrame & frame)
 //   DBGERR2(setup.address,HEX);
    frame.Get(&setup);
    hostMAC=setup.MAC;
+   serverMAC=setup.MAC2;
+   hostId=frame.Header.SourceId;
 
    setup=EmptyIMFrameSetup;
    _frame.Reset();
@@ -323,7 +337,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
 //   _frame.Header.
    setup.salt=0x82;
    setup.MAC= myMAC;
-   setup.MAC2=hostMAC;
+   setup.MAC2=serverMAC;
    setup.device1= 6;
    _frame.Put(&setup);
    DBGINFO("%");
@@ -333,27 +347,6 @@ bool Transceiver::ResponseHello(IMFrame & frame)
 }
 
 
-/*bool Transceiver::ResponseKnock(IMFrame & frame)
-{
-   IMFrame _frame;
-   _frame.Reset();
-   IMFrameSetup *setup =(IMFrameSetup *)&_frame.Body;
-   _frame.Header.Sequence=ksequence++;
-   _frame.Header.DestinationId=frame.Header.SourceId;
-   _frame.Header.Function=IMF_HELLO;
-   _frame.Header.Len=sizeof(IMFrameSetup);
-
-   setup->MAC1=0x77777;
-   setup->salt=0xAA;
-   DBGINFO("%");
-   DBGINFO(_frame.Header.Sequence);
-   DBGINFO("+");
-   DBGINFO(_frame.Header.SourceId);
-
-   return Send(_frame);
-}
-
-*/
 
 bool Transceiver::Backward(IMFrame & frame)
 {
@@ -388,11 +381,37 @@ bool Transceiver::Forward(IMFrame & frame)
 
 }
 
+bool Transceiver::Onward(IMFrame & frame)
+{
+        if ((frame.Header.DestinationId==myId) || (myId==0))
+        {
+          return false;
+        }
+        else
+        {
+
+           if (frame.Header.ReceiverId==myId)
+           {
+             if (frame.Forward())
+               return Forward(frame);
+             else
+               return Backward(frame);
+           } else
+              return false;
+        }
+
+}
+
+
 bool Transceiver::ForwardHello(IMFrame & frame)
 {
     IMFrameSetup setup_recv;
     frame.Get(&setup_recv);
     routing.addMAC(setup_recv.MAC);
+    if (frame.Onward())
+    {
+      frame.Header.SourceId=myId;
+    }
     return Forward(frame);
 }
 
@@ -400,7 +419,9 @@ bool Transceiver::BackwardWelcome(IMFrame & frame)
 {
     IMFrameSetup setup_recv;
     frame.Get(&setup_recv);
-    routing.addMAC(setup_recv.MAC);
+//    routing.addMAC(setup_recv.MAC);
+    setup_recv.hostchannel=SlaveChannel;
+    frame.Put(&setup_recv);
     return Backward(frame);
 }
 
@@ -424,10 +445,12 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    }
 
    myId=setup.address;
+//   serverMac=setup.MAC2;
    HostChannel=setup.hostchannel;
    SlaveChannel=setup.slavechannel;
    HostChannel=0;
    connected=1;
+   DBGINFO(myId);
    DBGINFO("CONNECT%");
    return true;
 

@@ -66,6 +66,7 @@ private:
     header_t * pHeader;
     TableACK  ack;
     byte connected;
+    byte knocked;
     volatile byte ruptures[2];
     float rssi;
     unsigned short rSize;
@@ -76,6 +77,11 @@ private:
     uint8_t CRC(IMFrame & p);
     void PrepareTransmit();
     void Rupture();
+    bool Forward(IMFrame & frame);
+    bool Backward(IMFrame & frame);
+    bool Send(IMFrame & frame);
+    bool Send();
+    bool CheckReadState();
 
 public:
     Transceiver();
@@ -88,6 +94,7 @@ public:
     IMAddress hostId;
     IMMAC myMAC;
     IMMAC hostMAC;
+    IMMAC serverMAC;
 
     byte HostChannel;
     byte SlaveChannel;
@@ -100,20 +107,16 @@ public:
     bool GetFrame(IMFrame&frame);
     uint8_t GetData();
     float Rssi();
-    bool CheckReadState();
 
 
     bool Transmit();
-    bool Local(IMFrame & frame);
+    bool myHost(IMFrame & frame);
+//    bool Local(IMFrame & frame);
     void Push(IMFrame & frame);
     void ReceiveACK(IMFrame & frame);
     bool ReceiveWelcome(IMFrame & frame);
     bool ResponseHello(IMFrame & frame);
     void SendACK(IMFrame & frame);
-    bool Forward(IMFrame & frame);
-    bool Backward(IMFrame & frame);
-    bool Send();
-    bool Send(IMFrame & frame);
     void Idle();
     bool Retry();
     bool Knock();
@@ -122,6 +125,7 @@ public:
     bool BackwardWelcome(IMFrame & frame);
     bool Routing(IMFrame & frame);
     bool Connected();
+    bool Onward(IMFrame & frame);
     void printReceive();
     void printSend();
     static short ClassTest();
