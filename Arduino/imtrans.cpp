@@ -26,7 +26,7 @@ Transceiver::Transceiver()
   HostChannel=0;
   SlaveChannel=0;
   BroadcastChannel=0;
-
+  Deconnect();
 }
 
 void Transceiver::Init(IMCC1101 & cc)
@@ -86,6 +86,7 @@ uint8_t Transceiver::GetData()
   }
 }
 
+/*
 bool Transceiver::Routing(IMFrame & frame)
 {
     IMAddress a=routing.Forward(frame.Header.DestinationId);
@@ -100,6 +101,7 @@ bool Transceiver::Routing(IMFrame & frame)
     }
 
 }
+*/
 
 
 bool Transceiver::GetFrame(IMFrame & frame)
@@ -184,6 +186,14 @@ void Transceiver::setChannel(byte channel)
   cc1101->SetChannel(channel);
 }
 
+void Transceiver::Deconnect()
+{
+  connected=false;
+  router.reset();
+  router.addMAC(myMAC,0xFF);
+  DBGINFO("Deconnect");
+
+}
 
 bool Transceiver::Connected()
 {
@@ -204,11 +214,9 @@ bool Transceiver::myHost(IMFrame & frame)
 
 void Transceiver::Prepare(IMFrame & frame)
 {
-//  frame.Header.SourceId=myId;
-  byte dst=frame.Header.DestinationId;
-  frame.Header.pseq = ack.Answer(dst);
+ // byte dst=frame.Header.DestinationId;
+//  frame.Header.pseq = ack.Answer(dst);
   frame.Header.SenderId=myId;
-  frame.Header.ReceiverId=routing.Repeater(frame.Header.DestinationId);
   frame.Header.crc=0;
   frame.Header.crc=CRC(frame);
 }
@@ -251,7 +259,7 @@ bool Transceiver::Send(IMFrame & frame)
 bool Transceiver::Transmit()
 {
    byte io=0;
-   while (queue.pop(TX_buffer.packet))  {
+/*   while (queue.pop(TX_buffer.packet))  {
      PrepareTransmit();
      if (Send())
      {
@@ -259,25 +267,28 @@ bool Transceiver::Transmit()
         io++;
      }
    }
+   */
    return io;
+
 }
 
 
 
 void Transceiver::Push(IMFrame & frame)
 {
-   queue.push(frame);
+//   queue.push(frame);
 }
 
 bool Transceiver::Retry()
 {
-     IMFrame * pf;
+  /*   IMFrame * pf;
      pf=ack.toRetry();
      if (pf)
      {
         Push(*pf);
         return true;
      }
+     */
      return false;
 }
 
@@ -285,7 +296,11 @@ bool Transceiver::Retry()
 bool Transceiver::SendData(IMFrame & frame)
 {
    setChannel(HostChannel);
+   frame.Header.Function = IMF_DATA;
    frame.Header.SourceId=myId;
+   frame.Header.ReceiverId=hostId;
+   frame.Header.Sequence = seqnr++;
+
    return Send(frame);
 
 }
@@ -297,11 +312,12 @@ bool Transceiver::Knock()
    setup=EmptyIMFrameSetup;
    _frame.Reset();
    _frame.Header.Function=IMF_KNOCK;
-   _frame.Header.DestinationId=0;
+//   _frame.Header.DestinationId=0;
    _frame.Header.Sequence=ksequence++;
    _frame.Header.SourceId=myId;
    setup.MAC= myMAC;
    setup.MAC2=serverMAC;
+   setup.salt=_salt;
    //setup.device1= 5;
    _frame.Put(&setup);
    return Send(_frame);
@@ -310,15 +326,20 @@ bool Transceiver::Knock()
 
 bool Transceiver::ResponseHello(IMFrame & frame)
 {
-    knocked++;
-    if (Connected() && !(knocked % 5))
+
+   IMFrameSetup *sp;
+   if (sp->salt!=_salt){
+     Deconnect();
+    _salt=sp->salt;
+   }
+
+
+   _knocked++;
+    if (Connected() && !(_knocked % 5))
      return false;
 
-   IMFrame _frame;
    IMFrameSetup setup;
-//    frame.Get(&setup);
-//   DBGINFO("#");
-//   DBGERR2(setup.address,HEX);
+   IMFrame _frame;
    frame.Get(&setup);
    hostMAC=setup.MAC;
    serverMAC=setup.MAC2;
@@ -331,8 +352,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    _frame.Header.DestinationId=frame.Header.SourceId;
 //   _frame.Header.ReceiverId=frame.Header.SenderId;
    _frame.Header.Sequence=ksequence++;
-//   _frame.Header.
-   setup.salt=0x82;
+//   setup.salt=0x82;
    setup.MAC= myMAC;
    setup.MAC2=serverMAC;
    setup.device1= 6;
@@ -351,10 +371,12 @@ bool Transceiver::Backward(IMFrame & frame)
    _frame=frame;
    DBGINFO("BACKWARD");
    _frame.Header.Function=frame.Header.Function | IMF_FORWARD;
-   _frame.Header.DestinationId=frame.Header.DestinationId;
-   _frame.Header.ReceiverId=routing.Forward(frame.Header.DestinationId);
-   _frame.Header.SenderId=myId;
-   _frame.Header.SourceId=frame.Header.SourceId;
+   _frame.Header.ReceiverId=router.Repeater(frame.Header.DestinationId);
+
+//   _frame.Header.DestinationId=frame.Header.DestinationId;
+//   _frame.Header.ReceiverId=routing.Backward(frame.Header.DestinationId)
+//   _frame.Header.SenderId=myId;
+//   _frame.Header.SourceId=frame.Header.SourceId;
    setChannel(SlaveChannel);
    return Send(_frame);
 
@@ -366,10 +388,10 @@ bool Transceiver::Forward(IMFrame & frame)
    _frame=frame;
    DBGINFO("FORWARD");
    _frame.Header.Function=frame.Header.Function | IMF_FORWARD;
-   _frame.Header.DestinationId=frame.Header.DestinationId;
-   _frame.Header.ReceiverId=routing.Forward(frame.Header.DestinationId);
-   _frame.Header.SenderId=myId;
-   _frame.Header.SourceId=frame.Header.SourceId;
+   //_frame.Header.DestinationId=frame.Header.DestinationId;
+   _frame.Header.ReceiverId=hostId;
+//   _frame.Header.SenderId=myId;
+//   _frame.Header.SourceId=frame.Header.SourceId;
 //   _frame.Header.SenderId=myId;
 //   _frame.Header.ReceiverId=hostId;
    _frame.Header.Sequence=ksequence++;
@@ -384,6 +406,7 @@ bool Transceiver::Onward(IMFrame & frame)
         {
           return false;
         }
+
         else
         {
 
@@ -393,8 +416,10 @@ bool Transceiver::Onward(IMFrame & frame)
                return Forward(frame);
              else
                return Backward(frame);
-           } else
-              return false;
+           } else {
+              DBGERR("&NOTMY");
+              return true;
+           }
         }
 
 }
@@ -404,7 +429,7 @@ bool Transceiver::ForwardHello(IMFrame & frame)
 {
     IMFrameSetup setup_recv;
     frame.Get(&setup_recv);
-    routing.addMAC(setup_recv.MAC);
+    router.addMAC(setup_recv.MAC,frame.Header.SenderId);
     if (frame.Onward())
     {
       frame.Header.SourceId=myId;
@@ -416,7 +441,7 @@ bool Transceiver::BackwardWelcome(IMFrame & frame)
 {
     IMFrameSetup setup_recv;
     frame.Get(&setup_recv);
-    routing.addAddress(setup_recv.MAC,setup_recv.address);
+    router.addAddress(setup_recv.MAC,setup_recv.address);
     setup_recv.hostchannel=SlaveChannel;
     frame.Put(&setup_recv);
     return Backward(frame);
@@ -442,7 +467,6 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    }
 
    myId=setup.address;
-//   serverMac=setup.MAC2;
    HostChannel=setup.hostchannel;
    SlaveChannel=setup.slavechannel;
    HostChannel=0;
@@ -459,7 +483,7 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
 
 void Transceiver::ReceiveACK(IMFrame & frame)
 {
-  ack.Receive(frame);
+ // ack.Receive(frame);
 }
 
 void Transceiver::SendACK(IMFrame & frame)

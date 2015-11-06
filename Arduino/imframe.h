@@ -104,6 +104,10 @@ typedef struct
                       return 1;
 
         }
+        IMFrameSetup * Setup()
+        {
+         return (IMFrameSetup *) &(Body);
+        }
 
 
         void Reset()

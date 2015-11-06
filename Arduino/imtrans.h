@@ -61,12 +61,15 @@ private:
     static Transceiver* ptr; //static ptr to Sleep class for the ISR
     IMCC1101 * cc1101;  //The CC1101 device
     IMFrame * pPacket;
-    IMQueue queue;
-    IMRouting routing;
+//    IMQueue queue;
+    IMRouting router;
     header_t * pHeader;
-    TableACK  ack;
+//    TableACK  ack;
     byte connected;
-    byte knocked;
+    byte _knocked;
+    uint16_t _salt;
+    byte seqnr;
+    byte ksequence;
     volatile byte ruptures[2];
     float rssi;
     unsigned short rSize;
@@ -82,11 +85,12 @@ private:
     bool Send(IMFrame & frame);
     bool Send();
     bool CheckReadState();
+    void Deconnect();
+    void Push(IMFrame & frame);
 
 public:
     Transceiver();
     volatile  byte state;
-    byte ksequence;
 
     transfer_t RX_buffer ;
     transfer_t TX_buffer ;
@@ -112,7 +116,6 @@ public:
     bool Transmit();
     bool myHost(IMFrame & frame);
 //    bool Local(IMFrame & frame);
-    void Push(IMFrame & frame);
     void ReceiveACK(IMFrame & frame);
     bool ReceiveWelcome(IMFrame & frame);
     bool ResponseHello(IMFrame & frame);
@@ -123,7 +126,7 @@ public:
     bool SendData(IMFrame & frame);
     bool ForwardHello(IMFrame & frame);
     bool BackwardWelcome(IMFrame & frame);
-    bool Routing(IMFrame & frame);
+//    bool Routing(IMFrame & frame);
     bool Connected();
     bool Onward(IMFrame & frame);
     void printReceive();

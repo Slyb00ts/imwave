@@ -12,23 +12,25 @@
 #include "imframe.h"
 
 
-#define MAXTableRouting 8
+#define MAXTableRouting 127
 class IMRouting
 {
   private:
   int count;
-  IMAddress Source[MAXTableRouting];
-  IMAddress Destination[MAXTableRouting];
-  IMMAC _mac;
-
-  public:
-  uint32_t time[MAXTableRouting];
-
+  IMAddress BYPASS[MAXTableRouting];
+  IMAddress ORIGIN[MAXTableRouting];
+  IMMAC MMAC [MAXTableRouting];
   byte Send(IMFrame & frame);
   IMAddress Forward(IMAddress addr);
+  byte find(IMMAC  mac);
+
+  public:
+//  uint32_t time[MAXTableRouting];
+
   IMAddress Repeater(IMAddress addr);
-  byte addMAC(IMMAC mac);
-  byte addAddress(IMMAC mac,IMAddress addr);
+  void addMAC(IMMAC mac,IMAddress bypass);
+  void addAddress(IMMAC mac,IMAddress addr);
+  void reset();
 
 };
 

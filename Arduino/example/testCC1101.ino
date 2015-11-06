@@ -37,9 +37,8 @@
 
 
 
-#define RADIO_BUFFSIZE 725  //Buffer for radio
+#define RADIO_BUFFSIZE 63  //Buffer for radio
 
-#define RESEND_TIMEOUT1 75  //Wait this time in ms for an radio ack
 
 //Used for error signaling (ON when restransmitting, OFF on receive success)
 #define ERRLEDON() digitalWrite(13,HIGH)
@@ -51,18 +50,8 @@
 /******************************* Module specific settings **********************/
 
 
-
-
-  
-
-
-
-
-
 #define INDEX_NWID 0  //Network ID
 #define INDEX_SRC  1  //Source ID
-#define INDEX_DEST 2  //Target ID
-#define INDEX_SEQ  3  //Senders current sequence number
 
 
 #define RadioDelay 2900  //Time between calls - Let hardware serial write out async
@@ -104,6 +93,12 @@ Transceiver trx;
 
 /************************* Functions **********************/
 
+int freeRam ()
+{
+      extern int __heap_start, *__brkval;
+      int v;
+      return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
+}
 
 void printRadio()
 {
@@ -172,6 +167,7 @@ void SendData()
       frame.Reset();
       UartPrepareData(frame);
 
+      DBGINFO("SendData ");
       trx.SendData(frame);
       DBGINFO("PUSH ");
       if (trx.Retry())
@@ -183,6 +179,8 @@ void SendData()
          DBGINFO("transmit:");  DBGINFO(millis());    DBGINFO(" ");
          DBGINFO(trx.TX_buffer.len);    DBGINFO(",");
       }
+      DBGINFO("\r\n");
+
       Timer.setStage(LISTENDATA);
       trx.StartReceive();
    } else {
@@ -197,7 +195,9 @@ void SendKnock()
    {
      if ((Timer.Cycle() %5)==0)
      {
+      DBGINFO("Knock ");
        trx.Knock();
+      DBGINFO("\r\n");
      }
 
    };
@@ -230,10 +230,10 @@ byte GetData()
 //      trx.printReceive();
       if (trx.GetFrame(rxFrame))
       {
-        DBGINFO(" RSSI: ");           DBGINFO(trx.Rssi());            DBGINFO("dBm\r\n");
+        DBGINFO(" RSSI: ");           DBGINFO(trx.Rssi());            DBGINFO("dBm  ");
         if (rxFrame.Knock())
         {
-           DBGINFO(" receiveKnock ");
+           DBGINFO("\r\n receiveKnock ");
            if (trx.myHost(rxFrame)){
              Timer.Calibrate(millis()-BroadcastCallibrate);
              if (trx.ResponseHello(rxFrame)){
@@ -244,6 +244,7 @@ byte GetData()
            } else {
              DBGINFO(" alien host ");
            }
+           DBGINFO(" \r\n");
         }
         else if (rxFrame.Hello())
         {
@@ -267,9 +268,10 @@ byte GetData()
         } else{
           if (rxFrame.NeedACK())
              trx.SendACK(rxFrame);
-            radioBufLen+=rxFrame.Get((uint8_t*)&(radioBuf[radioBufLen]));
-            if (radio_writeout == 0xFFFF) radio_writeout = 0;  //signal the uart handler to start writing out
-            if (rxFrame.Repeat())
+          DBGINFO(" rxGET ");
+          radioBufLen+=rxFrame.Get((uint8_t*)&(radioBuf[radioBufLen]));
+          if (radio_writeout == 0xFFFF) radio_writeout = 0;  //signal the uart handler to start writing out
+          if (rxFrame.Repeat())
                return 1;
         }
       }
@@ -278,7 +280,7 @@ byte GetData()
         DBGERR("!VALID");
       }
 //      DBGINFO(millis());
-//      DBGINFO("\r\n");
+      DBGINFO("\r\n");
   }
   return 0;
 
@@ -361,6 +363,8 @@ void setup()
 
 void loop()
 {
+//  DBGINFO(freeRam());
+//  DBGINFO("FREE\r\n");
   ERRLEDON();         delay(50);         ERRLEDOFF();
 
   /************** radio to UART ************************/

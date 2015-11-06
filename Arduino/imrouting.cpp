@@ -13,26 +13,54 @@ IMAddress IMRouting::Forward(IMAddress addr)
 {
   for(byte i=0;i<count;i++)
   {
-    if (Source[i]==addr)
-      return Destination[i];
   }
   return 0xFF;
 }
 
 IMAddress IMRouting::Repeater(IMAddress addr)
 {
+  for(byte i=1;i<count;i++)
+  {
+    if (ORIGIN[i]==addr)
+      return BYPASS[i];
+  }
   return 0;
 }
 
-byte IMRouting::addMAC(IMMAC mac)
+byte IMRouting::find(IMMAC mac)
 {
+ for(byte i=1;i<count;i++)
+  {
+    if (MMAC[i]==mac)
+      return i;
+  }
+  return 0;
 
-  _mac=mac;
+}
+void IMRouting::addMAC(IMMAC mac,IMAddress bypass)
+{
+   byte x=find(mac);
+   if (x==0){
+
+     MMAC[count]=mac;
+     BYPASS[count]=bypass;
+      ++count;
+   }
 }
 
-byte addAddress(IMMAC mac,IMAddress addr)
+void IMRouting::addAddress(IMMAC mac,IMAddress addr)
 {
-  _addr=addr;
+   byte x=find(mac);
+   if (x){
+      ORIGIN[x]=addr;
+
+    }
+
+
+
 }
 
-
+void IMRouting::reset()
+{
+  count=0;
+}
