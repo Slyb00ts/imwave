@@ -67,6 +67,7 @@ private:
 //    TableACK  ack;
     byte connected;
     byte _knocked;
+    byte myHop;
     uint16_t _salt;
     byte seqnr;
     byte ksequence;
@@ -87,6 +88,7 @@ private:
     bool CheckReadState();
     void Deconnect();
     void Push(IMFrame & frame);
+    bool BackwardWelcome(IMFrame & frame);
 
 public:
     Transceiver();
@@ -99,7 +101,6 @@ public:
     IMMAC myMAC;
     IMMAC hostMAC;
     IMMAC serverMAC;
-
     byte HostChannel;
     byte SlaveChannel;
     byte BroadcastChannel;
@@ -119,13 +120,12 @@ public:
     void ReceiveACK(IMFrame & frame);
     bool ReceiveWelcome(IMFrame & frame);
     bool ResponseHello(IMFrame & frame);
+    bool ForwardHello(IMFrame & frame);
     void SendACK(IMFrame & frame);
     void Idle();
     bool Retry();
     bool Knock();
     bool SendData(IMFrame & frame);
-    bool ForwardHello(IMFrame & frame);
-    bool BackwardWelcome(IMFrame & frame);
 //    bool Routing(IMFrame & frame);
     bool Connected();
     bool Onward(IMFrame & frame);

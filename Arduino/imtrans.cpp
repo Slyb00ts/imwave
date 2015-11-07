@@ -189,6 +189,7 @@ void Transceiver::setChannel(byte channel)
 void Transceiver::Deconnect()
 {
   connected=false;
+  myId=0;
   router.reset();
   router.addMAC(myMAC,0xFF);
   DBGINFO("Deconnect");
@@ -312,12 +313,13 @@ bool Transceiver::Knock()
    setup=EmptyIMFrameSetup;
    _frame.Reset();
    _frame.Header.Function=IMF_KNOCK;
-//   _frame.Header.DestinationId=0;
    _frame.Header.Sequence=ksequence++;
    _frame.Header.SourceId=myId;
    setup.MAC= myMAC;
    setup.MAC2=serverMAC;
    setup.salt=_salt;
+   setup.hostchannel=SlaveChannel;
+   setup.hop=myHop;
    //setup.device1= 5;
    _frame.Put(&setup);
    return Send(_frame);
@@ -328,7 +330,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
 {
 
    IMFrameSetup *sp;
-   if (sp->salt!=_salt){
+   if (sp->salt!=_salt){   //host reboot
      Deconnect();
     _salt=sp->salt;
    }
@@ -343,19 +345,24 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    frame.Get(&setup);
    hostMAC=setup.MAC;
    serverMAC=setup.MAC2;
+   myHop=setup.hop;
+   myHop++;
    hostId=frame.Header.SourceId;
+   HostChannel=setup.hostchannel;
+
+   setChannel(HostChannel);
 
    setup=EmptyIMFrameSetup;
    _frame.Reset();
-//   _frame.Header.SourceId=myId;
+   _frame.Header.SourceId=myId;   //if not registerred then myId==0
    _frame.Header.Function=IMF_HELLO+IMF_REPEAT ;
    _frame.Header.DestinationId=frame.Header.SourceId;
-//   _frame.Header.ReceiverId=frame.Header.SenderId;
-   _frame.Header.Sequence=ksequence++;
+   _frame.Header.Sequence=frame.Header.Sequence;
 //   setup.salt=0x82;
    setup.MAC= myMAC;
    setup.MAC2=serverMAC;
    setup.device1= 6;
+   setup.hop=myHop;
    _frame.Put(&setup);
    DBGINFO("%");
    DBGINFO(_frame.Header.Sequence);
@@ -372,14 +379,7 @@ bool Transceiver::Backward(IMFrame & frame)
    DBGINFO("BACKWARD");
    _frame.Header.Function=frame.Header.Function | IMF_FORWARD;
    _frame.Header.ReceiverId=router.Repeater(frame.Header.DestinationId);
-
-//   _frame.Header.DestinationId=frame.Header.DestinationId;
-//   _frame.Header.ReceiverId=routing.Backward(frame.Header.DestinationId)
-//   _frame.Header.SenderId=myId;
-//   _frame.Header.SourceId=frame.Header.SourceId;
-   setChannel(SlaveChannel);
    return Send(_frame);
-
 }
 
 bool Transceiver::Forward(IMFrame & frame)
@@ -387,15 +387,9 @@ bool Transceiver::Forward(IMFrame & frame)
    IMFrame _frame;
    _frame=frame;
    DBGINFO("FORWARD");
-   _frame.Header.Function=frame.Header.Function | IMF_FORWARD;
-   //_frame.Header.DestinationId=frame.Header.DestinationId;
-   _frame.Header.ReceiverId=hostId;
-//   _frame.Header.SenderId=myId;
-//   _frame.Header.SourceId=frame.Header.SourceId;
-//   _frame.Header.SenderId=myId;
-//   _frame.Header.ReceiverId=hostId;
-   _frame.Header.Sequence=ksequence++;
    setChannel(HostChannel);
+   _frame.Header.Function=frame.Header.Function | IMF_FORWARD;
+   _frame.Header.ReceiverId=hostId;
    return Send(_frame);
 
 }
@@ -404,9 +398,8 @@ bool Transceiver::Onward(IMFrame & frame)
 {
         if ((frame.Header.DestinationId==myId) || (myId==0))
         {
-          return false;
+          return false;    //this frame is for me
         }
-
         else
         {
 
@@ -414,8 +407,10 @@ bool Transceiver::Onward(IMFrame & frame)
            {
              if (frame.Forward())
                return Forward(frame);
-             else
+             else {
+               setChannel(SlaveChannel);
                return Backward(frame);
+             }
            } else {
               DBGERR("&NOTMY");
               return true;
@@ -429,11 +424,13 @@ bool Transceiver::ForwardHello(IMFrame & frame)
 {
     IMFrameSetup setup_recv;
     frame.Get(&setup_recv);
-    router.addMAC(setup_recv.MAC,frame.Header.SenderId);
-    if (frame.Onward())
+    IMAddress a=frame.Header.SenderId;
+    if (frame.Onward())   // first hop
     {
-      frame.Header.SourceId=myId;
+      frame.Header.SourceId=myId; // server should know where send welcome
+      a=0;                        // register MAC with no addres (no bypass)
     }
+    router.addMAC(setup_recv.MAC,a);
     return Forward(frame);
 }
 
@@ -441,10 +438,20 @@ bool Transceiver::BackwardWelcome(IMFrame & frame)
 {
     IMFrameSetup setup_recv;
     frame.Get(&setup_recv);
-    router.addAddress(setup_recv.MAC,setup_recv.address);
+    byte x=router.addAddress(setup_recv.MAC,setup_recv.address);
+    if (x==0xFF)
+       return false;
     setup_recv.hostchannel=SlaveChannel;
     frame.Put(&setup_recv);
-    return Backward(frame);
+    if (x==0) {
+      setChannel(BroadcastChannel);
+      frame.Header.ReceiverId=0;
+    } else{
+      frame.Header.ReceiverId=x;
+      setChannel(SlaveChannel);
+    }
+    return Send(frame);
+
 }
 
 
@@ -467,8 +474,8 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    }
 
    myId=setup.address;
-   HostChannel=setup.hostchannel;
    SlaveChannel=setup.slavechannel;
+   router.myId=myId;
    HostChannel=0;
    SlaveChannel=0;
    connected=1;

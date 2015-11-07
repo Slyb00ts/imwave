@@ -9,20 +9,13 @@ byte IMRouting::Send(IMFrame & frame)
 }
 
 
-IMAddress IMRouting::Forward(IMAddress addr)
-{
-  for(byte i=0;i<count;i++)
-  {
-  }
-  return 0xFF;
-}
 
 IMAddress IMRouting::Repeater(IMAddress addr)
 {
   for(byte i=1;i<count;i++)
   {
     if (ORIGIN[i]==addr)
-      return BYPASS[i];
+      return WARD[i];
   }
   return 0;
 }
@@ -37,24 +30,26 @@ byte IMRouting::find(IMMAC mac)
   return 0;
 
 }
-void IMRouting::addMAC(IMMAC mac,IMAddress bypass)
+void IMRouting::addMAC(IMMAC mac,IMAddress ward)
 {
    byte x=find(mac);
    if (x==0){
 
      MMAC[count]=mac;
-     BYPASS[count]=bypass;
+     WARD[count]=ward;
       ++count;
    }
 }
 
-void IMRouting::addAddress(IMMAC mac,IMAddress addr)
+byte IMRouting::addAddress(IMMAC mac,IMAddress addr)
 {
    byte x=find(mac);
    if (x){
       ORIGIN[x]=addr;
+      return WARD[x];
 
-    }
+   }
+   return 0xFF;
 
 
 

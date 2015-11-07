@@ -31,27 +31,11 @@
 
 /******************************** Configuration *************************************/
 
-#define MID  0x02  //My ID
 #define MMAC 0x102030  // My MAC
-
-
-
 
 #define RADIO_BUFFSIZE 63  //Buffer for radio
 
 
-//Used for error signaling (ON when restransmitting, OFF on receive success)
-#define ERRLEDON() digitalWrite(13,HIGH)
-#define ERRLEDOFF() digitalWrite(13,LOW)
-#define ERRLEDINIT() pinMode(13, OUTPUT)
-
-
-
-/******************************* Module specific settings **********************/
-
-
-#define INDEX_NWID 0  //Network ID
-#define INDEX_SRC  1  //Source ID
 
 
 #define RadioDelay 2900  //Time between calls - Let hardware serial write out async
@@ -60,12 +44,28 @@
 #define BroadcastCallibrate 300
 
 
-#define SlaveDelay 700
 #define DataDelay 1000
 #define DataDuration 300
-#define SlaveDuration 300
 #define CycleDuration 3000
-/****************** Vars *******************************/
+/****************** Events *******************************/
+
+
+#define PRINTRADIO 1
+#define STARTBROADCAST 2
+#define STOPBROADCAST 3
+#define STARTDATA 4
+#define STOPDATA 5
+
+#define LISTENBROADCAST 101
+#define LISTENDATA 102
+
+/************************* Module specyfic functions **********************/
+
+//Used for error signaling (ON when restransmitting, OFF on receive success)
+#define ERRLEDON() digitalWrite(13,HIGH)
+#define ERRLEDOFF() digitalWrite(13,LOW)
+#define ERRLEDINIT() pinMode(13, OUTPUT)
+
 
 
 
@@ -73,25 +73,11 @@ char radioBuf[RADIO_BUFFSIZE] = {0,};
 unsigned short radioBufLen = 0;
 unsigned short radio_writeout = 0xFFFF;
 
+/******************************* Objects **********************/
 
 IMCC1101  cc1101;
 IMTimer  Timer;
 Transceiver trx;
-//volatile byte ReadState = 0;
-//volatile byte WriteState= 0;
-
-#define PRINTRADIO 1
-#define STARTBROADCAST 2
-#define STOPBROADCAST 3
-#define STARTDATA 4
-#define STOPDATA 5
-#define STARTSLAVE 7
-
-#define LISTENBROADCAST 101
-#define LISTENDATA 102
-#define LISTENSLAVE 103
-
-/************************* Functions **********************/
 
 int freeRam ()
 {
@@ -148,16 +134,15 @@ void ListenBroadcast()
 
 }
 
-void SendSlave()
+void ListenData()
 {
-   if (trx.Connected())
-   {
       trx.setChannel(trx.SlaveChannel);
-      Timer.setStage(LISTENSLAVE);
+      Timer.setStage(LISTENDATA);
       trx.StartReceive();
-   }
 
 }
+
+
 
 void SendData()
 {
@@ -180,9 +165,8 @@ void SendData()
          DBGINFO(trx.TX_buffer.len);    DBGINFO(",");
       }
       DBGINFO("\r\n");
+      ListenData();
 
-      Timer.setStage(LISTENDATA);
-      trx.StartReceive();
    } else {
      ListenBroadcast();
    }
@@ -199,25 +183,11 @@ void SendKnock()
        trx.Knock();
       DBGINFO("\r\n");
      }
+     ListenData();
 
-   };
-   ListenBroadcast();
-
-
-}
-
-void CheckSlave()
-{
-   if (trx.Connected())
-   {
-       DBGINFO("Slave");
-       trx.setChannel(trx.SlaveChannel);
-       Timer.setStage(LISTENSLAVE);
-       trx.StartReceive();
-
-   } else{
+   } else
      ListenBroadcast();
-   }
+
 
 }
 
@@ -235,7 +205,7 @@ byte GetData()
         {
            DBGINFO("\r\n receiveKnock ");
            if (trx.myHost(rxFrame)){
-             Timer.Calibrate(millis()-BroadcastCallibrate);
+             Timer.Calibrate(millis()+BroadcastCallibrate);
              if (trx.ResponseHello(rxFrame)){
                  DBGINFO(" rHELLO ");
                  return 1;
@@ -286,7 +256,7 @@ byte GetData()
 
 }
 
-void ListenData()
+void ReceiveData()
 {
        DBGINFO('*');
 
@@ -314,17 +284,15 @@ void stageloop(byte stage)
 //  DBGINFO(":");  DBGINFO(stage);
   switch (stage)
   {
-    case STARTBROADCAST:  SendKnock();      break;
-    case STOPBROADCAST:  StopListen();      break;
-    case STARTSLAVE:  SendSlave();      break;
+    case STARTBROADCAST:  ListenBroadcast();      break;
+    case STOPBROADCAST:  SendKnock();      break;
     case STARTDATA: SendData();break;
     case STOPDATA:   StopListen();      break;
 
     case PRINTRADIO:     printRadio(); break;
 
-    case LISTENDATA : ListenData();break;
-    case LISTENBROADCAST : ListenData();break;
-    case LISTENSLAVE : ListenData();break;
+    case LISTENDATA : ReceiveData();break;
+    case LISTENBROADCAST : ReceiveData();break;
 
     default:
     break;
@@ -349,7 +317,7 @@ void setup()
     Timer.Setup(Timer.PERIOD,CycleDuration);
     Timer.Setup(PRINTRADIO,RadioDelay);
 
-    Timer.Setup(STARTSLAVE,SlaveDelay);
+//    Timer.Setup(STARTSLAVE,SlaveDelay);
     Timer.Setup(STARTDATA,DataDelay);
     Timer.Setup(STOPDATA,DataDelay+DataDuration);
 

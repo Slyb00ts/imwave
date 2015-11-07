@@ -40,6 +40,7 @@ typedef struct {
         uint8_t shift;
         uint8_t hostchannel;
         uint8_t slavechannel;
+        uint8_t hop;
 
 } IMFrameSetup;
 
