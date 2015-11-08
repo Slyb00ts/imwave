@@ -23,6 +23,7 @@
 #include "imack.h"
 #include "imqueue.h"
 #include "imrouting.h"
+#include "imtimer.h"
 
 
 
@@ -63,12 +64,14 @@ private:
     IMFrame * pPacket;
 //    IMQueue queue;
     IMRouting router;
-    header_t * pHeader;
+
+//    header_t * pHeader;
 //    TableACK  ack;
     byte connected;
     byte _knocked;
     byte myHop;
     uint16_t _salt;
+    uint16_t callibrate;
     byte seqnr;
     byte ksequence;
     volatile byte ruptures[2];
@@ -89,42 +92,51 @@ private:
     void Deconnect();
     void Push(IMFrame & frame);
     bool BackwardWelcome(IMFrame & frame);
+    void PrepareSetup(IMFrameSetup &se);
+    bool SendKnock();
+    bool myHost(IMFrame & frame);
+    void StartReceive();
+    void setChannel(byte channel);
+    void Idle();
 
 public:
     Transceiver();
     volatile  byte state;
+    IMTimer  timer;
 
     transfer_t RX_buffer ;
     transfer_t TX_buffer ;
     IMAddress myId;
     IMAddress hostId;
+    IMAddress serverId;
     IMMAC myMAC;
     IMMAC hostMAC;
     IMMAC serverMAC;
     byte HostChannel;
-    byte SlaveChannel;
+    byte myChannel;
     byte BroadcastChannel;
     funTransceiver onEvent;
     void Init(IMCC1101 & cc);
     friend void PCINT0_vect(void);
-    void StartReceive();
-    void setChannel(byte channel);
     bool GetFrame(IMFrame&frame);
     uint8_t GetData();
     float Rssi();
 
 
     bool Transmit();
-    bool myHost(IMFrame & frame);
+    void Knock();
+    void ListenData();
+    void ListenBroadcast();
+    void StopListen();
+
 //    bool Local(IMFrame & frame);
+    bool ReceiveKnock(IMFrame & frame);
     void ReceiveACK(IMFrame & frame);
     bool ReceiveWelcome(IMFrame & frame);
     bool ResponseHello(IMFrame & frame);
     bool ForwardHello(IMFrame & frame);
     void SendACK(IMFrame & frame);
-    void Idle();
     bool Retry();
-    bool Knock();
     bool SendData(IMFrame & frame);
 //    bool Routing(IMFrame & frame);
     bool Connected();

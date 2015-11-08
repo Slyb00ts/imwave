@@ -32,6 +32,16 @@ uint16_t IMSht2x::ReadData(uint8_t command)
 }
 
 //Public:
+uint16_t IMSht2x::GetHumidityBin(void)
+{
+	return (ReadData(Sht2xHumCmd));
+}
+uint16_t IMSht2x::GetTemperatureBin(void)
+{
+	return (ReadData(Sht2xTempCmd));
+}
+
+
 float IMSht2x::GetHumidity(void)
 {
 	return (-6.0 + 125.0 / 65536.0 * (float)(ReadData(Sht2xHumCmd)));

@@ -19,7 +19,8 @@ class IMRouting
   int count;
   IMAddress WARD[MAXTableRouting];          //hop address
   IMAddress ORIGIN[MAXTableRouting];        //device address
-  IMMAC MMAC [MAXTableRouting];
+  IMMAC MACARRAY[MAXTableRouting];
+  byte CHANNEL[MAXTableRouting];           //device channel listen
   byte Send(IMFrame & frame);
 //  IMAddress Forward(IMAddress addr);
   byte find(IMMAC  mac);
@@ -29,7 +30,8 @@ class IMRouting
   IMAddress myId;
   IMAddress Repeater(IMAddress addr);
   void addMAC(IMMAC mac,IMAddress ward);
-  byte addAddress(IMMAC mac,IMAddress addr);
+  byte addAddress(IMMAC mac,IMAddress addr, byte channel);
+  byte getChannel(IMAddress addr);
   void reset();
 
 };

@@ -1,11 +1,12 @@
 //
 //    FILE: transceiver.cpp
-// VERSION: 0.1.00
+// VERSION: 0.4.00
 // PURPOSE: DTransceiver library for Arduino
 //
 // DATASHEET: 
 //
 // HISTORY:
+// 0.4 by Dariusz Mazur (01/11/2015)
 // 0.2 by Dariusz Mazur (01/09/2015)
 //
 
@@ -24,8 +25,9 @@ Transceiver::Transceiver()
   ptr = this;	//the ptr points to this object
   state = 0;
   HostChannel=0;
-  SlaveChannel=0;
+  myChannel=0;
   BroadcastChannel=0;
+  callibrate=300;
   Deconnect();
 }
 
@@ -35,8 +37,7 @@ void Transceiver::Init(IMCC1101 & cc)
   cc1101->Init();
   cc1101->StartReceive();
         pPacket = &RX_buffer.packet;
-        pHeader = &pPacket->Header;
-
+//        pHeader = &pPacket->Header;
 }
 
 
@@ -115,7 +116,7 @@ bool Transceiver::GetFrame(IMFrame & frame)
         return io;
       }
       if (io){
-         io =( (pHeader->ReceiverId==myId) || myId==0 || (pHeader->ReceiverId==0));
+         io =( (pPacket->Header.ReceiverId==myId) ||  (pPacket->Header.ReceiverId==0));
       } else {
           DBGERR("!CRC");
           return io;
@@ -170,8 +171,8 @@ float Transceiver::Rssi()
 
 void Transceiver::setRssi()
 {
-            crc = pPacket->Body[pHeader->Len+1];
-            unsigned short c = pPacket->Body[pHeader->Len];
+            crc = pPacket->Body[pPacket->Header.Len+1];
+            unsigned short c = pPacket->Body[pPacket->Header.Len];
             rssi = c;
             if (c&0x80) rssi -= 256;
             rssi /= 2;
@@ -193,7 +194,6 @@ void Transceiver::Deconnect()
   router.reset();
   router.addMAC(myMAC,0xFF);
   DBGINFO("Deconnect");
-
 }
 
 bool Transceiver::Connected()
@@ -205,9 +205,9 @@ bool Transceiver::Connected()
 bool Transceiver::myHost(IMFrame & frame)
 {
   if (Connected()){
-     IMFrameSetup setup;
-     frame.Get(&setup);
-     return hostMAC==setup.MAC;
+//     IMFrameSetup setup;
+//     frame.Get(&setup);
+     return hostMAC==frame.Setup()->MAC;
   } else
      return true;
 }
@@ -293,6 +293,17 @@ bool Transceiver::Retry()
      return false;
 }
 
+void Transceiver::PrepareSetup(IMFrameSetup &se)
+{
+   se.MAC= myMAC;
+   se.MAC2=serverMAC;
+   se.salt=_salt;
+   se.device1= 6;
+   se.hostchannel=myChannel;
+   se.hop=myHop;
+
+}
+
 
 bool Transceiver::SendData(IMFrame & frame)
 {
@@ -301,11 +312,57 @@ bool Transceiver::SendData(IMFrame & frame)
    frame.Header.SourceId=myId;
    frame.Header.ReceiverId=hostId;
    frame.Header.Sequence = seqnr++;
+   frame.Header.DestinationId=serverId;
 
    return Send(frame);
 
 }
-bool Transceiver::Knock()
+
+
+void Transceiver::ListenBroadcast()
+{
+      setChannel(BroadcastChannel);
+      timer.setStage(LISTENBROADCAST);
+      StartReceive();
+}
+
+void Transceiver::ListenData()
+{
+      setChannel(myChannel);
+      timer.setStage(LISTENDATA);
+      StartReceive();
+}
+
+void Transceiver::StopListen()
+{
+    if (Connected())
+    {
+       DBGINFO("stop listen");
+//     trx.Idle();
+//     Timer.setStage(Timer.IDDLESTAGE);
+   }
+}
+
+
+bool Transceiver::ReceiveKnock(IMFrame & frame)
+{
+           if (myHost(frame)){
+             timer.Calibrate(millis()+callibrate);
+             if (ResponseHello(frame)){
+                 ListenData();      //return to listen channel
+                 DBGINFO(" rHELLO ");
+                 return true;
+              }
+
+           } else {
+                        DBGINFO(" alien host ");
+           }
+           return false;
+
+
+}
+
+bool Transceiver::SendKnock()
 {
    setChannel(BroadcastChannel);
    IMFrame _frame;
@@ -315,16 +372,29 @@ bool Transceiver::Knock()
    _frame.Header.Function=IMF_KNOCK;
    _frame.Header.Sequence=ksequence++;
    _frame.Header.SourceId=myId;
-   setup.MAC= myMAC;
-   setup.MAC2=serverMAC;
-   setup.salt=_salt;
-   setup.hostchannel=SlaveChannel;
-   setup.hop=myHop;
+   PrepareSetup(setup);
    //setup.device1= 5;
    _frame.Put(&setup);
    return Send(_frame);
-
 }
+
+
+void Transceiver::Knock()
+{
+   if (Connected())
+   {
+     if ((timer.Cycle() %5)==0)
+     {
+        DBGINFO("Knock ");
+        SendKnock();
+        DBGINFO("\r\n");
+     }
+     ListenData();
+
+   } else
+     ListenBroadcast();
+}
+
 
 bool Transceiver::ResponseHello(IMFrame & frame)
 {
@@ -359,15 +429,13 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    _frame.Header.DestinationId=frame.Header.SourceId;
    _frame.Header.Sequence=frame.Header.Sequence;
 //   setup.salt=0x82;
-   setup.MAC= myMAC;
-   setup.MAC2=serverMAC;
-   setup.device1= 6;
-   setup.hop=myHop;
+   PrepareSetup(setup);
    _frame.Put(&setup);
    DBGINFO("%");
    DBGINFO(_frame.Header.Sequence);
    DBGERR2(setup.MAC,HEX);
-   return Send(_frame);
+   Send(_frame);
+   return true;   //changed channel
 }
 
 
@@ -377,8 +445,10 @@ bool Transceiver::Backward(IMFrame & frame)
    IMFrame _frame;
    _frame=frame;
    DBGINFO("BACKWARD");
+//          setChannel(SlaveChannel);   //get proper channel form router
    _frame.Header.Function=frame.Header.Function | IMF_FORWARD;
    _frame.Header.ReceiverId=router.Repeater(frame.Header.DestinationId);
+   setChannel(router.getChannel(_frame.Header.ReceiverId));
    return Send(_frame);
 }
 
@@ -408,7 +478,6 @@ bool Transceiver::Onward(IMFrame & frame)
              if (frame.Forward())
                return Forward(frame);
              else {
-               setChannel(SlaveChannel);
                return Backward(frame);
              }
            } else {
@@ -438,20 +507,20 @@ bool Transceiver::BackwardWelcome(IMFrame & frame)
 {
     IMFrameSetup setup_recv;
     frame.Get(&setup_recv);
-    byte x=router.addAddress(setup_recv.MAC,setup_recv.address);
+    byte x=router.addAddress(setup_recv.MAC,setup_recv.address,setup_recv.slavechannel);
     if (x==0xFF)
        return false;
-    setup_recv.hostchannel=SlaveChannel;
+    setup_recv.hostchannel=myChannel;
     frame.Put(&setup_recv);
     if (x==0) {
-      setChannel(BroadcastChannel);
+      setChannel(BroadcastChannel);        // source hop - listen on broadcast
       frame.Header.ReceiverId=0;
     } else{
-      frame.Header.ReceiverId=x;
-      setChannel(SlaveChannel);
+      frame.Header.ReceiverId=x;          //transmiter hop
+      setChannel(router.getChannel(x));  // set to channel of hop
+      setChannel(BroadcastChannel);
     }
     return Send(frame);
-
 }
 
 
@@ -472,12 +541,12 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
      return BackwardWelcome(frame);
 
    }
-
+   serverId=frame.Header.SourceId;
    myId=setup.address;
-   SlaveChannel=setup.slavechannel;
+   myChannel=setup.slavechannel;
    router.myId=myId;
    HostChannel=0;
-   SlaveChannel=0;
+   myChannel=0;
    connected=1;
    DBGINFO(myId);
    DBGINFO("CONNECT%");

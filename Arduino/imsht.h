@@ -11,6 +11,7 @@
 #define imSHT_h
 
 #include <inttypes.h>
+#include <Wire.h>
 
 #define Sht2xAddr		0x40
 #define Sht2xTempCmd	0xE3
@@ -23,5 +24,7 @@ class IMSht2x
 	public:
 		float GetHumidity(void);
 		float GetTemperature(void);
+		uint16_t GetHumidityBin(void);
+		uint16_t GetTemperatureBin(void);
 };
 #endif

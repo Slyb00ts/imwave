@@ -21,6 +21,20 @@ typedef void( * funIMTimer )( byte );
 
 
 
+/****************** Events *******************************/
+
+
+#define PRINTRADIO 1
+#define STARTBROADCAST 2
+#define STOPBROADCAST 3
+#define STARTDATA 4
+#define STOPDATA 5
+#define LISTENBROADCAST 101
+#define LISTENDATA 102
+
+
+
+
 extern "C" void PCINT0_vect(void)__attribute__ ((signal)); // handle pin change interrupt for D8 to D13 here
 
 class  IMTimer
