@@ -184,12 +184,14 @@ void Transceiver::setChannel(byte channel)
 {
   DBGINFO("CHN");
   DBGINFO(channel);
+  DBGINFO("_");
   cc1101->SetChannel(channel);
 }
 
 void Transceiver::Deconnect()
 {
   connected=false;
+  _salt=1;
   myId=0;
   router.reset();
   router.addMAC(myMAC,0xFF);
@@ -348,6 +350,16 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
 {
            if (myHost(frame)){
              timer.Calibrate(millis()+callibrate);
+             IMFrameSetup *sp=frame.Setup();
+             if (sp->salt!=_salt){   //host reboot
+                 Deconnect();
+                 DBGINFO("HOST REBBOT");
+
+                 if (sp->salt==0)     //send invalid knock
+                      return false;
+                 _salt=sp->salt; //accept new value
+             }
+
              if (ResponseHello(frame)){
                  ListenData();      //return to listen channel
                  DBGINFO(" rHELLO ");
@@ -362,7 +374,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
 
 }
 
-bool Transceiver::SendKnock()
+bool Transceiver::SendKnock(bool invalid)
 {
    setChannel(BroadcastChannel);
    IMFrame _frame;
@@ -373,6 +385,9 @@ bool Transceiver::SendKnock()
    _frame.Header.Sequence=ksequence++;
    _frame.Header.SourceId=myId;
    PrepareSetup(setup);
+   if (invalid){
+     setup.salt=0;
+   }
    //setup.device1= 5;
    _frame.Put(&setup);
    return Send(_frame);
@@ -381,51 +396,58 @@ bool Transceiver::SendKnock()
 
 void Transceiver::Knock()
 {
+   if (timer.Watchdog(50))
+   {
+      DBGINFO("WATCHDOG");
+      Deconnect();
+   }
    if (Connected())
    {
      if ((timer.Cycle() %5)==0)
      {
         DBGINFO("Knock ");
-        SendKnock();
+        SendKnock(false);
         DBGINFO("\r\n");
      }
      ListenData();
 
-   } else
+   } else{
+        DBGINFO("InvalidKnock ");
+        SendKnock(true);
+        DBGINFO("\r\n");
+
      ListenBroadcast();
+   }
 }
 
 
 bool Transceiver::ResponseHello(IMFrame & frame)
 {
 
-   IMFrameSetup *sp;
-   if (sp->salt!=_salt){   //host reboot
-     Deconnect();
-    _salt=sp->salt;
-   }
 
-
+   timer.Watchdog();
    _knocked++;
     if (Connected() && !(_knocked % 5))
      return false;
 
-   IMFrameSetup setup;
+   IMFrameSetup *sp=frame.Setup();
    IMFrame _frame;
-   frame.Get(&setup);
-   hostMAC=setup.MAC;
-   serverMAC=setup.MAC2;
-   myHop=setup.hop;
+//   frame.Get(&setup);
+   hostMAC=sp->MAC;
+   serverMAC=sp->MAC2;
+   myHop=sp->hop;
    myHop++;
    hostId=frame.Header.SourceId;
-   HostChannel=setup.hostchannel;
+   HostChannel=sp->hostchannel;
 
    setChannel(HostChannel);
 
+   IMFrameSetup setup;
    setup=EmptyIMFrameSetup;
    _frame.Reset();
    _frame.Header.SourceId=myId;   //if not registerred then myId==0
    _frame.Header.Function=IMF_HELLO+IMF_REPEAT ;
+   _frame.Header.ReceiverId=frame.Header.SenderId;
    _frame.Header.DestinationId=frame.Header.SourceId;
    _frame.Header.Sequence=frame.Header.Sequence;
 //   setup.salt=0x82;
@@ -472,18 +494,24 @@ bool Transceiver::Onward(IMFrame & frame)
         }
         else
         {
+           if (!Connected())
+           {
+              DBGERR("&NOTCNT");
+              return true;
+
+           }
 
            if (frame.Header.ReceiverId==myId)
            {
              if (frame.Forward())
-               return Forward(frame);
+                Forward(frame);
              else {
-               return Backward(frame);
+                Backward(frame);
              }
            } else {
               DBGERR("&NOTMY");
-              return true;
            }
+           return true;
         }
 
 }

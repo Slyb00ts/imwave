@@ -23,15 +23,12 @@
 #include "imdebug.h"
 
 
-#include "imtrans.h"
-#include "imtimer.h"
-#include "uart.h"
 
 
 
 /******************************** Configuration *************************************/
 
-#define MMAC 0x102030  // My MAC
+#define MMAC 0x102040  // My MAC
 
 #define RADIO_BUFFSIZE 63  //Buffer for radio
 
@@ -47,25 +44,14 @@
 #define DataDelay 1000
 #define DataDuration 300
 #define CycleDuration 3000
-/****************** Events *******************************/
 
-
-#define PRINTRADIO 1
-#define STARTBROADCAST 2
-#define STOPBROADCAST 3
-#define STARTDATA 4
-#define STOPDATA 5
-
-#define LISTENBROADCAST 101
-#define LISTENDATA 102
 
 /************************* Module specyfic functions **********************/
 
-//Used for error signaling (ON when restransmitting, OFF on receive success)
-#define ERRLEDON() digitalWrite(13,HIGH)
-#define ERRLEDOFF() digitalWrite(13,LOW)
-#define ERRLEDINIT() pinMode(13, OUTPUT)
 
+#include "imtrans.h"
+#include "imtimer.h"
+#include "uart.h"
 
 
 
@@ -76,7 +62,6 @@ unsigned short radio_writeout = 0xFFFF;
 /******************************* Objects **********************/
 
 IMCC1101  cc1101;
-IMTimer  Timer;
 Transceiver trx;
 
 int freeRam ()
@@ -101,7 +86,6 @@ void printRadio()
     {
       generatorUart();
     }
-
 }
 
 void pciSetup(byte pin)
@@ -122,25 +106,10 @@ void OnRead(byte state)
   {
     return ;
   }
-  Timer.doneListen();
+  trx.timer.doneListen();
 }
 
 
-void ListenBroadcast()
-{
-      trx.setChannel(trx.BroadcastChannel);
-      Timer.setStage(LISTENBROADCAST);
-      trx.StartReceive();
-
-}
-
-void ListenData()
-{
-      trx.setChannel(trx.SlaveChannel);
-      Timer.setStage(LISTENDATA);
-      trx.StartReceive();
-
-}
 
 
 
@@ -154,7 +123,6 @@ void SendData()
 
       DBGINFO("SendData ");
       trx.SendData(frame);
-      DBGINFO("PUSH ");
       if (trx.Retry())
       {
          DBGINFO("Retry");
@@ -165,54 +133,31 @@ void SendData()
          DBGINFO(trx.TX_buffer.len);    DBGINFO(",");
       }
       DBGINFO("\r\n");
-      ListenData();
+      trx.ListenData();
 
    } else {
-     ListenBroadcast();
+     trx.ListenBroadcast();
    }
 
 }
 
-void SendKnock()
-{
-   if (trx.Connected())
-   {
-     if ((Timer.Cycle() %5)==0)
-     {
-      DBGINFO("Knock ");
-       trx.Knock();
-      DBGINFO("\r\n");
-     }
-     ListenData();
-
-   } else
-     ListenBroadcast();
 
 
-}
-
-
-byte GetData()
+void ReceiveData()
 {
   static IMFrame rxFrame;
   if (trx.GetData()  )
-    {
-//      trx.printReceive();
+  {
+//    trx.printReceive();
       if (trx.GetFrame(rxFrame))
       {
         DBGINFO(" RSSI: ");           DBGINFO(trx.Rssi());            DBGINFO("dBm  ");
         if (rxFrame.Knock())
         {
            DBGINFO("\r\n receiveKnock ");
-           if (trx.myHost(rxFrame)){
-             Timer.Calibrate(millis()+BroadcastCallibrate);
-             if (trx.ResponseHello(rxFrame)){
-                 DBGINFO(" rHELLO ");
-                 return 1;
-              }
-
-           } else {
-             DBGINFO(" alien host ");
+           if (trx.ReceiveKnock(rxFrame))
+           {
+              DBGINFO(" sendHello ");
            }
            DBGINFO(" \r\n");
         }
@@ -223,26 +168,26 @@ byte GetData()
         }
         else if (rxFrame.Welcome())
         {
-              if (trx.ReceiveWelcome(rxFrame))
-                 DBGINFO(" Welcome ");
+           if (trx.ReceiveWelcome(rxFrame))
+              DBGINFO(" Welcome ");
 
-
-        } else if (trx.Onward(rxFrame)){
-
-           DBGINFO(" Onward ");
+        }
+        else if (trx.Onward(rxFrame))
+        {
+              DBGINFO(" Onward ");
         }
         else if (rxFrame.ACK())
         {
               trx.ReceiveACK(rxFrame);
-           DBGINFO(" ACK ");
-        } else{
+              DBGINFO(" ACK ");
+        }
+        else
+        {
           if (rxFrame.NeedACK())
              trx.SendACK(rxFrame);
           DBGINFO(" rxGET ");
           radioBufLen+=rxFrame.Get((uint8_t*)&(radioBuf[radioBufLen]));
           if (radio_writeout == 0xFFFF) radio_writeout = 0;  //signal the uart handler to start writing out
-          if (rxFrame.Repeat())
-               return 1;
         }
       }
       else
@@ -252,31 +197,10 @@ byte GetData()
 //      DBGINFO(millis());
       DBGINFO("\r\n");
   }
-  return 0;
 
 }
 
-void ReceiveData()
-{
-       DBGINFO('*');
 
-        while (GetData()){
-          trx.StartReceive();
-        }
-        trx.StartReceive();
-}
-
-void StopListen()
-{
- 
-  if (trx.Connected())
-  {
-    DBGINFO("stop listen");
-//    trx.Idle();
-//    Timer.setStage(Timer.IDDLESTAGE);
-  }
-
-}
 
 void stageloop(byte stage)
 {
@@ -284,13 +208,11 @@ void stageloop(byte stage)
 //  DBGINFO(":");  DBGINFO(stage);
   switch (stage)
   {
-    case STARTBROADCAST:  ListenBroadcast();      break;
-    case STOPBROADCAST:  SendKnock();      break;
+    case STARTBROADCAST:  trx.ListenBroadcast();      break;
+    case STOPBROADCAST:  trx.Knock();      break;
     case STARTDATA: SendData();break;
-    case STOPDATA:   StopListen();      break;
-
+    case STOPDATA:   trx.StopListen();      break;
     case PRINTRADIO:     printRadio(); break;
-
     case LISTENDATA : ReceiveData();break;
     case LISTENBROADCAST : ReceiveData();break;
 
@@ -310,20 +232,16 @@ void setup()
   trx.Init(cc1101);
   trx.myMAC=MMAC;
   trx.onEvent=OnRead;
-  Timer.onStage=stageloop;
+  trx.timer.onStage=stageloop;
   pciSetup(9);
 //  DBGINFO("classtest TRX");  DBGINFO(Transceiver::ClassTest());
-  DBGINFO("classtest Timer");  DBGINFO(IMTimer::ClassTest());
-    Timer.Setup(Timer.PERIOD,CycleDuration);
-    Timer.Setup(PRINTRADIO,RadioDelay);
-
-//    Timer.Setup(STARTSLAVE,SlaveDelay);
-    Timer.Setup(STARTDATA,DataDelay);
-    Timer.Setup(STOPDATA,DataDelay+DataDuration);
-
-    Timer.Setup(STARTBROADCAST,BroadcastDelay);
-    Timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration);
-
+   DBGINFO("classtest Timer");  DBGINFO(IMTimer::ClassTest());
+    trx.timer.Setup(trx.timer.PERIOD,CycleDuration);
+    trx.timer.Setup(PRINTRADIO,RadioDelay);
+    trx.timer.Setup(STARTDATA,DataDelay);
+    trx.timer.Setup(STOPDATA,DataDelay+DataDuration);
+    trx.timer.Setup(STARTBROADCAST,BroadcastDelay);
+    trx.timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration);
 }
 
 
@@ -333,16 +251,13 @@ void loop()
 {
 //  DBGINFO(freeRam());
 //  DBGINFO("FREE\r\n");
-  ERRLEDON();         delay(50);         ERRLEDOFF();
-
-  /************** radio to UART ************************/
+  ERRFLASH();
   byte xstage;
   do{
 
-     xstage=Timer.WaitStage();
+     xstage=trx.timer.WaitStage();
      stageloop(xstage);
-  }while( xstage==Timer.PERIOD);
-
+  }while( xstage==trx.timer.PERIOD);
 //  DBGINFO(")\r\n");
 
 }

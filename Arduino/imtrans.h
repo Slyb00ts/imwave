@@ -93,7 +93,7 @@ private:
     void Push(IMFrame & frame);
     bool BackwardWelcome(IMFrame & frame);
     void PrepareSetup(IMFrameSetup &se);
-    bool SendKnock();
+    bool SendKnock(bool invalid);
     bool myHost(IMFrame & frame);
     void StartReceive();
     void setChannel(byte channel);

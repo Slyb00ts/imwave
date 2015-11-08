@@ -43,6 +43,7 @@ class  IMTimer
     static IMTimer* ptrr; //static ptr to Sleep class for the ISR
     long waiting;
     long cycle;
+    byte watchdog;
     unsigned long start;
     byte current;
     volatile byte _listen;
@@ -71,6 +72,8 @@ class  IMTimer
         void setStage(byte stage);
         void doneListen();
         void doneWrite();
+        void Watchdog();
+        bool Watchdog(byte dog);
         long Cycle();
         void Calibrate(unsigned long time);
 

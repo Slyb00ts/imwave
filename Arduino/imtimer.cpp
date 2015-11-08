@@ -32,6 +32,15 @@ long IMTimer::Cycle()
   return cycle;
 }
 
+void IMTimer::Watchdog()
+{
+  watchdog=0;
+}
+
+bool IMTimer::Watchdog(byte dog)
+{
+  return watchdog>dog;
+}
 
 void IMTimer::Setup(byte stage, unsigned long waittime)
 {
@@ -105,8 +114,10 @@ byte IMTimer::WaitStage()
 
   }
   byte r= nearStage;
-  if (r==PERIOD)
+  if (r==PERIOD) {
      cycle++;
+     watchdog++;
+  }
   compute();
 
 
