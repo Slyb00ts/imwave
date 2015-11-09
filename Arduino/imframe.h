@@ -44,6 +44,9 @@ typedef struct {
 
 } IMFrameSetup;
 
+typedef struct {
+      uint16_t w[15];
+} IMFrameData;
 
 static const  IMFrameSetup EmptyIMFrameSetup={0};
 #define _frameBodySize _frameSize - sizeof(IMFrameHeader)
@@ -110,6 +113,10 @@ typedef struct
          return (IMFrameSetup *) &(Body);
         }
 
+        IMFrameData * Data()
+        {
+         return (IMFrameData *) &(Body);
+        }
 
         void Reset()
         {
