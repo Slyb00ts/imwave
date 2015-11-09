@@ -98,6 +98,9 @@ private:
     void StartReceive();
     void setChannel(byte channel);
     void Idle();
+    bool SendQueue();
+    bool RetryData();
+    bool Onward(IMFrame & frame);
 
 public:
     Transceiver();
@@ -110,8 +113,10 @@ public:
     IMAddress hostId;
     IMAddress serverId;
     IMMAC myMAC;
+
     IMMAC hostMAC;
     IMMAC serverMAC;
+    byte myDevice;
     byte HostChannel;
     byte myChannel;
     byte BroadcastChannel;
@@ -123,11 +128,12 @@ public:
     float Rssi();
 
 
-    bool Transmit();
     void Knock();
     void ListenData();
     void ListenBroadcast();
     void StopListen();
+    bool ParseFrame(IMFrame & rxFrame);
+    void Transmit();
 
 
 //    bool Local(IMFrame & frame);
@@ -137,11 +143,9 @@ public:
     bool ResponseHello(IMFrame & frame);
     bool ForwardHello(IMFrame & frame);
     void SendACK(IMFrame & frame);
-    bool Retry();
     bool SendData(IMFrame & frame);
 //    bool Routing(IMFrame & frame);
     bool Connected();
-    bool Onward(IMFrame & frame);
     void printReceive();
     void printSend();
     static short ClassTest();

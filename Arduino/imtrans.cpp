@@ -259,7 +259,7 @@ bool Transceiver::Send(IMFrame & frame)
   return Send();
 }
 
-bool Transceiver::Transmit()
+bool Transceiver::SendQueue()
 {
    byte io=0;
 /*   while (queue.pop(TX_buffer.packet))  {
@@ -282,7 +282,7 @@ void Transceiver::Push(IMFrame & frame)
 //   queue.push(frame);
 }
 
-bool Transceiver::Retry()
+bool Transceiver::RetryData()
 {
   /*   IMFrame * pf;
      pf=ack.toRetry();
@@ -300,7 +300,7 @@ void Transceiver::PrepareSetup(IMFrameSetup &se)
    se.MAC= myMAC;
    se.MAC2=serverMAC;
    se.salt=_salt;
-   se.device1= 6;
+   se.device1= myDevice;
    se.hostchannel=myChannel;
    se.hop=myHop;
 
@@ -315,11 +315,25 @@ bool Transceiver::SendData(IMFrame & frame)
    frame.Header.ReceiverId=hostId;
    frame.Header.Sequence = seqnr++;
    frame.Header.DestinationId=serverId;
-
    return Send(frame);
 
 }
 
+
+void Transceiver::Transmit()
+{
+      if (RetryData())
+      {
+         DBGINFO("Retry");
+      }
+      if (SendQueue())
+      {
+         DBGINFO("transmit:");  DBGINFO(millis());    DBGINFO(" ");
+         DBGINFO(TX_buffer.len);    DBGINFO(",");
+      }
+      DBGINFO("\r\n");
+      ListenData();
+}
 
 void Transceiver::ListenBroadcast()
 {
@@ -599,6 +613,48 @@ void Transceiver::SendACK(IMFrame & frame)
  Send(_f);
 
 }
+
+
+bool Transceiver::ParseFrame(IMFrame & rxFrame)
+{
+        if (rxFrame.Knock())
+        {
+           DBGINFO("\r\n receiveKnock ");
+           if (ReceiveKnock(rxFrame))
+           {
+              DBGINFO(" sendHello ");
+           }
+           DBGINFO(" \r\n");
+        }
+        else if (rxFrame.Hello())
+        {
+           if (ForwardHello(rxFrame))
+              DBGINFO(" FORWARDHello ");
+        }
+        else if (rxFrame.Welcome())
+        {
+           if (ReceiveWelcome(rxFrame))
+              DBGINFO(" Welcome ");
+
+        }
+        else if (Onward(rxFrame))
+        {
+              DBGINFO(" Onward ");
+        }
+        else if (rxFrame.ACK())
+        {
+              ReceiveACK(rxFrame);
+              DBGINFO(" ACK ");
+        }
+        else
+        {
+          return true;
+        }
+        return false;
+
+
+}
+
 
 void Transceiver::printReceive()
 {
