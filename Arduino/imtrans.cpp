@@ -363,7 +363,7 @@ void Transceiver::StopListen()
 bool Transceiver::ReceiveKnock(IMFrame & frame)
 {
            if (myHost(frame)){
-             timer.Calibrate(millis()+callibrate);
+             timer.Calibrate(millis()-callibrate);
              IMFrameSetup *sp=frame.Setup();
              if (sp->salt!=_salt){   //host reboot
                  Deconnect();
@@ -441,7 +441,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
 
    timer.Watchdog();
    _knocked++;
-    if (Connected() && !(_knocked % 5))
+    if (Connected() && (_knocked % 10))
      return false;
 
    IMFrameSetup *sp=frame.Setup();
@@ -538,6 +538,7 @@ bool Transceiver::ForwardHello(IMFrame & frame)
     IMAddress a=frame.Header.SenderId;
     if (frame.Onward())   // first hop
     {
+      frame.Header.DestinationId=serverId;
       frame.Header.SourceId=myId; // server should know where send welcome
       a=0;                        // register MAC with no addres (no bypass)
     }
@@ -574,7 +575,7 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    setup=EmptyIMFrameSetup;
    frame.Get(&setup);
 
-   DBGINFO("%MAC");
+   DBGINFO("\r\n%MAC");
    DBGINFO(setup.MAC);
    DBGINFO(":");
    DBGINFO(setup.MAC2);
@@ -629,7 +630,7 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
         else if (rxFrame.Hello())
         {
            if (ForwardHello(rxFrame))
-              DBGINFO(" FORWARDHello ");
+              DBGINFO(" FORWHello ");
         }
         else if (rxFrame.Welcome())
         {
@@ -648,10 +649,15 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
         }
         else
         {
-          return true;
+              DBGINFO(" tue ");
+          return false;
         }
-        return false;
+     if (Connected())
+        ListenData();
+     else
+        ListenBroadcast();
 
+        return true;
 
 }
 

@@ -30,6 +30,9 @@ unsigned long IMTimer::getTime(unsigned long time)
 long IMTimer::Cycle()
 {
   return cycle;
+  DBGINFO("CYC(");
+  DBGINFO(cycle);
+
 }
 
 void IMTimer::Watchdog()
