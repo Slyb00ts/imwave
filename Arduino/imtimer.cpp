@@ -10,9 +10,11 @@ IMTimer::IMTimer()
 
 void IMTimer::Calibrate(unsigned long time)
 {
+  unsigned long del=start;
    start=time;
+   del=time-del- stages[PERIOD]+50000;
    DBGINFO("cl%");
-   DBGINFO(start);
+   DBGINFO(del);
 }
 
 unsigned long IMTimer::getTime()
@@ -112,7 +114,7 @@ byte IMTimer::WaitStage()
    }
    if ((waiting % 2000)==2)
    {
-     return 8;
+     return LAP;
    }
 
   }

@@ -62,6 +62,7 @@ class  IMTimer
         funIMTimer onListen;
         static const byte IDDLESTAGE = 100;
         static const byte PERIOD = 0;
+        static const byte LAP = 8;
 
 
 	friend void PCINT0_vect(void);

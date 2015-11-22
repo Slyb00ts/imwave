@@ -375,7 +375,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
              }
 
              if (ResponseHello(frame)){
-                 ListenData();      //return to listen channel
+                 ListenBroadcast();      //return to broadcas channel (wait to WELCOME)
                  DBGINFO(" rHELLO ");
                  return true;
               }
@@ -415,23 +415,24 @@ void Transceiver::Knock()
       DBGINFO("WATCHDOG");
       Deconnect();
    }
-   if (Connected())
-   {
-     if ((timer.Cycle() %5)==0)
+//   if ((timer.Cycle() %5)==0){
+     if (Connected())
      {
-        DBGINFO("Knock ");
-        SendKnock(false);
-        DBGINFO("\r\n");
+
+          DBGINFO("Knock ");
+          SendKnock(false);
+          DBGINFO("\r\n");
+
+       ListenData();
+
+     } else{
+          DBGINFO("InvalidKnock ");
+          SendKnock(true);
+          DBGINFO("\r\n");
+
+       ListenBroadcast();
      }
-     ListenData();
-
-   } else{
-        DBGINFO("InvalidKnock ");
-        SendKnock(true);
-        DBGINFO("\r\n");
-
-     ListenBroadcast();
-   }
+//   }
 }
 
 
@@ -456,8 +457,9 @@ bool Transceiver::ResponseHello(IMFrame & frame)
 
    setChannel(HostChannel);
 
-   IMFrameSetup setup;
-   setup=EmptyIMFrameSetup;
+   IMFrameSetup * setup=_frame.Setup();
+
+   (*setup) =EmptyIMFrameSetup;
    _frame.Reset();
    _frame.Header.SourceId=myId;   //if not registerred then myId==0
    _frame.Header.Function=IMF_HELLO+IMF_REPEAT ;
@@ -465,11 +467,11 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    _frame.Header.DestinationId=frame.Header.SourceId;
    _frame.Header.Sequence=frame.Header.Sequence;
 //   setup.salt=0x82;
-   PrepareSetup(setup);
-   _frame.Put(&setup);
+   PrepareSetup(*setup);
+//   _frame.Put(&setup);
    DBGINFO("%");
    DBGINFO(_frame.Header.Sequence);
-   DBGERR2(setup.MAC,HEX);
+   DBGERR2(setup->MAC,HEX);
    Send(_frame);
    return true;   //changed channel
 }
@@ -626,6 +628,7 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
               DBGINFO(" sendHello ");
            }
            DBGINFO(" \r\n");
+           return true;
         }
         else if (rxFrame.Hello())
         {
