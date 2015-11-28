@@ -18,6 +18,10 @@
 // PUBLIC
 //
 
+#ifndef TimerKnockCycle
+#define TimerKnockCycle 5
+#endif
+
 Transceiver* Transceiver::ptr = 0;
 
 Transceiver::Transceiver()
@@ -173,6 +177,7 @@ void Transceiver::setRssi()
 {
             crc = pPacket->Body[pPacket->Header.Len+1];
             unsigned short c = pPacket->Body[pPacket->Header.Len];
+            rssiH=c;
             rssi = c;
             if (c&0x80) rssi -= 256;
             rssi /= 2;
@@ -206,12 +211,12 @@ bool Transceiver::Connected()
 
 bool Transceiver::myHost(IMFrame & frame)
 {
-  if (Connected()){
+//  if (Connected()){
 //     IMFrameSetup setup;
 //     frame.Get(&setup);
      return hostMAC==frame.Setup()->MAC;
-  } else
-     return true;
+//  } else
+//     return true;
 }
 
 
@@ -362,17 +367,33 @@ void Transceiver::StopListen()
 
 bool Transceiver::ReceiveKnock(IMFrame & frame)
 {
-           if (myHost(frame)){
-             timer.Calibrate(millis()-callibrate);
-             IMFrameSetup *sp=frame.Setup();
-             if (sp->salt!=_salt){   //host reboot
-                 Deconnect();
-                 DBGINFO("HOST REBBOT");
+           IMFrameSetup *sp=frame.Setup();
+           if (Connected()) {
+              if (myHost(frame)){
+                if (sp->salt!=_salt){   //host reboot
+                   Deconnect();
+                   DBGINFO("HOST REBBOT");
+                } else {
+                   timer.Calibrate(millis()-callibrate);
+                }
+              } else {
+                        DBGINFO(" alien host ");
+                        return false;
+              }
 
-                 if (sp->salt==0)     //send invalid knock
+           }
+
+           if (sp->salt==0) {    //send invalid knock
+                        DBGINFO(" inv ");
                       return false;
-                 _salt=sp->salt; //accept new value
              }
+
+//           if (myHost(frame)){
+//             if (sp->salt!=_salt){   //host reboot
+//                 Deconnect();
+//                 DBGINFO("HOST REBBOT");
+
+               _salt=sp->salt; //accept new value
 
              if (ResponseHello(frame)){
                  ListenBroadcast();      //return to broadcas channel (wait to WELCOME)
@@ -380,9 +401,6 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                  return true;
               }
 
-           } else {
-                        DBGINFO(" alien host ");
-           }
            return false;
 
 
@@ -392,47 +410,47 @@ bool Transceiver::SendKnock(bool invalid)
 {
    setChannel(BroadcastChannel);
    IMFrame _frame;
-   IMFrameSetup setup;
-   setup=EmptyIMFrameSetup;
+   IMFrameSetup *setup=_frame.Setup();
+//   setup=EmptyIMFrameSetup;
    _frame.Reset();
    _frame.Header.Function=IMF_KNOCK;
    _frame.Header.Sequence=ksequence++;
    _frame.Header.SourceId=myId;
-   PrepareSetup(setup);
+   PrepareSetup(*setup);
    if (invalid){
-     setup.salt=0;
+     setup->salt=0;
    }
-   //setup.device1= 5;
-   _frame.Put(&setup);
+//   _frame.Put(&setup);
    return Send(_frame);
 }
 
 
 void Transceiver::Knock()
 {
-   if (timer.Watchdog(50))
+   if (timer.Watchdog(90+TimerKnockCycle*3))
    {
       DBGINFO("WATCHDOG");
       Deconnect();
    }
-//   if ((timer.Cycle() %5)==0){
-     if (Connected())
-     {
+   if (Connected())
+   {
 
+      if ((timer.Cycle() %TimerKnockCycle)==0){
           DBGINFO("Knock ");
           SendKnock(false);
           DBGINFO("\r\n");
+          ListenData();
+       }
 
-       ListenData();
-
-     } else{
+   } else {
+       if ((timer.Cycle() % 3)==0){
           DBGINFO("InvalidKnock ");
           SendKnock(true);
           DBGINFO("\r\n");
-
+       }
        ListenBroadcast();
-     }
-//   }
+   }
+
 }
 
 
@@ -447,7 +465,6 @@ bool Transceiver::ResponseHello(IMFrame & frame)
 
    IMFrameSetup *sp=frame.Setup();
    IMFrame _frame;
-//   frame.Get(&setup);
    hostMAC=sp->MAC;
    serverMAC=sp->MAC2;
    myHop=sp->hop;
@@ -459,15 +476,16 @@ bool Transceiver::ResponseHello(IMFrame & frame)
 
    IMFrameSetup * setup=_frame.Setup();
 
-   (*setup) =EmptyIMFrameSetup;
+//   (*setup) =EmptyIMFrameSetup;
    _frame.Reset();
    _frame.Header.SourceId=myId;   //if not registerred then myId==0
    _frame.Header.Function=IMF_HELLO+IMF_REPEAT ;
    _frame.Header.ReceiverId=frame.Header.SenderId;
    _frame.Header.DestinationId=frame.Header.SourceId;
    _frame.Header.Sequence=frame.Header.Sequence;
-//   setup.salt=0x82;
    PrepareSetup(*setup);
+    setup->rssi=rssiH;
+
 //   _frame.Put(&setup);
    DBGINFO("%");
    DBGINFO(_frame.Header.Sequence);
@@ -483,10 +501,9 @@ bool Transceiver::Backward(IMFrame & frame)
    IMFrame _frame;
    _frame=frame;
    DBGINFO("BACKWARD");
-//          setChannel(SlaveChannel);   //get proper channel form router
    _frame.Header.Function=frame.Header.Function | IMF_FORWARD;
    _frame.Header.ReceiverId=router.Repeater(frame.Header.DestinationId);
-   setChannel(router.getChannel(_frame.Header.ReceiverId));
+   setChannel(router.getChannel(_frame.Header.ReceiverId));  //get proper channel form router
    return Send(_frame);
 }
 
@@ -499,7 +516,6 @@ bool Transceiver::Forward(IMFrame & frame)
    _frame.Header.Function=frame.Header.Function | IMF_FORWARD;
    _frame.Header.ReceiverId=hostId;
    return Send(_frame);
-
 }
 
 bool Transceiver::Onward(IMFrame & frame)
@@ -514,7 +530,6 @@ bool Transceiver::Onward(IMFrame & frame)
            {
               DBGERR("&NOTCNT");
               return true;
-
            }
 
            if (frame.Header.ReceiverId==myId)
@@ -560,7 +575,7 @@ bool Transceiver::BackwardWelcome(IMFrame & frame)
     if (x==0) {
       setChannel(BroadcastChannel);        // source hop - listen on broadcast
       frame.Header.ReceiverId=0;
-    } else{
+    } else {
       frame.Header.ReceiverId=x;          //transmiter hop
       setChannel(router.getChannel(x));  // set to channel of hop
       setChannel(BroadcastChannel);
@@ -584,7 +599,6 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    if  (setup.MAC!=myMAC) {
      DBGINFO("NOT FOR ME");
      return BackwardWelcome(frame);
-
    }
    serverId=frame.Header.SourceId;
    myId=setup.address;
@@ -593,10 +607,10 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    HostChannel=0;
    myChannel=0;
    connected=1;
+   callibrate=300+myId*30;
    DBGINFO(myId);
    DBGINFO("CONNECT%");
    return true;
-
 }
 
 
@@ -609,12 +623,11 @@ void Transceiver::ReceiveACK(IMFrame & frame)
 
 void Transceiver::SendACK(IMFrame & frame)
 {
- IMFrame _f = frame;
- _f.Header.Function=IMF_ACK  ;
- _f.Header.DestinationId=frame.Header.SourceId;
- _f.Header.SourceId=myId;
- Send(_f);
-
+  IMFrame _f = frame;
+  _f.Header.Function=IMF_ACK  ;
+  _f.Header.DestinationId=frame.Header.SourceId;
+  _f.Header.SourceId=myId;
+  Send(_f);
 }
 
 
@@ -655,12 +668,13 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
               DBGINFO(" tue ");
           return false;
         }
+
      if (Connected())
         ListenData();
      else
         ListenBroadcast();
 
-        return true;
+     return true;
 
 }
 
@@ -721,7 +735,6 @@ void Transceiver::Rupture()
 ISR(PCINT0_vect) // handle pin change interrupt for D8 to D13 here
 {
    Transceiver::ptr->Rupture();
-
 }
 
 

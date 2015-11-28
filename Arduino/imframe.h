@@ -41,6 +41,7 @@ typedef struct {
         uint8_t hostchannel;
         uint8_t slavechannel;
         uint8_t hop;
+        uint8_t rssi;
 
 } IMFrameSetup;
 

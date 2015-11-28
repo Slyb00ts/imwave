@@ -75,6 +75,7 @@ private:
     byte seqnr;
     byte ksequence;
     volatile byte ruptures[2];
+    byte rssiH;
     float rssi;
     unsigned short rSize;
     unsigned short crc;
