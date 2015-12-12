@@ -102,6 +102,8 @@ private:
     bool SendQueue();
     bool RetryData();
     bool Onward(IMFrame & frame);
+    bool TestFrame();
+    uint8_t GetData();
 
 public:
     Transceiver();
@@ -125,7 +127,6 @@ public:
     void Init(IMCC1101 & cc);
     friend void PCINT0_vect(void);
     bool GetFrame(IMFrame&frame);
-    uint8_t GetData();
     float Rssi();
 
 

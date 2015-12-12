@@ -109,7 +109,7 @@ bool Transceiver::Routing(IMFrame & frame)
 */
 
 
-bool Transceiver::GetFrame(IMFrame & frame)
+bool Transceiver::TestFrame()
 {
       bool io= ((RX_buffer.len>=sizeof(header_t)) && (RX_buffer.len<=sizeof(packet_t)));
       if (io)
@@ -126,17 +126,29 @@ bool Transceiver::GetFrame(IMFrame & frame)
           return io;
       };
 
-      if (io) {
-        frame=RX_buffer.packet;
-        setRssi();
-      } else {
+      if (!io) {
           DBGERR("Address");
           DBGERR(RX_buffer.packet.Header.ReceiverId);
-          return io;
       };
 
       return io;
 
+}
+
+bool Transceiver::GetFrame(IMFrame& frame)
+{
+  if (GetData()) {
+    bool io = TestFrame();
+    if (io) {
+        frame=RX_buffer.packet;
+        setRssi();
+        DBGINFO(" RSSI: ");           DBGINFO(Rssi());            DBGINFO("dBm  ");
+    }
+    return io;
+
+  } else {
+     return false;
+  }
 }
 
 
@@ -358,7 +370,7 @@ void Transceiver::StopListen()
 {
     if (Connected())
     {
-       DBGINFO("stop listen");
+//       DBGINFO("stop listen");
 //     trx.Idle();
 //     Timer.setStage(Timer.IDDLESTAGE);
    }
@@ -460,8 +472,11 @@ bool Transceiver::ResponseHello(IMFrame & frame)
 
    timer.Watchdog();
    _knocked++;
-    if (Connected() && (_knocked % 10))
+    if (Connected() && (_knocked % 10))  {
+       DBGINFO("notHL ");
+
      return false;
+    }
 
    IMFrameSetup *sp=frame.Setup();
    IMFrame _frame;
@@ -587,22 +602,23 @@ bool Transceiver::BackwardWelcome(IMFrame & frame)
 
 bool Transceiver::ReceiveWelcome(IMFrame & frame)
 {
-   IMFrameSetup setup;
+   IMFrameSetup * setup =frame.Setup();
 
-   setup=EmptyIMFrameSetup;
-   frame.Get(&setup);
+//   setup=EmptyIMFrameSetup;
+//   frame.Get(&setup);
 
    DBGINFO("\r\n%MAC");
-   DBGINFO(setup.MAC);
+   DBGINFO(setup->MAC);
    DBGINFO(":");
-   DBGINFO(setup.MAC2);
-   if  (setup.MAC!=myMAC) {
-     DBGINFO("NOT FOR ME");
+   DBGINFO(setup->MAC2);
+   if  (setup->MAC!=myMAC) {
+     DBGINFO("*****NOT FORME ");
+     DBGINFO(myMAC);
      return BackwardWelcome(frame);
    }
    serverId=frame.Header.SourceId;
-   myId=setup.address;
-   myChannel=setup.slavechannel;
+   myId=setup->address;
+   myChannel=setup->slavechannel;
    router.myId=myId;
    HostChannel=0;
    myChannel=0;
@@ -666,7 +682,10 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
         else
         {
               DBGINFO(" tue ");
-          return false;
+              if (rxFrame.NeedACK())
+                       SendACK(rxFrame);
+
+              return false;
         }
 
      if (Connected())

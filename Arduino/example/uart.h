@@ -20,7 +20,6 @@
 
 char uartBuf[UART_BUFFSIZE] = {0,};
 unsigned short uartBufLen = 0;
-unsigned short seqnr = 0;
 static uint8_t lasthop=0;//counter for retries
 
 
@@ -38,6 +37,33 @@ void shiftUartBuffer(unsigned short x)
       }
 }
 
+long internalVcc() {
+  long result;
+  // Read 1.1V reference against AVcc
+  ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+  delay(2); // Wait for Vref to settle
+  ADCSRA |= _BV(ADSC); // Convert
+  while (bit_is_set(ADCSRA,ADSC));
+  result = ADCL;
+  result |= ADCH<<8;
+  result = 1126400L / result; // Back-calculate AVcc in mV
+  return result;
+}
+
+long internalTemp() {
+//  https://code.google.com/p/tinkerit/wiki/SecretThermometer
+  long result;
+  // Read temperature sensor against 1.1V reference
+  ADMUX = _BV(REFS1) | _BV(REFS0) | _BV(MUX3);
+  delay(2); // Wait for Vref to settle
+  ADCSRA |= _BV(ADSC); // Convert
+  while (bit_is_set(ADCSRA,ADSC));
+  result = ADCL;
+  result |= ADCH<<8;
+  result = (result - 125) * 1075;
+  return result;
+}
+
 
 void generatorUart()
 {
@@ -51,12 +77,25 @@ void generatorUart()
 
 void UartPrepareData(IMFrame &frame)
 {
-      seqnr++;  //new data -> increase sequence number
-      frame.Header.Sequence = seqnr;
-      frame.Header.Function = IMF_DATA;
-      byte x=frame.Put((uint8_t *)uartBuf,uartBufLen);
+  IMFrameData *dt=frame.Data();
+  DBGINFO("ml:");
+  DBGINFO(millis());
+  dt->w[0]=millis();
+  dt->w[1]=millis()>>16;
+//  long x =internalVcc();
+  long x=500;
+  DBGINFO("vcc:");
+  DBGINFO(x);
+  dt->w[2]=x;
+  dt->w[3]=x >>16;
+//  x =internalTemp();
+  dt->w[4]=x;
+  dt->w[5]=x >>16;
+  DBGINFO("tmo:");
+  DBGINFO(x);
+  DBGINFO("\r\n");
 
-      shiftUartBuffer(x);
+ //   shiftUartBuffer(x);
 
 }
 
