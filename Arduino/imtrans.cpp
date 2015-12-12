@@ -20,7 +20,13 @@
 
 #ifndef TimerKnockCycle
 #define TimerKnockCycle 5
+#define TimerHelloCycle 30
 #endif
+
+#if DBGLVL>=1
+  #define TimerHelloCycle 10
+#endif
+
 
 Transceiver* Transceiver::ptr = 0;
 
@@ -120,7 +126,7 @@ bool Transceiver::TestFrame()
         return io;
       }
       if (io){
-         io =( (pPacket->Header.ReceiverId==myId) ||  (pPacket->Header.ReceiverId==0));
+         io =( (RX_buffer.packet.Header.ReceiverId==myId) ||  (RX_buffer.packet.Header.ReceiverId==0));
       } else {
           DBGERR("!CRC");
           return io;
@@ -187,9 +193,11 @@ float Transceiver::Rssi()
 
 void Transceiver::setRssi()
 {
-            crc = pPacket->Body[pPacket->Header.Len+1];
-            unsigned short c = pPacket->Body[pPacket->Header.Len];
+            crc = RX_buffer.packet.Body[_frameBodySize+1];
+            unsigned short c = RX_buffer.packet.Body[_frameBodySize];
             rssiH=c;
+//             DBGINFO(c);
+//            DBGINFO("&");
             rssi = c;
             if (c&0x80) rssi -= 256;
             rssi /= 2;
@@ -472,7 +480,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
 
    timer.Watchdog();
    _knocked++;
-    if (Connected() && (_knocked % 10))  {
+    if (Connected() && (_knocked % TimerHelloCycle))  {
        DBGINFO("notHL ");
 
      return false;
