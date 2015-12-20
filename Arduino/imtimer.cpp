@@ -31,6 +31,23 @@ unsigned long IMTimer::getTime(unsigned long time)
   return ((time-start) %stages[PERIOD]);
 }
 
+void IMTimer::sleep(unsigned long time)
+{
+  period_t xtime;
+  if (time==15)  xtime=SLEEP_15Ms;
+  else if (time==30) xtime=SLEEP_30MS;
+  else if (time==60) xtime=SLEEP_60MS;
+  else {
+    delay(time);
+//    return;
+  }
+//   delay(time);
+ // LowPower.powerDown(xtime, ADC_OFF, BOD_OFF);
+ LowPower.idle(xtime, ADC_OFF, TIMER4_OFF,TIMER3_OFF,TIMER1_ON,TIMER0_ON, SPI_ON,USART1_OFF,TWI_ON, USB_ON);
+
+
+
+}
 
 long IMTimer::Cycle()
 {
@@ -86,7 +103,7 @@ void IMTimer::setStage(byte stage)
 
 byte IMTimer::WaitStage()
 {
-  DBGINFO("{\r\n");
+/*  DBGINFO("{\r\n");
   DBGINFO(nearTime);
   DBGINFO('%');
   DBGINFO(millis());
@@ -94,7 +111,7 @@ byte IMTimer::WaitStage()
   DBGINFO(getTime());
   DBGINFO('%');
   DBGINFO(cycle);
-
+  */
   while(nearTime >getTime())
   {
      waiting++;
@@ -103,13 +120,15 @@ byte IMTimer::WaitStage()
 //       if (next>202)
 //          delay(200);
 //       else
-       if (next>52)
-          delay(40);
+       if (next>72)
+          sleep(60);
        else
-         delay(2);
+         sleep(2);
      }
      if (_listen){
        _listen=0;
+       DBGINFO(">>");
+       DBGINFO(millis());
        return current;
      }
      if ((waiting % 2000)==2)

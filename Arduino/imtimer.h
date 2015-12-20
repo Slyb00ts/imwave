@@ -11,6 +11,7 @@
 #ifndef imTimer_h
 #define imTimer_h
 #include <avr/interrupt.h>
+#include <LowPower.h>
 
 
 #include <Arduino.h>
@@ -54,6 +55,7 @@ class  IMTimer
     void compute();
     unsigned long getTime();
     unsigned long getTime(unsigned long time);
+    void sleep(unsigned long time);
 
 
   public:
