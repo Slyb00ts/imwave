@@ -13,8 +13,11 @@ void IMTimer::Calibrate(unsigned long time)
   unsigned long del=start;
    start=time;
    del=time-del- stages[PERIOD]+50000;
-   DBGINFO("cl%");
+   DBGINFO("cl");
    DBGINFO(del);
+   DBGINFO("%");
+   DBGINFO(time);
+
 }
 
 unsigned long IMTimer::getTime()
@@ -71,18 +74,8 @@ void IMTimer::compute()
   }
 
 }
-/*
-byte IMTimer::Find(unsigned long _next)
-{
-  for(byte i=0 ;i<maxStages;i++)
-  {
-    if  (_next=stages[i])
-       return i;
-  }
-  return 0;
 
-}
-*/
+
 
 void IMTimer::setStage(byte stage)
 {
@@ -93,35 +86,45 @@ void IMTimer::setStage(byte stage)
 
 byte IMTimer::WaitStage()
 {
-/*  DBGINFO("{\r\n");
+  DBGINFO("{\r\n");
   DBGINFO(nearTime);
   DBGINFO('%');
-  DBGINFO(waiting);
+  DBGINFO(millis());
   DBGINFO('%');
   DBGINFO(getTime());
   DBGINFO('%');
   DBGINFO(cycle);
-*/
+
   while(nearTime >getTime())
   {
-   waiting++;
-   if ((nearTime+3) > getTime()) {
-     delay(2);
-   }
-   if (_listen){
-     _listen=0;
-     return current;
-   }
-   if ((waiting % 2000)==2)
-   {
-     return LAP;
-   }
+     waiting++;
+     long next=nearTime-getTime();
+     if (next > 3) {
+//       if (next>202)
+//          delay(200);
+//       else
+       if (next>52)
+          delay(40);
+       else
+         delay(2);
+     }
+     if (_listen){
+       _listen=0;
+       return current;
+     }
+     if ((waiting % 2000)==2)
+     {
+       return LAP;
+     }
 
   }
+
+
   byte r= nearStage;
   if (r==PERIOD) {
      cycle++;
      watchdog++;
+     delay(20);
   }
   compute();
 
@@ -132,6 +135,9 @@ byte IMTimer::WaitStage()
 void IMTimer::doneListen()
 {
    _listen++;
+   DBGINFO("??");
+   DBGINFO(millis());
+
 }
 void IMTimer::doneWrite()
 {

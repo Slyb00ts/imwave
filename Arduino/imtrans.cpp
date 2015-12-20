@@ -37,7 +37,7 @@ Transceiver::Transceiver()
   HostChannel=0;
   myChannel=0;
   BroadcastChannel=0;
-  callibrate=300;
+  callibrate=200;
   Deconnect();
 }
 
@@ -221,6 +221,7 @@ void Transceiver::Deconnect()
   router.reset();
   router.addMAC(myMAC,0xFF);
   DBGINFO("Deconnect");
+  timer.Watchdog();
 }
 
 bool Transceiver::Connected()
@@ -481,7 +482,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    timer.Watchdog();
    _knocked++;
     if (Connected() && (_knocked % TimerHelloCycle))  {
-       DBGINFO("notHL ");
+       DBGINFO("notHELLO ");
 
      return false;
     }
@@ -502,7 +503,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
 //   (*setup) =EmptyIMFrameSetup;
    _frame.Reset();
    _frame.Header.SourceId=myId;   //if not registerred then myId==0
-   _frame.Header.Function=IMF_HELLO+IMF_REPEAT ;
+   _frame.Header.Function=IMF_HELLO ;
    _frame.Header.ReceiverId=frame.Header.SenderId;
    _frame.Header.DestinationId=frame.Header.SourceId;
    _frame.Header.Sequence=frame.Header.Sequence;

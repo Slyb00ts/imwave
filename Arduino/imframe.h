@@ -9,6 +9,7 @@
 #define IMF_WELCOME   0x06
 #define IMF_ACK       0x08
 #define IMF_DATA      0x09
+#define IMF_ORDER     0x0A
 #define IMF_REPEAT    0x80
 #define IMF_FORWARD   0x20
 #define _frameSize  32
