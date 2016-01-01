@@ -37,7 +37,7 @@ Transceiver::Transceiver()
   HostChannel=0;
   myChannel=0;
   BroadcastChannel=0;
-  callibrate=200;
+  calibrate=200;
   Deconnect();
 }
 
@@ -185,10 +185,28 @@ uint8_t Transceiver::CRC(IMFrame & f)
  
 }  
 
-float Transceiver::Rssi()
+float Transceiver::Rssi(byte h  )
 {
+            float rssi = h;
+            if (h&0x80) rssi -= 256;
+            rssi /= 2;
+            rssi -= 74;
   return rssi;
 }
+float Transceiver::Rssi()
+{
+   return Rssi(rssiH);
+}
+float Transceiver::RssiListen()
+{
+   return Rssi(hostRssiListen);
+}
+float Transceiver::RssiSend()
+{
+   return Rssi(hostRssiSend);
+}
+
+
 
 
 void Transceiver::setRssi()
@@ -198,10 +216,10 @@ void Transceiver::setRssi()
             rssiH=c;
 //             DBGINFO(c);
 //            DBGINFO("&");
-            rssi = c;
-            if (c&0x80) rssi -= 256;
-            rssi /= 2;
-            rssi -= 74;
+//            rssi = c;
+//            if (c&0x80) rssi -= 256;
+//            rssi /= 2;
+//            rssi -= 74;
 
 }
 
@@ -393,7 +411,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                    Deconnect();
                    DBGINFO("HOST REBBOT");
                 } else {
-                   timer.Calibrate(millis()-callibrate);
+                   timer.Calibrate(millis()-calibrate);
                 }
               } else {
                         DBGINFO(" alien host ");
@@ -507,6 +525,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    _frame.Header.Sequence=frame.Header.Sequence;
    PrepareSetup(*setup);
     setup->rssi=rssiH;
+    hostRssiListen=rssiH;
 
 //   _frame.Put(&setup);
    DBGINFO("%");
@@ -580,6 +599,7 @@ bool Transceiver::ForwardHello(IMFrame & frame)
       frame.Header.DestinationId=serverId;
       frame.Header.SourceId=myId; // server should know where send welcome
       a=0;                        // register MAC with no addres (no bypass)
+      frame.Setup()->rssi=rssiH;  // send RSSI to server
     }
     router.addMAC(setup_recv.MAC,a);
     return Forward(frame);
@@ -626,11 +646,12 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    serverId=frame.Header.SourceId;
    myId=setup->address;
    myChannel=setup->slavechannel;
+   hostRssiSend=setup->rssi;
    router.myId=myId;
    HostChannel=0;
    myChannel=0;
    connected=1;
-   callibrate=300+myId*30;
+   calibrate=300+myId*30;
    DBGINFO(myId);
    DBGINFO("CONNECT%");
    return true;
@@ -730,6 +751,22 @@ void Transceiver::printSend()
       }
 }
 
+
+void Transceiver::printStatus()
+{
+          DBGINFO(" RSSI ");
+          DBGINFO(RssiListen());
+          DBGINFO("  ");
+          DBGINFO(RssiSend());
+          DBGINFO(" dBm ");
+          DBGINFO(" Deviation ");
+          DBGINFO(timer.DeviationPlus);
+          DBGINFO("  ");
+          DBGINFO(timer.DeviationMinus);
+          DBGINFO("  ");
+          DBGINFO(calibrate);
+
+}
 
 
 

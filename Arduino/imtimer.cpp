@@ -12,16 +12,14 @@ void IMTimer::Calibrate(unsigned long time)
 {
   unsigned long del=start;
    start=time;
-   del=time-del- stages[PERIOD]+50000;
-   if (del>0)
+   del=(time-del)%1000;
+   if (del<500)
      DeviationPlus+=del;
    else
+   {
      DeviationMinus-=del;
-
-//   DBGINFO("cl");
-//   DBGINFO(del);
-//   DBGINFO("%");
-//   DBGINFO(time);
+     DeviationMinus+=1000;
+   }
 
 }
 

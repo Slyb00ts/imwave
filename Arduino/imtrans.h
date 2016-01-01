@@ -71,12 +71,14 @@ private:
     byte _knocked;
     byte myHop;
     uint16_t _salt;
-    uint16_t callibrate;
+    uint16_t calibrate;
     byte seqnr;
     byte ksequence;
     volatile byte ruptures[2];
-    byte rssiH;
-    float rssi;
+    byte rssiH;  //from last receinve frame
+    byte hostRssiSend;     //from hello
+    byte hostRssiListen;  //from welcome
+//    float rssi;
     unsigned short rSize;
     unsigned short crc;
     void setRssi();
@@ -127,7 +129,6 @@ public:
     void Init(IMCC1101 & cc);
     friend void PCINT0_vect(void);
     bool GetFrame(IMFrame&frame);
-    float Rssi();
 
 
     void Knock();
@@ -150,6 +151,11 @@ public:
     bool Connected();
     void printReceive();
     void printSend();
+    void printStatus();
+    float Rssi(byte h); //compute Rssi from byte
+    float Rssi(); //return last Rssi
+    float RssiListen();
+    float RssiSend();
     static short ClassTest();
 
 private:

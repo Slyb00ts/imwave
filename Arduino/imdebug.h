@@ -50,7 +50,7 @@
 
 
 #if DBGLVL>=1
-#define INITDBG()    delay(3000);\
+#define INITDBG()    delay(6000);\
                      dbgSerial.begin(dbgSerialSpeed);\
                      dbgSerial.print("\r\n\r\nHello\r\n\r\n")
 
