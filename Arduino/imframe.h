@@ -4,12 +4,13 @@
 #include <Arduino.h>
 
 
-#define IMF_KNOCK     0x04        // Packet automation control
-#define IMF_HELLO     0x05
-#define IMF_WELCOME   0x06
+#define IMF_KNOCK     0x04        // broadcast
+#define IMF_HELLO     0x05        // response to broadcast
+#define IMF_WELCOME   0x06        // register hop
 #define IMF_ACK       0x08
 #define IMF_DATA      0x09
 #define IMF_ORDER     0x0A
+#define IMF_STATUS    0x0B        //internal status
 #define IMF_REPEAT    0x80
 #define IMF_FORWARD   0x20
 #define _frameSize  32
@@ -47,8 +48,19 @@ typedef struct {
 } IMFrameSetup;
 
 typedef struct {
-      uint16_t w[15];
+      uint16_t w[11];
 } IMFrameData;
+
+
+typedef struct {
+   uint16_t Version;
+   uint16_t intVcc;
+   uint16_t intTmp;
+   uint16_t DeviationPlus;
+   uint16_t DeviationMinus;
+
+} IMFrameStatus;
+
 
 static const  IMFrameSetup EmptyIMFrameSetup={0};
 #define _frameBodySize _frameSize - sizeof(IMFrameHeader)
@@ -119,6 +131,11 @@ typedef struct
         {
          return (IMFrameData *) &(Body);
         }
+        IMFrameStatus * Status()
+        {
+         return (IMFrameStatus *) &(Body);
+        }
+
 
         void Reset()
         {

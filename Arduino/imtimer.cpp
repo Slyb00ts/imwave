@@ -13,12 +13,24 @@ void IMTimer::Calibrate(unsigned long time)
   unsigned long del=start;
    start=time;
    del=time-del- stages[PERIOD]+50000;
-   DBGINFO("cl");
-   DBGINFO(del);
-   DBGINFO("%");
-   DBGINFO(time);
+   if (del>0)
+     DeviationPlus+=del;
+   else
+     DeviationMinus-=del;
+
+//   DBGINFO("cl");
+//   DBGINFO(del);
+//   DBGINFO("%");
+//   DBGINFO(time);
 
 }
+
+void IMTimer::ResetDeviation()
+{
+  DeviationPlus=0;
+  DeviationMinus=0;
+}
+
 
 unsigned long IMTimer::getTime()
 {
@@ -37,6 +49,7 @@ void IMTimer::sleep(unsigned long time)
   if (time==15)  xtime=SLEEP_15Ms;
   else if (time==30) xtime=SLEEP_30MS;
   else if (time==60) xtime=SLEEP_60MS;
+  else if (time>120) xtime=SLEEP_120MS;
   else {
     delay(time);
 //    return;
@@ -45,15 +58,22 @@ void IMTimer::sleep(unsigned long time)
  // LowPower.powerDown(xtime, ADC_OFF, BOD_OFF);
  LowPower.idle(xtime, ADC_OFF, TIMER4_OFF,TIMER3_OFF,TIMER1_ON,TIMER0_ON, SPI_ON,USART1_OFF,TWI_ON, USB_ON);
 
+ // LowPower.powerSave(xtime, ADC_OFF, BOD_ON,TIMER2_ON);
 
+//  LowPower.powerStandby(xtime, ADC_OFF, BOD_ON);
 
+}
+
+uint16_t IMTimer::CycleHour()
+{
+  return uint16_t(3600000 / stages[PERIOD]);
 }
 
 long IMTimer::Cycle()
 {
   return cycle;
-  DBGINFO("CYC(");
-  DBGINFO(cycle);
+//  DBGINFO("CYC(");
+//  DBGINFO(cycle);
 
 }
 
@@ -127,8 +147,8 @@ byte IMTimer::WaitStage()
      }
      if (_listen){
        _listen=0;
-       DBGINFO(">>");
-       DBGINFO(millis());
+//       DBGINFO(">>");
+//       DBGINFO(millis());
        return current;
      }
      if ((waiting % 2000)==2)
@@ -144,6 +164,8 @@ byte IMTimer::WaitStage()
      cycle++;
      watchdog++;
      delay(20);
+     if (cycle % CycleHour())
+       r=CRONHOUR;
   }
   compute();
 
@@ -154,8 +176,8 @@ byte IMTimer::WaitStage()
 void IMTimer::doneListen()
 {
    _listen++;
-   DBGINFO("??");
-   DBGINFO(millis());
+//   DBGINFO("??");
+//   DBGINFO(millis());
 
 }
 void IMTimer::doneWrite()

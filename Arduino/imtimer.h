@@ -32,6 +32,8 @@ typedef void( * funIMTimer )( byte );
 #define STOPDATA 5
 #define LISTENBROADCAST 101
 #define LISTENDATA 102
+#define CRONHOUR 201
+#define CRONDAY 202
 
 
 
@@ -56,12 +58,15 @@ class  IMTimer
     unsigned long getTime();
     unsigned long getTime(unsigned long time);
     void sleep(unsigned long time);
+    uint16_t CycleHour();
 
 
   public:
         IMTimer();
         funIMTimer onStage;
         funIMTimer onListen;
+        uint16_t DeviationPlus;                       //sum deviation in calibrate
+        uint16_t DeviationMinus;                     //separate for shorter and longer
         static const byte IDDLESTAGE = 100;
         static const byte PERIOD = 0;
         static const byte LAP = 8;
@@ -75,6 +80,7 @@ class  IMTimer
         void setStage(byte stage);
         void doneListen();
         void doneWrite();
+        void ResetDeviation();
         void Watchdog();
         bool Watchdog(byte dog);
         long Cycle();

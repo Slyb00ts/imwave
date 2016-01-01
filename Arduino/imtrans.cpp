@@ -148,7 +148,7 @@ bool Transceiver::GetFrame(IMFrame& frame)
     if (io) {
         frame=RX_buffer.packet;
         setRssi();
-        DBGINFO(" RSSI: ");           DBGINFO(Rssi());            DBGINFO("dBm  ");
+//        DBGINFO(" RSSI: ");           DBGINFO(Rssi());            DBGINFO("dBm  ");
     }
     return io;
 
@@ -207,9 +207,7 @@ void Transceiver::setRssi()
 
 void Transceiver::setChannel(byte channel)
 {
-  DBGINFO("CHN");
-  DBGINFO(channel);
-  DBGINFO("_");
+//  DBGINFO("CHN");  DBGINFO(channel);  DBGINFO("_");
   cc1101->SetChannel(channel);
 }
 
@@ -616,10 +614,10 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
 //   setup=EmptyIMFrameSetup;
 //   frame.Get(&setup);
 
-   DBGINFO("\r\n%MAC");
-   DBGINFO(setup->MAC);
-   DBGINFO(":");
-   DBGINFO(setup->MAC2);
+//   DBGINFO("\r\n%MAC");
+//   DBGINFO(setup->MAC);
+//   DBGINFO(":");
+//   DBGINFO(setup->MAC2);
    if  (setup->MAC!=myMAC) {
      DBGINFO("*****NOT FORME ");
      DBGINFO(myMAC);
