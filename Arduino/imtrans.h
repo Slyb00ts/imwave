@@ -72,8 +72,10 @@ private:
     byte myHop;
     uint16_t _salt;
     uint16_t calibrate;
+    uint16_t _cycledata;
     byte seqnr;
     byte ksequence;
+
     volatile byte ruptures[2];
     byte rssiH;  //from last receinve frame
     byte hostRssiSend;     //from hello
@@ -152,6 +154,7 @@ public:
     void printReceive();
     void printSend();
     void printStatus();
+    bool CycleData();
     float Rssi(byte h); //compute Rssi from byte
     float Rssi(); //return last Rssi
     float RssiListen();

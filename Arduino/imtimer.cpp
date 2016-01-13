@@ -21,6 +21,10 @@ void IMTimer::Calibrate(unsigned long time)
      DeviationMinus+=1000;
    }
 
+   if (current!=LISTENBROADCAST){
+     DBGINFO("BROADCAST");
+     DBGINFO(current);
+   }
 }
 
 void IMTimer::ResetDeviation()
@@ -47,16 +51,22 @@ void IMTimer::sleep(unsigned long time)
   if (time==15)  xtime=SLEEP_15Ms;
   else if (time==30) xtime=SLEEP_30MS;
   else if (time==60) xtime=SLEEP_60MS;
-  else if (time>120) xtime=SLEEP_120MS;
+  else if (time>=120) xtime=SLEEP_120MS;
   else {
     delay(time);
-//    return;
+    return;
   }
 //   delay(time);
  // LowPower.powerDown(xtime, ADC_OFF, BOD_OFF);
+ // DBGINFO("S");
+ unsigned long xstart=millis();
  LowPower.idle(xtime, ADC_OFF, TIMER4_OFF,TIMER3_OFF,TIMER1_ON,TIMER0_ON, SPI_ON,USART1_OFF,TWI_ON, USB_ON);
-
- // LowPower.powerSave(xtime, ADC_OFF, BOD_ON,TIMER2_ON);
+/*       DBGINFO("\r\n<<");
+       DBGINFO(millis()-xstart);
+       DBGINFO(" ");
+       DBGINFO(time);
+*/
+//  LowPower.powerSave(xtime, ADC_OFF, BOD_ON,TIMER2_ON);
 
 //  LowPower.powerStandby(xtime, ADC_OFF, BOD_ON);
 
@@ -130,14 +140,15 @@ byte IMTimer::WaitStage()
   DBGINFO('%');
   DBGINFO(cycle);
   */
+//  int waits=0;
   while(nearTime >getTime())
   {
-     waiting++;
      long next=nearTime-getTime();
      if (next > 3) {
-//       if (next>202)
-//          delay(200);
-//       else
+//       waiting++;
+       if (next>202)
+          sleep(120);
+       else
        if (next>72)
           sleep(60);
        else
@@ -161,9 +172,11 @@ byte IMTimer::WaitStage()
   if (r==PERIOD) {
      cycle++;
      watchdog++;
-     delay(20);
-     if (cycle % CycleHour())
+     delay(30);
+     if (cycle % CycleHour() ==0)
        r=CRONHOUR;
+//     DBGINFO(">>");
+//     DBGINFO(waiting);
   }
   compute();
 

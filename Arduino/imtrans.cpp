@@ -38,6 +38,7 @@ Transceiver::Transceiver()
   myChannel=0;
   BroadcastChannel=0;
   calibrate=200;
+  _cycledata=1;
   Deconnect();
 }
 
@@ -91,7 +92,8 @@ uint8_t Transceiver::GetData()
     printReceive();
     return rSize;
   } else{
-//    DBGINFO("[");
+    DBGINFO("[");
+    DBGINFO(cc1101->RXBytes());
 //    DBGINFO(cc1101-> SpiReadStatus(CC1101_MARCSTATE));
     return 0;
   }
@@ -397,7 +399,7 @@ void Transceiver::StopListen()
     {
 //       DBGINFO("stop listen");
 //     trx.Idle();
-//     Timer.setStage(Timer.IDDLESTAGE);
+     timer.setStage(IMTimer::IDDLESTAGE);
    }
 }
 
@@ -434,7 +436,6 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
 
              if (ResponseHello(frame)){
                  ListenBroadcast();      //return to broadcas channel (wait to WELCOME)
-                 DBGINFO(" rHELLO ");
                  return true;
               }
 
@@ -472,7 +473,7 @@ void Transceiver::Knock()
    if (Connected())
    {
 
-      if ((timer.Cycle() %TimerKnockCycle)==0){
+      if ((timer.Cycle() % TimerKnockCycle)==0){
           DBGINFO("Knock ");
           SendKnock(false);
           DBGINFO("\r\n");
@@ -480,7 +481,7 @@ void Transceiver::Knock()
        }
 
    } else {
-       if ((timer.Cycle() % 3)==0){
+       if ((timer.Cycle() % 10)==0){
           DBGINFO("InvalidKnock ");
           SendKnock(true);
           DBGINFO("\r\n");
@@ -528,9 +529,9 @@ bool Transceiver::ResponseHello(IMFrame & frame)
     hostRssiListen=rssiH;
 
 //   _frame.Put(&setup);
-   DBGINFO("%");
-   DBGINFO(_frame.Header.Sequence);
-   DBGERR2(setup->MAC,HEX);
+//   DBGINFO("%");
+//   DBGINFO(_frame.Header.Sequence);
+//   DBGERR2(setup->MAC,HEX);
    Send(_frame);
    return true;   //changed channel
 }
@@ -652,6 +653,8 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    myChannel=0;
    connected=1;
    calibrate=300+myId*30;
+   if (setup->hop==1)
+     _cycledata=10;
    DBGINFO(myId);
    DBGINFO("CONNECT%");
    return true;
@@ -689,8 +692,9 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
         }
         else if (rxFrame.Hello())
         {
+           DBGINFO("HELLO");
            if (ForwardHello(rxFrame))
-              DBGINFO(" FORWHello ");
+              DBGINFO(" FORW ");
         }
         else if (rxFrame.Welcome())
         {
@@ -765,6 +769,12 @@ void Transceiver::printStatus()
           DBGINFO(timer.DeviationMinus);
           DBGINFO("  ");
           DBGINFO(calibrate);
+          DBGINFO(" cykl: ");
+          DBGINFO(timer.Cycle());
+          DBGINFO("  ");
+          DBGINFO(timer.CycleHour());
+          DBGINFO("  ");
+          DBGINFO(_cycledata);
 
 }
 
@@ -782,6 +792,12 @@ short Transceiver::ClassTest()
   return 0;
 }
 
+
+bool Transceiver::CycleData()
+{
+  return       (timer.Cycle() % _cycledata) ==0;
+
+}
 
 void Transceiver::Rupture()
 {
