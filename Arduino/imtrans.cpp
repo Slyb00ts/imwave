@@ -1,11 +1,12 @@
 //
 //    FILE: transceiver.cpp
-// VERSION: 0.4.00
+// VERSION: 0.5.00
 // PURPOSE: DTransceiver library for Arduino
 //
 // DATASHEET: 
 //
 // HISTORY:
+// 0.5 by Dariusz Mazur (11/01/2016)
 // 0.4 by Dariusz Mazur (01/11/2015)
 // 0.2 by Dariusz Mazur (01/09/2015)
 //
@@ -37,7 +38,7 @@ Transceiver::Transceiver()
   HostChannel=0;
   myChannel=0;
   BroadcastChannel=0;
-  calibrate=200;
+  calibrate=0;
   _cycledata=1;
   Deconnect();
 }
@@ -49,6 +50,17 @@ void Transceiver::Init(IMCC1101 & cc)
   cc1101->StartReceive();
         pPacket = &RX_buffer.packet;
 //        pHeader = &pPacket->Header;
+  TimerSetup();
+}
+
+void Transceiver::TimerSetup()
+{
+    timer.Setup(STARTBROADCAST,BroadcastDelay);
+    timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration+calibrate);
+    timer.Setup(IMTimer::PERIOD,CycleDuration);
+    timer.Setup(STARTDATA,DataDelay-calibrate);
+    timer.Setup(STOPDATA,DataDelay+DataDuration);
+
 }
 
 
@@ -150,7 +162,7 @@ bool Transceiver::GetFrame(IMFrame& frame)
     if (io) {
         frame=RX_buffer.packet;
         setRssi();
-//        DBGINFO(" RSSI: ");           DBGINFO(Rssi());            DBGINFO("dBm  ");
+        DBGINFO(" RSSI: ");           DBGINFO(Rssi());            DBGINFO("dBm  ");
     }
     return io;
 
@@ -422,22 +434,21 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
 
            }
 
-           if (sp->salt==0) {    //send invalid knock
-                        DBGINFO(" inv ");
+           if (sp->salt==0) {    //received invalid knock
+                      DBGINFO(" invalid ");
                       return false;
-             }
+           }
 
 //           if (myHost(frame)){
 //             if (sp->salt!=_salt){   //host reboot
 //                 Deconnect();
 //                 DBGINFO("HOST REBBOT");
 
-               _salt=sp->salt; //accept new value
-
-             if (ResponseHello(frame)){
+           _salt=sp->salt; //accept new value
+           if (ResponseHello(frame)){
                  ListenBroadcast();      //return to broadcas channel (wait to WELCOME)
                  return true;
-              }
+           }
 
            return false;
 
@@ -449,7 +460,6 @@ bool Transceiver::SendKnock(bool invalid)
    setChannel(BroadcastChannel);
    IMFrame _frame;
    IMFrameSetup *setup=_frame.Setup();
-//   setup=EmptyIMFrameSetup;
    _frame.Reset();
    _frame.Header.Function=IMF_KNOCK;
    _frame.Header.Sequence=ksequence++;
@@ -458,7 +468,6 @@ bool Transceiver::SendKnock(bool invalid)
    if (invalid){
      setup->salt=0;
    }
-//   _frame.Put(&setup);
    return Send(_frame);
 }
 
@@ -494,15 +503,12 @@ void Transceiver::Knock()
 
 bool Transceiver::ResponseHello(IMFrame & frame)
 {
-
-
    timer.Watchdog();
    _knocked++;
-    if (Connected() && (_knocked % TimerHelloCycle))  {
-       DBGINFO("notHELLO ");
-
-     return false;
-    }
+   if (Connected() && (_knocked % TimerHelloCycle))  {
+       DBGINFO("notsendHELLO ");
+       return false;
+   }
 
    IMFrameSetup *sp=frame.Setup();
    IMFrame _frame;
@@ -517,7 +523,6 @@ bool Transceiver::ResponseHello(IMFrame & frame)
 
    IMFrameSetup * setup=_frame.Setup();
 
-//   (*setup) =EmptyIMFrameSetup;
    _frame.Reset();
    _frame.Header.SourceId=myId;   //if not registerred then myId==0
    _frame.Header.Function=IMF_HELLO ;

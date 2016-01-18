@@ -44,6 +44,16 @@
 #define TransceiverWrite  2
 
 
+#define CycleDuration 3000
+#define BroadcastDelay 200
+#define BroadcastDuration 400
+
+#define DataDelay 1200
+#define DataDuration 300
+
+
+
+
 typedef struct
 {
   uint8_t len;
@@ -155,6 +165,7 @@ public:
     void printSend();
     void printStatus();
     bool CycleData();
+    void TimerSetup();
     float Rssi(byte h); //compute Rssi from byte
     float Rssi(); //return last Rssi
     float RssiListen();
