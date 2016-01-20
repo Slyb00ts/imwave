@@ -79,6 +79,7 @@ private:
 //    TableACK  ack;
     byte connected;
     byte _knocked;
+    byte _helloed;
     byte myHop;
     uint16_t _salt;
     uint16_t calibrate;

@@ -20,7 +20,7 @@
 //
 
 #ifndef TimerKnockCycle
-#define TimerKnockCycle 5
+#define TimerKnockCycle 10
 #define TimerHelloCycle 30
 #endif
 
@@ -486,11 +486,11 @@ void Transceiver::Knock()
           DBGINFO("Knock ");
           SendKnock(false);
           DBGINFO("\r\n");
-          ListenData();
        }
+       ListenData();
 
    } else {
-       if ((timer.Cycle() % 10)==0){
+       if ((timer.Cycle() % TimerKnockCycle)==0){
           DBGINFO("InvalidKnock ");
           SendKnock(true);
           DBGINFO("\r\n");
@@ -505,10 +505,25 @@ bool Transceiver::ResponseHello(IMFrame & frame)
 {
    timer.Watchdog();
    _knocked++;
-   if (Connected() && (_knocked % TimerHelloCycle))  {
-       DBGINFO("notsendHELLO ");
+   byte xr;
+   if (Connected()){
+     if (_knocked % TimerHelloCycle)  {
+         DBGINFO("notsendHELLO ");
+         return false;
+     }
+     xr=random(100)+60;
+   } else {
+     if (_knocked<_helloed)
        return false;
+     xr=random(60);
+     _helloed=_knocked +(xr % 4);
+
    }
+   DBGINFO("[[");
+   DBGINFO(xr);
+   DBGINFO("]] ");
+   delay(xr);
+
 
    IMFrameSetup *sp=frame.Setup();
    IMFrame _frame;
