@@ -7,7 +7,7 @@
 #ifndef imDebug_h
 #define imDebug_h
 
-#define DBGLVL 2
+#define DBGLVL 0
 
 
 #include "Arduino.h"

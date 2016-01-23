@@ -46,10 +46,10 @@
 
 #define CycleDuration 3000
 #define BroadcastDelay 200
-#define BroadcastDuration 400
+#define BroadcastDuration 200
 
-#define DataDelay 1200
-#define DataDuration 300
+#define DataDelay 1300
+#define DataDuration 200
 
 
 
@@ -71,7 +71,7 @@ class Transceiver
 private:
     static Transceiver* ptr; //static ptr to Sleep class for the ISR
     IMCC1101 * cc1101;  //The CC1101 device
-    IMFrame * pPacket;
+//    IMFrame * pPacket;
 //    IMQueue queue;
     IMRouting router;
 
@@ -97,7 +97,7 @@ private:
     void setRssi();
     void Prepare(IMFrame & frame );
     unsigned short crcCheck();
-    uint8_t CRC(IMFrame & p);
+//    uint8_t CRC(IMFrame & p);
     void PrepareTransmit();
     void Rupture();
     bool Forward(IMFrame & frame);
@@ -119,6 +119,8 @@ private:
     bool Onward(IMFrame & frame);
     bool TestFrame();
     uint8_t GetData();
+    void TimerSetupAll();
+    void TimerSetup(unsigned long cal);
 
 public:
     Transceiver();
@@ -166,7 +168,6 @@ public:
     void printSend();
     void printStatus();
     bool CycleData();
-    void TimerSetup();
     float Rssi(byte h); //compute Rssi from byte
     float Rssi(); //return last Rssi
     float RssiListen();

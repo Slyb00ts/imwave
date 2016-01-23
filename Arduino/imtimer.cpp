@@ -173,10 +173,10 @@ byte IMTimer::WaitStage()
      cycle++;
      watchdog++;
      delay(30);
-     if (cycle % CycleHour() ==0)
+     if ((cycle % CycleHour()) ==0){
        r=CRONHOUR;
-//     DBGINFO(">>");
-//     DBGINFO(waiting);
+
+     }
   }
   compute();
 

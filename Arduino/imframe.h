@@ -26,10 +26,10 @@ typedef struct
 	IMAddress ReceiverId;
 	IMAddress DestinationId;
         byte Sequence;
-        byte Len;
-        byte Retry;
         byte crc;
-        byte pseq;
+        byte Len;
+//        byte Retry;
+//        byte pseq;
 } IMFrameHeader;
 
 typedef struct {
@@ -72,13 +72,18 @@ typedef struct
         byte CRC()
         {
             unsigned short c=42;
-            for(unsigned short i=0 ; i<(sizeof(IMFrameHeader )+Header.Len) ; i++)
+            for(unsigned short i=0 ; i<(_frameSize) ; i++)
             {
               c+=((uint8_t*)&Header)[i];
             }
-            return c;
+            return 0x100-c;
 
         }
+        byte checkCRC()
+        {
+          return CRC()==0;
+        }
+
 
 
         byte Put(byte*buf,byte len)
@@ -92,10 +97,10 @@ typedef struct
                       return i;
 
         }
-        byte Get(byte* buf)
+        byte Get(byte* buf,byte Len)
         {
                       byte i;
-                      for(i=0; i<Header.Len  ;i++)  //fill uart buffer
+                      for(i=0; i<Len  ;i++)  //fill uart buffer
                       {
                         buf[i] = Body[i];
                       }
@@ -106,8 +111,7 @@ typedef struct
         byte Put(IMFrameSetup*buf)
         {
                       byte i;
-                      Header.Len = sizeof(IMFrameSetup);  //length
-                      for ( i=0 ; i<Header.Len ; i++ )
+                      for ( i=0 ; i<sizeof(IMFrameSetup) ; i++ )
                       {
                             Body[i] = ((byte *)buf)[i];
                       }
@@ -116,8 +120,6 @@ typedef struct
         }
         byte Get(IMFrameSetup* buf)
         {
-                      if (Header.Len!=sizeof(IMFrameSetup))
-                          return 0;
                       memcpy(buf,&Body,sizeof(IMFrameSetup));
                       return 1;
 
@@ -140,7 +142,7 @@ typedef struct
         void Reset()
         {
                       Header.Len = 0;//length
-                      Header.Retry = 0;
+//                      Header.Retry = 0;
                       memset(&Header,0,_frameSize);
 
 //                      for (byte i=0 ; i<_frameBodySize ; i++ )

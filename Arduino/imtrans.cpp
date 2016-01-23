@@ -48,21 +48,26 @@ void Transceiver::Init(IMCC1101 & cc)
   cc1101=&cc;
   cc1101->Init();
   cc1101->StartReceive();
-        pPacket = &RX_buffer.packet;
+//        pPacket = &RX_buffer.packet;
 //        pHeader = &pPacket->Header;
-  TimerSetup();
+  TimerSetupAll();
+  TimerSetup(0);
+
 }
 
-void Transceiver::TimerSetup()
+void Transceiver::TimerSetupAll()
 {
     timer.Setup(STARTBROADCAST,BroadcastDelay);
-    timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration+calibrate);
     timer.Setup(IMTimer::PERIOD,CycleDuration);
-    timer.Setup(STARTDATA,DataDelay-calibrate);
     timer.Setup(STOPDATA,DataDelay+DataDuration);
 
 }
-
+void Transceiver::TimerSetup(unsigned long cal)
+{
+    calibrate=cal;
+    timer.Setup(STARTDATA,DataDelay-calibrate);
+    timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration+calibrate);
+}
 
 void Transceiver::StartReceive()
 {
@@ -175,19 +180,30 @@ bool Transceiver::GetFrame(IMFrame& frame)
 unsigned short Transceiver::crcCheck()
 {
           unsigned short cnt = RX_buffer.packet.Header.crc;
-          RX_buffer.packet.Header.crc = 0;
+
+//          RX_buffer.packet.Header.crc = 0;
 //          unsigned short cne=CRC(RX_buffer.packet);
           unsigned short cnf=RX_buffer.packet.CRC();
 //          DBGINFO(cne);
-//         DBGINFO('?');
-//          DBGINFO(cnf);
-//          DBGINFO('?');
-//          DBGINFO(cnt);
+/*         DBGINFO('?');
+          DBGINFO(cnf);
+          DBGINFO('?');
+          DBGINFO(cnt);
+          DBGINFO( RX_buffer.packet.checkCRC());
 
-          return (cnf==cnt);
+          RX_buffer.packet.Header.crc = 0;
+          unsigned short cng=RX_buffer.packet.CRC();
+          RX_buffer.packet.Header.crc=cng;
+          DBGINFO('?');
+          DBGINFO(cng);
+          DBGINFO( RX_buffer.packet.checkCRC());
+
+ */
+//          return (cnf==0);
+         return RX_buffer.packet.checkCRC();
 }
 
-
+    /*
 uint8_t Transceiver::CRC(IMFrame & f)
 {
     unsigned short c=42;
@@ -197,7 +213,8 @@ uint8_t Transceiver::CRC(IMFrame & f)
     }
     return c;
  
-}  
+}
+*/
 
 float Transceiver::Rssi(byte h  )
 {
@@ -277,7 +294,7 @@ void Transceiver::Prepare(IMFrame & frame)
 //  frame.Header.pseq = ack.Answer(dst);
   frame.Header.SenderId=myId;
   frame.Header.crc=0;
-  frame.Header.crc=CRC(frame);
+  frame.Header.crc=frame.CRC();
 }
 void Transceiver::PrepareTransmit()
 {
@@ -425,7 +442,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                    Deconnect();
                    DBGINFO("HOST REBBOT");
                 } else {
-                   timer.Calibrate(millis()-calibrate);
+                   timer.Calibrate(millis()-BroadcastDelay-BroadcastDuration);
                 }
               } else {
                         DBGINFO(" alien host ");
@@ -672,7 +689,9 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    HostChannel=0;
    myChannel=0;
    connected=1;
-   calibrate=300+myId*30;
+//   calibrate=300+myId*30;
+   TimerSetup(myId*30);
+
    if (setup->hop==1)
      _cycledata=10;
    DBGINFO(myId);
