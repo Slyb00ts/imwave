@@ -39,7 +39,8 @@ Transceiver::Transceiver()
   myChannel=0;
   BroadcastChannel=0;
   calibrate=0;
-  _cycledata=1;
+  _cycledata=3;
+  _calibrateshift=0;
   Deconnect();
 }
 
@@ -59,13 +60,13 @@ void Transceiver::TimerSetupAll()
 {
     timer.Setup(STARTBROADCAST,BroadcastDelay);
     timer.Setup(IMTimer::PERIOD,CycleDuration);
-    timer.Setup(STOPDATA,DataDelay+DataDuration);
 
 }
 void Transceiver::TimerSetup(unsigned long cal)
 {
     calibrate=cal;
-    timer.Setup(STARTDATA,DataDelay-calibrate);
+    timer.Setup(STARTDATA,DataDelay+calibrate-_calibrateshift);
+    timer.Setup(STOPDATA,DataDelay+DataDuration+calibrate-_calibrateshift);
     timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration+calibrate);
 }
 
@@ -442,7 +443,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                    Deconnect();
                    DBGINFO("HOST REBBOT");
                 } else {
-                   timer.Calibrate(millis()-BroadcastDelay-BroadcastDuration);
+                   timer.Calibrate(millis()-BroadcastDelay-100);
                 }
               } else {
                         DBGINFO(" alien host ");
@@ -690,10 +691,13 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    myChannel=0;
    connected=1;
 //   calibrate=300+myId*30;
-   TimerSetup(myId*30);
+   TimerSetup(myId*40);
 
-   if (setup->hop==1)
+   if (setup->hop==1) {
      _cycledata=10;
+     _calibrateshift=200;
+   }
+   _cycleshift=(timer.Cycle()+myId) % _cycledata;
    DBGINFO(myId);
    DBGINFO("CONNECT%");
    return true;
@@ -811,8 +815,8 @@ void Transceiver::printStatus()
           DBGINFO(" cykl: ");
           DBGINFO(timer.Cycle());
           DBGINFO("  ");
-          DBGINFO(timer.CycleHour());
-          DBGINFO("  ");
+          DBGINFO(_cycleshift);
+          DBGINFO(" > ");
           DBGINFO(_cycledata);
 
 }
@@ -834,7 +838,7 @@ short Transceiver::ClassTest()
 
 bool Transceiver::CycleData()
 {
-  return       (timer.Cycle() % _cycledata) ==0;
+  return       (timer.Cycle() % _cycledata) ==_cycleshift;
 
 }
 

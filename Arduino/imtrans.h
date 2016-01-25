@@ -48,8 +48,8 @@
 #define BroadcastDelay 200
 #define BroadcastDuration 200
 
-#define DataDelay 1300
-#define DataDuration 200
+#define DataDelay 900
+#define DataDuration 300
 
 
 
@@ -82,8 +82,10 @@ private:
     byte _helloed;
     byte myHop;
     uint16_t _salt;
+    uint16_t _calibrateshift;
     uint16_t calibrate;
     uint16_t _cycledata;
+    uint16_t _cycleshift;
     byte seqnr;
     byte ksequence;
 
