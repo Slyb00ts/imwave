@@ -13,6 +13,8 @@
 #define IMF_STATUS    0x0B        //internal status
 #define IMF_REPEAT    0x80
 #define IMF_FORWARD   0x20
+
+#define IMS_TRANSCEIVER 0x01
 #define _frameSize  32
 
 typedef uint8_t IMAddress;
@@ -44,6 +46,9 @@ typedef struct {
         uint8_t slavechannel;
         uint8_t hop;
         uint8_t rssi;
+        uint8_t mode;
+        uint8_t cycle;
+
 
 } IMFrameSetup;
 
