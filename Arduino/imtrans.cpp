@@ -38,10 +38,9 @@ Transceiver::Transceiver()
   HostChannel=0;
   myChannel=0;
   BroadcastChannel=0;
-  calibrate=0;
+  _calibrate=0;
   _cycledata=3;
   _calibrateshift=0;
-  Deconnect();
 }
 
 void Transceiver::Init(IMCC1101 & cc)
@@ -53,6 +52,7 @@ void Transceiver::Init(IMCC1101 & cc)
 //        pHeader = &pPacket->Header;
   TimerSetupAll();
   TimerSetup(0);
+  Deconnect();
 
 }
 
@@ -64,10 +64,10 @@ void Transceiver::TimerSetupAll()
 }
 void Transceiver::TimerSetup(unsigned long cal)
 {
-    calibrate=cal;
-    timer.Setup(STARTDATA,DataDelay+calibrate-_calibrateshift);
-    timer.Setup(STOPDATA,DataDelay+DataDuration+calibrate-_calibrateshift);
-    timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration+calibrate);
+    _calibrate=cal;
+    timer.Setup(STARTDATA,DataDelay+_calibrate-_calibrateshift);
+    timer.Setup(STOPDATA,DataDelay+DataDuration+_calibrate-_calibrateshift);
+    timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration+_calibrate);
 }
 
 void Transceiver::StartReceive()
@@ -268,8 +268,10 @@ void Transceiver::Deconnect()
   myId=0;
   router.reset();
   router.addMAC(myMAC,0xFF);
-  DBGINFO("Deconnect");
+//  DBGINFO("Deconnect");
   timer.Watchdog();
+  SendKnock(true);
+
 }
 
 bool Transceiver::Connected()
@@ -499,19 +501,21 @@ void Transceiver::Knock()
    }
    if (Connected())
    {
-
-      if ((timer.Cycle() % TimerKnockCycle)==0){
-          DBGINFO("Knock ");
-          SendKnock(false);
-          DBGINFO("\r\n");
-       }
-       ListenData();
-
+      if (BroadcastEnable){
+         if ((timer.Cycle() % TimerKnockCycle)==0){
+            DBGINFO("Knock ");
+            SendKnock(false);
+            DBGINFO("\r\n");
+         }
+         ListenData();
+     }
    } else {
-       if ((timer.Cycle() % TimerKnockCycle)==0){
+       if ((timer.Cycle() % (TimerKnockCycle))==0){
+          ERRFLASH();
           DBGINFO("InvalidKnock ");
           SendKnock(true);
           DBGINFO("\r\n");
+          ERRFLASH();
        }
        ListenBroadcast();
    }
@@ -665,6 +669,16 @@ bool Transceiver::BackwardWelcome(IMFrame & frame)
 }
 
 
+void Transceiver::setupCycle(byte aCycle)
+{
+  if (aCycle==1) {
+    _cycledata=20;
+  } else{
+    _cycledata=3;
+  }
+
+
+}
 
 bool Transceiver::ReceiveWelcome(IMFrame & frame)
 {
@@ -692,9 +706,11 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    connected=1;
 //   calibrate=300+myId*30;
    TimerSetup(myId*40);
+   BroadcastEnable=(setup->mode && IMS_TRANSCEIVER);
+   setupCycle(setup->cycle);
 
    if (setup->hop==1) {
-     _cycledata=10;
+  //   _cycledata=10;
      _calibrateshift=200;
    }
    _cycleshift=(timer.Cycle()+myId) % _cycledata;
@@ -811,7 +827,7 @@ void Transceiver::printStatus()
           DBGINFO("  ");
           DBGINFO(timer.DeviationMinus);
           DBGINFO("  ");
-          DBGINFO(calibrate);
+          DBGINFO(_calibrate);
           DBGINFO(" cykl: ");
           DBGINFO(timer.Cycle());
           DBGINFO("  ");

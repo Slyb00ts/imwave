@@ -78,12 +78,13 @@ private:
 //    header_t * pHeader;
 //    TableACK  ack;
     byte connected;
+
     byte _knocked;
     byte _helloed;
     byte myHop;
     uint16_t _salt;
     uint16_t _calibrateshift;
-    uint16_t calibrate;
+    uint16_t _calibrate;
     uint16_t _cycledata;
     uint16_t _cycleshift;
     byte seqnr;
@@ -123,6 +124,7 @@ private:
     uint8_t GetData();
     void TimerSetupAll();
     void TimerSetup(unsigned long cal);
+    void setupCycle(byte aCycle);
 
 public:
     Transceiver();
@@ -142,6 +144,7 @@ public:
     byte HostChannel;
     byte myChannel;
     byte BroadcastChannel;
+    bool BroadcastEnable;
     funTransceiver onEvent;
     void Init(IMCC1101 & cc);
     friend void PCINT0_vect(void);
