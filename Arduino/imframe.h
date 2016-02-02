@@ -14,7 +14,7 @@
 #define IMF_REPEAT    0x80
 #define IMF_FORWARD   0x20
 
-#define IMS_TRANSCEIVER 0x01
+#define IMS_TRANSCEIVER 0x8000
 #define _frameSize  32
 
 typedef uint8_t IMAddress;
@@ -40,14 +40,11 @@ typedef struct {
 	uint16_t device1;
         uint16_t device2;
         uint16_t salt;
-        uint8_t address;
-        uint8_t shift;
+        uint8_t address;  // hop in [knock, hello]
+        uint8_t rssi;
         uint8_t hostchannel;
         uint8_t slavechannel;
-        uint8_t hop;
-        uint8_t rssi;
-        uint8_t mode;
-        uint8_t cycle;
+        uint16_t mode;
 
 
 } IMFrameSetup;

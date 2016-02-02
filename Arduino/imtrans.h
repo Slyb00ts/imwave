@@ -124,7 +124,7 @@ private:
     uint8_t GetData();
     void TimerSetupAll();
     void TimerSetup(unsigned long cal);
-    void setupCycle(byte aCycle);
+    void setupMode(uint16_t aMode);
 
 public:
     Transceiver();

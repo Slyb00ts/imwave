@@ -180,11 +180,11 @@ bool Transceiver::GetFrame(IMFrame& frame)
 
 unsigned short Transceiver::crcCheck()
 {
-          unsigned short cnt = RX_buffer.packet.Header.crc;
+//          unsigned short cnt = RX_buffer.packet.Header.crc;
 
 //          RX_buffer.packet.Header.crc = 0;
 //          unsigned short cne=CRC(RX_buffer.packet);
-          unsigned short cnf=RX_buffer.packet.CRC();
+//          unsigned short cnf=RX_buffer.packet.CRC();
 //          DBGINFO(cne);
 /*         DBGINFO('?');
           DBGINFO(cnf);
@@ -376,9 +376,9 @@ void Transceiver::PrepareSetup(IMFrameSetup &se)
    se.MAC= myMAC;
    se.MAC2=serverMAC;
    se.salt=_salt;
-   se.device1= myDevice;
+//   se.device1= myDevice;
    se.hostchannel=myChannel;
-   se.hop=myHop;
+//   se.hop=myHop;
 
 }
 
@@ -485,6 +485,7 @@ bool Transceiver::SendKnock(bool invalid)
    _frame.Header.Sequence=ksequence++;
    _frame.Header.SourceId=myId;
    PrepareSetup(*setup);
+   setup->address=myHop;
    if (invalid){
      setup->salt=0;
    }
@@ -551,7 +552,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    IMFrame _frame;
    hostMAC=sp->MAC;
    serverMAC=sp->MAC2;
-   myHop=sp->hop;
+   myHop=sp->address;
    myHop++;
    hostId=frame.Header.SourceId;
    HostChannel=sp->hostchannel;
@@ -669,10 +670,15 @@ bool Transceiver::BackwardWelcome(IMFrame & frame)
 }
 
 
-void Transceiver::setupCycle(byte aCycle)
+void Transceiver::setupMode(uint16_t aMode)
 {
-  if (aCycle==1) {
+  BroadcastEnable=(aMode & IMS_TRANSCEIVER);
+  uint16_t xCycle= aMode & 0xFF;
+  if (xCycle==1) {
     _cycledata=20;
+  } else if (xCycle==2)   {
+    _cycledata=200;
+
   } else{
     _cycledata=3;
   }
@@ -706,11 +712,10 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    connected=1;
 //   calibrate=300+myId*30;
    TimerSetup(myId*40);
-   BroadcastEnable=(setup->mode && IMS_TRANSCEIVER);
-   setupCycle(setup->cycle);
+//   BroadcastEnable=(setup->mode && IMS_TRANSCEIVER);
+   setupMode(setup->mode);
 
-   if (setup->hop==1) {
-  //   _cycledata=10;
+   if (myHop==1) {
      _calibrateshift=200;
    }
    _cycleshift=(timer.Cycle()+myId) % _cycledata;
