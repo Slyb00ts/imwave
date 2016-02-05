@@ -112,6 +112,10 @@ uint8_t Transceiver::GetData()
   } else{
     DBGINFO("[");
     DBGINFO(cc1101->RXBytes());
+          DBGINFO(":");
+      DBGINFO(millis());
+      DBGINFO("] ");
+
 //    DBGINFO(cc1101-> SpiReadStatus(CC1101_MARCSTATE));
     return 0;
   }
@@ -313,6 +317,8 @@ bool Transceiver::Send()
   else
   {
     DBGERR("! SEND");
+    DBGERR(cc1101->errState);
+    cc1101->Reinit();
     return false;
   }
   state=TransceiverIdle;
@@ -408,6 +414,7 @@ void Transceiver::Transmit()
          DBGINFO(TX_buffer.len);    DBGINFO(",");
       }
       DBGINFO("\r\n");
+      delay(1);
       ListenData();
 }
 
@@ -499,6 +506,8 @@ void Transceiver::Knock()
    {
       DBGINFO("WATCHDOG");
       Deconnect();
+      reboot();
+
    }
    if (Connected())
    {

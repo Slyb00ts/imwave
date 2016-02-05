@@ -280,6 +280,7 @@ boolean IMCC1101::SendData(byte *txBuffer, byte size)
 {
 	byte marcState;
 	bool res = false;
+        errState=2;
 
 	SetRxState();
 
@@ -303,7 +304,7 @@ boolean IMCC1101::SendData(byte *txBuffer, byte size)
 	{
 		FlushTxFifo();
 		SetRxState();         // Back to RX state
-
+                errState=1;
 		return false;
 	}
 
@@ -311,8 +312,10 @@ boolean IMCC1101::SendData(byte *txBuffer, byte size)
 	while (digitalRead(GDO0));	// Wait for GDO0 to be cleared -> end of packet
 
 								// Check that the TX FIFO is empty
-	if ((SpiReadStatus(CC1101_TXBYTES) & 0x7F) == 0)
+	if ((SpiReadStatus(CC1101_TXBYTES) & 0x7F) == 0){
 		res = true;
+                errState=0;
+        }
 
 	FlushTxFifo();
 

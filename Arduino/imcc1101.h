@@ -166,6 +166,7 @@ private:
 	void SpiReadBurstReg(byte addr, byte *buffer, byte num);
 	void RegConfigSettings(void);
 public:
+        byte errState;
 	byte SpiReadStatus(byte addr);
         byte RXBytes();
 	void FlushRxFifo(void);

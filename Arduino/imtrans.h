@@ -24,6 +24,7 @@
 #include "imqueue.h"
 #include "imrouting.h"
 #include "imtimer.h"
+#include "imatmega.h"
 
 
 

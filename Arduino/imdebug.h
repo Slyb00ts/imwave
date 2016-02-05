@@ -7,7 +7,12 @@
 #ifndef imDebug_h
 #define imDebug_h
 
-#define DBGLVL 0
+#define DBGLVL 2
+#define DBGLED 1
+
+#ifndef DBGLED
+  #define DBGLED 1
+#endif
 
 
 #include "Arduino.h"
@@ -17,7 +22,11 @@
 #define ERRLEDON() digitalWrite(13,HIGH)
 #define ERRLEDOFF() digitalWrite(13,LOW)
 #define ERRLEDINIT() pinMode(13, OUTPUT)
-#define ERRFLASH() ERRLEDON(); delay(50);  ERRLEDOFF();
+#if DBGLED>=1
+  #define ERRFLASH() ERRLEDON(); delay(50);  ERRLEDOFF();
+#else
+  #define ERRFLASH(x) do{}while(0)
+#endif
 
 
 

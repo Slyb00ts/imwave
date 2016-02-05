@@ -34,6 +34,7 @@ typedef void( * funIMTimer )( byte );
 #define LISTENDATA 102
 #define CRONHOUR 201
 #define CRONDAY 202
+#define REBOOTLAP 250
 
 
 
