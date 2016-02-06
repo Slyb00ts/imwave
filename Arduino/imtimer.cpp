@@ -92,6 +92,7 @@ void IMTimer::Watchdog()
 
 bool IMTimer::Watchdog(byte dog)
 {
+  watchdog++;
   return watchdog>dog;
 }
 
@@ -171,7 +172,7 @@ byte IMTimer::WaitStage()
   byte r= nearStage;
   if (r==PERIOD) {
      cycle++;
-     watchdog++;
+//     watchdog++;
      delay(30);
      if ((cycle % CycleHour()) ==0){
        r=CRONHOUR;

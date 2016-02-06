@@ -21,11 +21,11 @@
 
 #ifndef TimerKnockCycle
 #define TimerKnockCycle 10
-#define TimerHelloCycle 30
+#define TimerHelloCycle 16
 #endif
 
 #if DBGLVL>=1
-  #define TimerHelloCycle 10
+  #define TimerHelloCycle 4
 #endif
 
 
@@ -270,6 +270,9 @@ void Transceiver::Deconnect()
   connected=false;
   _salt=1;
   myId=0;
+  hostId=0;
+  _cycledata=3;
+  myChannel=0;
   router.reset();
   router.addMAC(myMAC,0xFF);
 //  DBGINFO("Deconnect");
@@ -456,6 +459,9 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                 }
               } else {
                         DBGINFO(" alien host ");
+                        if (sp->salt==0) {    //received invalid knock
+                           DBGINFO(" invalid ");
+                        }
                         return false;
               }
 
@@ -502,7 +508,7 @@ bool Transceiver::SendKnock(bool invalid)
 
 void Transceiver::Knock()
 {
-   if (timer.Watchdog(90+TimerKnockCycle*3))
+   if (timer.Watchdog(60+TimerHelloCycle*_cycledata*3))
    {
       DBGINFO("WATCHDOG");
       Deconnect();
@@ -526,6 +532,7 @@ void Transceiver::Knock()
           SendKnock(true);
           DBGINFO("\r\n");
           ERRFLASH();
+//          timer.Watchdog();
        }
        ListenBroadcast();
    }
@@ -535,11 +542,10 @@ void Transceiver::Knock()
 
 bool Transceiver::ResponseHello(IMFrame & frame)
 {
-   timer.Watchdog();
    _knocked++;
    byte xr;
    if (Connected()){
-     if (_knocked % TimerHelloCycle)  {
+     if (_knocked % (TimerHelloCycle*_cycledata))  {
          DBGINFO("notsendHELLO ");
          return false;
      }
@@ -686,7 +692,7 @@ void Transceiver::setupMode(uint16_t aMode)
   if (xCycle==1) {
     _cycledata=20;
   } else if (xCycle==2)   {
-    _cycledata=200;
+    _cycledata=100;
 
   } else{
     _cycledata=3;
@@ -711,6 +717,7 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
      DBGINFO(myMAC);
      return BackwardWelcome(frame);
    }
+   timer.Watchdog();
    serverId=frame.Header.SourceId;
    myId=setup->address;
    myChannel=setup->slavechannel;
