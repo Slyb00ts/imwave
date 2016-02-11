@@ -85,6 +85,7 @@ class  IMTimer
         bool Watchdog(byte dog);
         long Cycle();
         void Calibrate(unsigned long time);
+        void printTime();
         uint16_t CycleHour();
 
 

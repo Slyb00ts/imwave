@@ -45,6 +45,13 @@ unsigned long IMTimer::getTime(unsigned long time)
   return ((time-start) %stages[PERIOD]);
 }
 
+void IMTimer::printTime()
+{
+   DBGINFO(millis());
+          DBGINFO(":");
+   DBGINFO(getTime());
+          DBGINFO(">");
+}
 void IMTimer::sleep(unsigned long time)
 {
   period_t xtime;

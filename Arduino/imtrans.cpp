@@ -111,6 +111,8 @@ uint8_t Transceiver::GetData()
     return rSize;
   } else{
     DBGINFO("[");
+    DBGINFO(state);
+          DBGINFO(":");
     DBGINFO(cc1101->RXBytes());
           DBGINFO(":");
       DBGINFO(millis());
@@ -315,16 +317,14 @@ void Transceiver::PrepareTransmit()
 bool Transceiver::Send()
 {
   state=TransceiverWrite;
-  if  (cc1101->SendData((uint8_t*)&(TX_buffer.packet),TX_buffer.len))
+  if  (cc1101->SendData((uint8_t*)&(TX_buffer.packet),TX_buffer.len)) {
     return true;
-  else
-  {
+  } else  {
     DBGERR("! SEND");
     DBGERR(cc1101->errState);
     cc1101->Reinit();
     return false;
   }
-  state=TransceiverIdle;
 
 //  if (cc1101->StopReceive())
 //    return cc1101->Transmit((uint8_t*)&(TX_buffer.packet),TX_buffer.len);
@@ -693,6 +693,8 @@ void Transceiver::setupMode(uint16_t aMode)
     _cycledata=20;
   } else if (xCycle==2)   {
     _cycledata=100;
+  } else if (xCycle==3)   {
+    _cycledata=1200;
 
   } else{
     _cycledata=3;
@@ -731,7 +733,7 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
 //   BroadcastEnable=(setup->mode && IMS_TRANSCEIVER);
    setupMode(setup->mode);
 
-   if (myHop==1) {
+   if (myHop==2) {
      _calibrateshift=200;
    }
    _cycleshift=(timer.Cycle()+myId) % _cycledata;
@@ -812,9 +814,8 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
 
 void Transceiver::printReceive()
 {
-      DBGINFO("Receive(");
-      DBGINFO(millis());
-      DBGINFO("): ");
+      DBGINFO("Receive<");
+      printTime();
       for (unsigned short i=0;i<rSize ;i++)
       {
         DBGINFO2(((uint8_t*)&RX_buffer)[i],HEX);
@@ -825,9 +826,8 @@ void Transceiver::printReceive()
 
 void Transceiver::printSend()
 {
-      DBGINFO("Send(");
-      DBGINFO(millis());
-      DBGINFO("): ");
+      DBGINFO("Send<");
+      printTime();
       for (unsigned short i=0;i<TX_buffer.len ;i++)
       {
         DBGINFO2(((uint8_t*)&TX_buffer)[i],HEX);
@@ -858,7 +858,10 @@ void Transceiver::printStatus()
 
 }
 
-
+void Transceiver::printTime()
+{
+  timer.printTime();
+}
 
 short Transceiver::ClassTest()
 {

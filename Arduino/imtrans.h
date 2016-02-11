@@ -173,6 +173,7 @@ public:
     void printReceive();
     void printSend();
     void printStatus();
+    void printTime();
     bool CycleData();
     float Rssi(byte h); //compute Rssi from byte
     float Rssi(); //return last Rssi
