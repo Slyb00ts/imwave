@@ -453,7 +453,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
               if (myHost(frame)){
                 if (sp->salt!=_salt){   //host reboot
                    Deconnect();
-                   DBGINFO("HOST REBBOT");
+                   DBGINFO("HOST REBOOT");
                 } else {
                    timer.Calibrate(millis()-BroadcastDelay-100);
                 }
@@ -508,7 +508,7 @@ bool Transceiver::SendKnock(bool invalid)
 
 void Transceiver::Knock()
 {
-   if (timer.Watchdog(60+TimerHelloCycle*_cycledata*3))
+   if (timer.Watchdog(60+TimerHelloCycle*_cycledata*4))
    {
       DBGINFO("WATCHDOG");
       Deconnect();
@@ -546,9 +546,12 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    byte xr;
    if (Connected()){
      if (_knocked % (TimerHelloCycle*_cycledata))  {
-         DBGINFO("notsendHELLO ");
-         return false;
+         if (_knocked<_helloed) {    //last call hasn't success
+           DBGINFO("notsendHELLO ");
+           return false;
+         }
      }
+     _helloed=_knocked +2;  //if not success bypass cycle
      xr=random(100)+60;
    } else {
      if (_knocked<_helloed)
@@ -719,6 +722,8 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
      DBGINFO(myMAC);
      return BackwardWelcome(frame);
    }
+   _helloed=_knocked +200; //we can wait on next connection
+
    timer.Watchdog();
    serverId=frame.Header.SourceId;
    myId=setup->address;

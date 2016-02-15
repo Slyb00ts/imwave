@@ -7,8 +7,8 @@
 #ifndef imDebug_h
 #define imDebug_h
 
-#define DBGLVL 0
-#define DBGLED 0
+#define DBGLVL 2
+#define DBGLED 1
 
 #ifndef DBGLED
   #define DBGLED 1
