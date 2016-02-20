@@ -48,8 +48,6 @@ void Transceiver::Init(IMCC1101 & cc)
   cc1101=&cc;
   cc1101->Init();
   cc1101->StartReceive();
-//        pPacket = &RX_buffer.packet;
-//        pHeader = &pPacket->Header;
   TimerSetupAll();
   TimerSetup(0);
   Deconnect();
@@ -269,7 +267,7 @@ void Transceiver::setChannel(byte channel)
 
 void Transceiver::Deconnect()
 {
-  connected=false;
+  _connected=false;
   _salt=1;
   myId=0;
   hostId=0;
@@ -280,12 +278,15 @@ void Transceiver::Deconnect()
 //  DBGINFO("Deconnect");
   timer.Watchdog();
   SendKnock(true);
+  delay(2);
+  ListenBroadcast();
+
 
 }
 
 bool Transceiver::Connected()
 {
-  return connected;
+  return _connected;
 }
 
 
@@ -316,6 +317,10 @@ void Transceiver::PrepareTransmit()
 
 bool Transceiver::Send()
 {
+
+  if (ruptures[TransceiverRead]){
+    DBGERR("?? READ ??");
+  }
   state=TransceiverWrite;
   if  (cc1101->SendData((uint8_t*)&(TX_buffer.packet),TX_buffer.len)) {
     return true;
@@ -334,6 +339,24 @@ bool Transceiver::Send()
 //  }
 }
 
+bool Transceiver::TestLow()
+{
+   IMFrame _frame;
+   IMFrameSetup *setup=_frame.Setup();
+   _frame.Reset();
+  TX_buffer.packet=_frame;
+  PrepareTransmit();
+  printSend();
+  state=TransceiverWrite;
+  if  (cc1101->SendData((uint8_t*)&(TX_buffer.packet),TX_buffer.len)) {
+    return true;
+  } else  {
+    DBGERR("! SEND");
+    DBGERR(cc1101->errState);
+//    cc1101->Reinit();
+    return false;
+  }
+}
 
 
 bool Transceiver::Send(IMFrame & frame)
@@ -542,16 +565,22 @@ void Transceiver::Knock()
 
 bool Transceiver::ResponseHello(IMFrame & frame)
 {
+   DBGINFO("((");
+   DBGINFO(_knocked);
+   DBGINFO(":");
+   DBGINFO(_helloed);
+   DBGINFO(")) ");
    _knocked++;
    byte xr;
    if (Connected()){
      if (_knocked % (TimerHelloCycle*_cycledata))  {
          if (_knocked<_helloed) {    //last call hasn't success
+
            DBGINFO("notsendHELLO ");
            return false;
          }
      }
-     _helloed=_knocked +2;  //if not success bypass cycle
+     _helloed=_knocked +3;  //if not success bypass cycle
      xr=random(100)+60;
    } else {
      if (_knocked<_helloed)
@@ -563,7 +592,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    DBGINFO("[[");
    DBGINFO(xr);
    DBGINFO("]] ");
-   delay(xr);
+   delaySleep(xr);
 
 
    IMFrameSetup *sp=frame.Setup();
@@ -691,7 +720,7 @@ bool Transceiver::BackwardWelcome(IMFrame & frame)
 void Transceiver::setupMode(uint16_t aMode)
 {
   BroadcastEnable=(aMode & IMS_TRANSCEIVER);
-  uint16_t xCycle= aMode & 0xFF;
+  uint8_t xCycle= aMode & 0xFF;
   if (xCycle==1) {
     _cycledata=20;
   } else if (xCycle==2)   {
@@ -732,9 +761,9 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    router.myId=myId;
    HostChannel=0;
    myChannel=0;
-   connected=1;
+   _connected=1;
 //   calibrate=300+myId*30;
-   TimerSetup(myId*40);
+   TimerSetup((myId % 9)*40);
 //   BroadcastEnable=(setup->mode && IMS_TRANSCEIVER);
    setupMode(setup->mode);
 
@@ -893,16 +922,23 @@ void Transceiver::Rupture()
   if (ruptures[state]>1)
   {
      ruptures[state]=0;
-     if (onEvent)
-       onEvent(state);
-  }
 
+     if (state!=TransceiverWrite)
+     {
+       timer.doneListen();
+     }
+  }
 }
+
+
+
+
 
 ISR(PCINT0_vect) // handle pin change interrupt for D8 to D13 here
 {
    Transceiver::ptr->Rupture();
 }
+
 
 
 //

@@ -10,8 +10,9 @@
 //
 #ifndef imTimer_h
 #define imTimer_h
+#include "imatmega.h"
 #include <avr/interrupt.h>
-#include <LowPower.h>
+#include <avr/sleep.h>
 
 
 #include <Arduino.h>
@@ -47,7 +48,7 @@ class  IMTimer
     static IMTimer* ptrr; //static ptr to Sleep class for the ISR
     long waiting;
     long cycle;
-    byte watchdog;
+    uint16_t watchdog;
     unsigned long start;
     byte current;
     volatile byte _listen;
@@ -82,7 +83,7 @@ class  IMTimer
         void doneWrite();
         void ResetDeviation();
         void Watchdog();
-        bool Watchdog(byte dog);
+        bool Watchdog(uint16_t dog);
         long Cycle();
         void Calibrate(unsigned long time);
         void printTime();

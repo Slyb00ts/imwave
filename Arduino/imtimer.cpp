@@ -13,6 +13,10 @@ void IMTimer::Calibrate(unsigned long time)
   unsigned long del=start;
    start=time;
    del=(time-del)%1000;
+   if (del){
+     DBGINFO("calib:");
+     DBGINFO(del);
+   }
    if (del<500)
      DeviationPlus+=del;
    else
@@ -54,21 +58,20 @@ void IMTimer::printTime()
 }
 void IMTimer::sleep(unsigned long time)
 {
-  period_t xtime;
+/*  period_t xtime;
   if (time==15)  xtime=SLEEP_15Ms;
   else if (time==30) xtime=SLEEP_30MS;
   else if (time==60) xtime=SLEEP_60MS;
   else if (time>=120) xtime=SLEEP_120MS;
   else {
-    delay(time);
+    delay(5);
     return;
   }
-//   delay(time);
- // LowPower.powerDown(xtime, ADC_OFF, BOD_OFF);
- // DBGINFO("S");
+  */
+   delay(3);
 // unsigned long xstart=millis();
- LowPower.idle(xtime, ADC_OFF, TIMER4_OFF,TIMER3_OFF,TIMER1_ON,TIMER0_ON, SPI_ON,USART1_OFF,TWI_ON, USB_ON);
-/*       DBGINFO("\r\n<<");
+// LowPower.idle(xtime, ADC_OFF, TIMER4_OFF,TIMER3_OFF,TIMER1_ON,TIMER0_ON, SPI_ON,USART1_OFF,TWI_ON, USB_ON);
+/*      DBGINFO("\r\n<<");
        DBGINFO(millis()-xstart);
        DBGINFO(" ");
        DBGINFO(time);
@@ -97,7 +100,7 @@ void IMTimer::Watchdog()
   watchdog=0;
 }
 
-bool IMTimer::Watchdog(byte dog)
+bool IMTimer::Watchdog(uint16_t dog)
 {
   watchdog++;
   return watchdog>dog;
@@ -149,8 +152,13 @@ byte IMTimer::WaitStage()
   DBGINFO(cycle);
   */
 //  int waits=0;
+  set_sleep_mode(SLEEP_MODE_IDLE);
+  cli();
+
   while(nearTime >getTime())
   {
+     goSleep();
+     /*
      long next=nearTime-getTime();
      if (next > 3) {
 //       waiting++;
@@ -162,25 +170,24 @@ byte IMTimer::WaitStage()
        else
          sleep(2);
      }
+     */
      if (_listen){
        _listen=0;
-//       DBGINFO(">>");
+//       DBGINFO("<()>");
 //       DBGINFO(millis());
        return current;
      }
-     if ((waiting % 2000)==2)
-     {
-       return LAP;
-     }
+
+    cli();
 
   }
-
+  sei();
 
   byte r= nearStage;
   if (r==PERIOD) {
      cycle++;
 //     watchdog++;
-     delay(30);
+     delaySleep(30);
      if ((cycle % CycleHour()) ==0){
        r=CRONHOUR;
 
@@ -195,6 +202,7 @@ byte IMTimer::WaitStage()
 void IMTimer::doneListen()
 {
    _listen++;
+   waiting=0;
 //   DBGINFO("??");
 //   DBGINFO(millis());
 

@@ -72,17 +72,17 @@ class Transceiver
 private:
     static Transceiver* ptr; //static ptr to Sleep class for the ISR
     IMCC1101 * cc1101;  //The CC1101 device
-//    IMFrame * pPacket;
 //    IMQueue queue;
     IMRouting router;
 
-//    header_t * pHeader;
 //    TableACK  ack;
-    byte connected;
+    byte _connected;
 
-    byte _knocked;
-    byte _helloed;
+    int _knocked;
+    int _helloed;
     byte myHop;
+    byte myChannel;
+    IMAddress myId;
     uint16_t _salt;
     uint16_t _calibrateshift;
     uint16_t _calibrate;
@@ -91,7 +91,7 @@ private:
     byte seqnr;
     byte ksequence;
 
-    volatile byte ruptures[2];
+    volatile byte ruptures[3];
     byte rssiH;  //from last receinve frame
     byte hostRssiSend;     //from hello
     byte hostRssiListen;  //from welcome
@@ -109,7 +109,6 @@ private:
     bool Send(IMFrame & frame);
     bool Send();
     bool CheckReadState();
-    void Deconnect();
     void Push(IMFrame & frame);
     bool BackwardWelcome(IMFrame & frame);
     void PrepareSetup(IMFrameSetup &se);
@@ -134,7 +133,6 @@ public:
 
     transfer_t RX_buffer ;
     transfer_t TX_buffer ;
-    IMAddress myId;
     IMAddress hostId;
     IMAddress serverId;
     IMMAC myMAC;
@@ -143,15 +141,15 @@ public:
     IMMAC serverMAC;
     byte myDevice;
     byte HostChannel;
-    byte myChannel;
     byte BroadcastChannel;
     bool BroadcastEnable;
-    funTransceiver onEvent;
+//    funTransceiver onEvent;
     void Init(IMCC1101 & cc);
     friend void PCINT0_vect(void);
     bool GetFrame(IMFrame&frame);
 
-
+    bool TestLow();
+    void Deconnect();
     void Knock();
     void ListenData();
     void ListenBroadcast();

@@ -7,7 +7,7 @@
 #ifndef imDebug_h
 #define imDebug_h
 
-#define DBGLVL 2
+#define DBGLVL 0
 #define DBGLED 1
 
 #ifndef DBGLED
@@ -59,7 +59,7 @@
 
 
 #if DBGLVL>=1
-#define INITDBG()    delay(6000);\
+#define INITDBG()    delay(4000);\
                      dbgSerial.begin(dbgSerialSpeed);\
                      dbgSerial.print("\r\n\r\nHello\r\n\r\n")
 
