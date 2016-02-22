@@ -370,3 +370,21 @@ byte IMCC1101::ReceiveData(byte *rxBuffer)
 		return 0;
 	}
 }
+
+bool IMCC1101::ReceiveDone()
+{
+  if (RXBytes()>10)
+  {
+    CheckReceiveFlag();
+    return true;
+  }
+  return false;
+
+}
+
+
+void IMCC1101::Sleep()
+{
+  FlushRxFifo();
+
+}

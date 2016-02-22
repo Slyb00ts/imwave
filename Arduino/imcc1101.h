@@ -180,10 +180,13 @@ public:
 	void Reset(void);
 	void Init(void);
 	void Reinit(void);
+        void Sleep(void);
 	boolean SendData(byte *txBuffer, byte size);
 	void StartReceive(void);
 	byte CheckReceiveFlag(void);
 	byte ReceiveData(byte *rxBuffer);
+        bool ReceiveDone();
+
 };
 
 #endif

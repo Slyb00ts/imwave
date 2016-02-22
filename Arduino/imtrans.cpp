@@ -51,15 +51,14 @@ void Transceiver::Init(IMCC1101 & cc)
   TimerSetupAll();
   TimerSetup(0);
   Deconnect();
-
 }
 
 void Transceiver::TimerSetupAll()
 {
     timer.Setup(STARTBROADCAST,BroadcastDelay);
     timer.Setup(IMTimer::PERIOD,CycleDuration);
-
 }
+
 void Transceiver::TimerSetup(unsigned long cal)
 {
     _calibrate=cal;
@@ -76,7 +75,7 @@ void Transceiver::StartReceive()
 
 void Transceiver::Idle()
 {
-  cc1101->FlushRxFifo();
+  cc1101->Sleep();
   state=TransceiverIdle;
 
 }
@@ -86,7 +85,6 @@ bool Transceiver::CheckReadState()
    DBGINFO(ruptures[TransceiverRead]);
    if (ruptures[TransceiverRead]>1){
       ruptures[TransceiverRead]=0;
-
       return true;
    }
    return false;
@@ -96,13 +94,8 @@ bool Transceiver::CheckReadState()
 uint8_t Transceiver::GetData()
 {
 
-//  if (cc1101->GetState() == CCGOTPACKET)
-  if (cc1101->RXBytes()>10)
+  if (cc1101->ReceiveDone())
   {
-    if (cc1101->CheckReceiveFlag())
-    {
-       DBGINFO("G");
-    }
     rSize=cc1101->ReceiveData((uint8_t*)&RX_buffer);
 //    rSize=cc1101->GetData((uint8_t*)&RX_buffer);
     printReceive();
@@ -110,13 +103,10 @@ uint8_t Transceiver::GetData()
   } else{
     DBGINFO("[");
     DBGINFO(state);
-          DBGINFO(":");
-    DBGINFO(cc1101->RXBytes());
-          DBGINFO(":");
-      DBGINFO(millis());
-      DBGINFO("] ");
+    DBGINFO(":EE:");
+    DBGINFO(millis());
+    DBGINFO("] ");
 
-//    DBGINFO(cc1101-> SpiReadStatus(CC1101_MARCSTATE));
     return 0;
   }
 }
@@ -141,7 +131,7 @@ bool Transceiver::Routing(IMFrame & frame)
 
 bool Transceiver::TestFrame()
 {
-      bool io= ((RX_buffer.len>=sizeof(header_t)) && (RX_buffer.len<=sizeof(packet_t)));
+      bool io= ((RX_buffer.len>=sizeof(IMFrameHeader)) && (RX_buffer.len<=sizeof(IMFrame)));
       if (io)
       {
         io=crcCheck();
@@ -208,18 +198,6 @@ unsigned short Transceiver::crcCheck()
          return RX_buffer.packet.checkCRC();
 }
 
-    /*
-uint8_t Transceiver::CRC(IMFrame & f)
-{
-    unsigned short c=42;
-    for(unsigned short i=0 ; i<(sizeof(header_t)+f.Header.Len) ; i++)
-    {
-      c+=((uint8_t*)&f)[i];
-    }
-    return c;
- 
-}
-*/
 
 float Transceiver::Rssi(byte h  )
 {
@@ -275,13 +253,10 @@ void Transceiver::Deconnect()
   myChannel=0;
   router.reset();
   router.addMAC(myMAC,0xFF);
-//  DBGINFO("Deconnect");
   timer.Watchdog();
   SendKnock(true);
   delay(2);
   ListenBroadcast();
-
-
 }
 
 bool Transceiver::Connected()
@@ -292,19 +267,12 @@ bool Transceiver::Connected()
 
 bool Transceiver::myHost(IMFrame & frame)
 {
-//  if (Connected()){
-//     IMFrameSetup setup;
-//     frame.Get(&setup);
      return hostMAC==frame.Setup()->MAC;
-//  } else
-//     return true;
 }
 
 
 void Transceiver::Prepare(IMFrame & frame)
 {
- // byte dst=frame.Header.DestinationId;
-//  frame.Header.pseq = ack.Answer(dst);
   frame.Header.SenderId=myId;
   frame.Header.crc=0;
   frame.Header.crc=frame.CRC();
@@ -331,12 +299,6 @@ bool Transceiver::Send()
     return false;
   }
 
-//  if (cc1101->StopReceive())
-//    return cc1101->Transmit((uint8_t*)&(TX_buffer.packet),TX_buffer.len);
-//  else{
-//    DBGERR("error stopreceive");
-//    return 0;
-//  }
 }
 
 bool Transceiver::TestLow()
@@ -352,8 +314,6 @@ bool Transceiver::TestLow()
     return true;
   } else  {
     DBGERR("! SEND");
-    DBGERR(cc1101->errState);
-//    cc1101->Reinit();
     return false;
   }
 }
@@ -392,14 +352,6 @@ void Transceiver::Push(IMFrame & frame)
 
 bool Transceiver::RetryData()
 {
-  /*   IMFrame * pf;
-     pf=ack.toRetry();
-     if (pf)
-     {
-        Push(*pf);
-        return true;
-     }
-     */
      return false;
 }
 
@@ -618,7 +570,6 @@ bool Transceiver::ResponseHello(IMFrame & frame)
     setup->rssi=rssiH;
     hostRssiListen=rssiH;
 
-//   _frame.Put(&setup);
 //   DBGINFO("%");
 //   DBGINFO(_frame.Header.Sequence);
 //   DBGERR2(setup->MAC,HEX);
@@ -739,8 +690,6 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
 {
    IMFrameSetup * setup =frame.Setup();
 
-//   setup=EmptyIMFrameSetup;
-//   frame.Get(&setup);
 
 //   DBGINFO("\r\n%MAC");
 //   DBGINFO(setup->MAC);

@@ -18,7 +18,6 @@
 
 #include "imdebug.h"
 #include "imcc1101.h"
-// # include "CC1101_lib.h"
 #include "imframe.h"
 #include "imack.h"
 #include "imqueue.h"
@@ -28,15 +27,10 @@
 
 
 
-//Buff for radio packet handling
-// #. define PAKETSIZE 61  //CC1101 adds LEN, LQI, RSSI -- stay under fifo size of 64 byte (CC1101 buggy)
 
 
 
 
-#define header_t IMFrameHeader
-#define packet_t IMFrame
-//.#.define IMCC1101 CC1101
 
 //Packet format delivered by the CC1101 RX
 
