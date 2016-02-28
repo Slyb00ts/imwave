@@ -167,6 +167,7 @@ public:
     void printStatus();
     void printTime();
     bool CycleData();
+    bool CycleDataPrev();
     float Rssi(byte h); //compute Rssi from byte
     float Rssi(); //return last Rssi
     float RssiListen();

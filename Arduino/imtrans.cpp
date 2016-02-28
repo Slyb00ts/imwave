@@ -250,6 +250,8 @@ void Transceiver::Deconnect()
   myId=0;
   hostId=0;
   _cycledata=3;
+  _knocked=0;
+  _helloed=0;   //on deconnect reset skipping
   myChannel=0;
   router.reset();
   router.addMAC(myMAC,0xFF);
@@ -502,11 +504,15 @@ void Transceiver::Knock()
      }
    } else {
        if ((timer.Cycle() % (TimerKnockCycle))==0){
-          ERRFLASH();
-          DBGINFO("InvalidKnock ");
-          SendKnock(true);
-          DBGINFO("\r\n");
-          ERRFLASH();
+          if (_cycleshift){  //hello sended
+            _cycleshift=0;
+          }else{
+            ERRFLASH();
+            DBGINFO("InvalidKnock ");
+            SendKnock(true);
+            DBGINFO("\r\n");
+            ERRFLASH();
+          }
 //          timer.Watchdog();
        }
        ListenBroadcast();
@@ -553,6 +559,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    serverMAC=sp->MAC2;
    myHop=sp->address;
    myHop++;
+   _cycleshift=1;
    hostId=frame.Header.SourceId;
    HostChannel=sp->hostchannel;
 
@@ -864,6 +871,13 @@ bool Transceiver::CycleData()
   return       (timer.Cycle() % _cycledata) ==_cycleshift;
 
 }
+
+bool Transceiver::CycleDataPrev()
+{
+  return       ((timer.Cycle()+1) % _cycledata) ==_cycleshift;
+
+}
+
 
 void Transceiver::Rupture()
 {
