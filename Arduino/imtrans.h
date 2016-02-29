@@ -17,13 +17,14 @@
 #endif
 
 #include "imdebug.h"
-#include "imcc1101.h"
+//#include "imcc1101.h"
 #include "imframe.h"
 #include "imack.h"
 #include "imqueue.h"
 #include "imrouting.h"
 #include "imtimer.h"
 #include "imatmega.h"
+#include "imbufcc1101.h"
 
 
 
@@ -34,9 +35,6 @@
 
 //Packet format delivered by the CC1101 RX
 
-#define TransceiverIdle  0
-#define TransceiverRead  1
-#define TransceiverWrite  2
 
 
 #define CycleDuration 3000
@@ -49,12 +47,6 @@
 
 
 
-typedef struct
-{
-  uint8_t len;
-  IMFrame packet;
-  uint16_t appended;
-} transfer_t;
 
 
 extern "C" void PCINT0_vect(void)__attribute__ ((signal)); // handle pin change interrupt for D8 to D13 here
@@ -65,9 +57,9 @@ class Transceiver
 {
 private:
     static Transceiver* ptr; //static ptr to Sleep class for the ISR
-    IMCC1101 * cc1101;  //The CC1101 device
 //    IMQueue queue;
     IMRouting router;
+    IMBuffer * buffer;
 
 //    TableACK  ack;
     byte _connected;
@@ -85,36 +77,33 @@ private:
     byte seqnr;
     byte ksequence;
 
-    volatile byte ruptures[3];
-    byte rssiH;  //from last receinve frame
+//    volatile byte ruptures[3];
+//    volatile  byte state;
     byte hostRssiSend;     //from hello
     byte hostRssiListen;  //from welcome
 //    float rssi;
-    unsigned short rSize;
-    unsigned short crc;
-    void setRssi();
+//    void setRssi();
     void Prepare(IMFrame & frame );
-    unsigned short crcCheck();
+//    unsigned short crcCheck();
 //    uint8_t CRC(IMFrame & p);
-    void PrepareTransmit();
+//    void PrepareTransmit();
     void Rupture();
     bool Forward(IMFrame & frame);
     bool Backward(IMFrame & frame);
     bool Send(IMFrame & frame);
-    bool Send();
-    bool CheckReadState();
+//    bool Send();
+//    bool CheckReadState();
     void Push(IMFrame & frame);
     bool BackwardWelcome(IMFrame & frame);
     void PrepareSetup(IMFrameSetup &se);
     bool SendKnock(bool invalid);
     bool myHost(IMFrame & frame);
     void StartReceive();
-    void setChannel(byte channel);
-    void Idle();
+//    void setChannel(byte channel);
+//    void Idle();
     bool SendQueue();
     bool RetryData();
     bool Onward(IMFrame & frame);
-    bool TestFrame();
     uint8_t GetData();
     void TimerSetupAll();
     void TimerSetup(unsigned long cal);
@@ -122,11 +111,10 @@ private:
 
 public:
     Transceiver();
-    volatile  byte state;
     IMTimer  timer;
 
-    transfer_t RX_buffer ;
-    transfer_t TX_buffer ;
+//    transfer_t RX_buffer ;
+//    transfer_t TX_buffer ;
     IMAddress hostId;
     IMAddress serverId;
     IMMAC myMAC;
@@ -138,7 +126,8 @@ public:
     byte BroadcastChannel;
     bool BroadcastEnable;
 //    funTransceiver onEvent;
-    void Init(IMCC1101 & cc);
+//    void Init(IMCC1101 & cc);
+    void Init(IMBuffer & buf);
     friend void PCINT0_vect(void);
     bool GetFrame(IMFrame&frame);
 
@@ -162,8 +151,6 @@ public:
     bool SendData(IMFrame & frame);
 //    bool Routing(IMFrame & frame);
     bool Connected();
-    void printReceive();
-    void printSend();
     void printStatus();
     void printTime();
     bool CycleData();

@@ -1,11 +1,12 @@
 //
 //    FILE: transceiver.cpp
-// VERSION: 0.5.00
+// VERSION: 0.6.00
 // PURPOSE: DTransceiver library for Arduino
 //
 // DATASHEET: 
 //
 // HISTORY:
+// 0.6 by Dariusz Mazur (01/03/2016)
 // 0.5 by Dariusz Mazur (11/01/2016)
 // 0.4 by Dariusz Mazur (01/11/2015)
 // 0.2 by Dariusz Mazur (01/09/2015)
@@ -34,7 +35,7 @@ Transceiver* Transceiver::ptr = 0;
 Transceiver::Transceiver()
 {
   ptr = this;	//the ptr points to this object
-  state = 0;
+//  state = 0;
   HostChannel=0;
   myChannel=0;
   BroadcastChannel=0;
@@ -43,11 +44,13 @@ Transceiver::Transceiver()
   _calibrateshift=0;
 }
 
-void Transceiver::Init(IMCC1101 & cc)
+void Transceiver::Init(IMBuffer & buf)
 {
-  cc1101=&cc;
-  cc1101->Init();
-  cc1101->StartReceive();
+   buffer=&buf;
+//  cc1101=&cc;
+//  cc1101->Init();
+//  cc1101->StartReceive();
+  buffer->Init();
   TimerSetupAll();
   TimerSetup(0);
   Deconnect();
@@ -67,6 +70,7 @@ void Transceiver::TimerSetup(unsigned long cal)
     timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration+_calibrate);
 }
 
+/*
 void Transceiver::StartReceive()
 {
   cc1101->StartReceive();
@@ -91,18 +95,21 @@ bool Transceiver::CheckReadState()
 
 }
 
+*/
 uint8_t Transceiver::GetData()
 {
 
-  if (cc1101->ReceiveDone())
+  if (buffer->Received())
   {
-    rSize=cc1101->ReceiveData((uint8_t*)&RX_buffer);
+ //   rSize=cc1101->ReceiveData((uint8_t*)&RX_buffer);
 //    rSize=cc1101->GetData((uint8_t*)&RX_buffer);
-    printReceive();
-    return rSize;
+    DBGINFO("Receive<");
+    printTime();
+    buffer->printReceive();
+    return 1;
   } else{
     DBGINFO("[");
-    DBGINFO(state);
+    DBGINFO(buffer->state);
     DBGINFO(":EE:");
     DBGINFO(millis());
     DBGINFO("] ");
@@ -129,41 +136,23 @@ bool Transceiver::Routing(IMFrame & frame)
 */
 
 
-bool Transceiver::TestFrame()
-{
-      bool io= ((RX_buffer.len>=sizeof(IMFrameHeader)) && (RX_buffer.len<=sizeof(IMFrame)));
-      if (io)
-      {
-        io=crcCheck();
-      } else {
-        DBGERR("!LEN");
-        return io;
-      }
-      if (io){
-         io =( (RX_buffer.packet.Header.ReceiverId==myId) ||  (RX_buffer.packet.Header.ReceiverId==0));
-      } else {
-          DBGERR("!CRC");
-          return io;
-      };
-
-      if (!io) {
-          DBGERR("Address");
-          DBGERR(RX_buffer.packet.Header.ReceiverId);
-      };
-
-      return io;
-
-}
 
 bool Transceiver::GetFrame(IMFrame& frame)
 {
   if (GetData()) {
-    bool io = TestFrame();
-    if (io) {
-        frame=RX_buffer.packet;
-        setRssi();
+//    bool io = TestFrame();
+//      bool io =( (buffer->RX_buffer.packet.Header.ReceiverId==myId) ||  (RX_buffer.packet.Header.ReceiverId==0));
+
+//    if (io) {
+        frame=buffer->RX_buffer.packet;
+        bool io =( (frame.Header.ReceiverId==myId) ||  (frame.Header.ReceiverId==0));
+       if (!io) {
+          DBGERR("Address");
+          DBGERR(frame.Header.ReceiverId);
+      };
+//        setRssi();
         DBGINFO(" RSSI: ");           DBGINFO(Rssi());            DBGINFO("dBm  ");
-    }
+//    }
     return io;
 
   } else {
@@ -172,31 +161,6 @@ bool Transceiver::GetFrame(IMFrame& frame)
 }
 
 
-unsigned short Transceiver::crcCheck()
-{
-//          unsigned short cnt = RX_buffer.packet.Header.crc;
-
-//          RX_buffer.packet.Header.crc = 0;
-//          unsigned short cne=CRC(RX_buffer.packet);
-//          unsigned short cnf=RX_buffer.packet.CRC();
-//          DBGINFO(cne);
-/*         DBGINFO('?');
-          DBGINFO(cnf);
-          DBGINFO('?');
-          DBGINFO(cnt);
-          DBGINFO( RX_buffer.packet.checkCRC());
-
-          RX_buffer.packet.Header.crc = 0;
-          unsigned short cng=RX_buffer.packet.CRC();
-          RX_buffer.packet.Header.crc=cng;
-          DBGINFO('?');
-          DBGINFO(cng);
-          DBGINFO( RX_buffer.packet.checkCRC());
-
- */
-//          return (cnf==0);
-         return RX_buffer.packet.checkCRC();
-}
 
 
 float Transceiver::Rssi(byte h  )
@@ -209,7 +173,7 @@ float Transceiver::Rssi(byte h  )
 }
 float Transceiver::Rssi()
 {
-   return Rssi(rssiH);
+   return Rssi(buffer->rssiH);
 }
 float Transceiver::RssiListen()
 {
@@ -223,25 +187,7 @@ float Transceiver::RssiSend()
 
 
 
-void Transceiver::setRssi()
-{
-            crc = RX_buffer.packet.Body[_frameBodySize+1];
-            unsigned short c = RX_buffer.packet.Body[_frameBodySize];
-            rssiH=c;
-//             DBGINFO(c);
-//            DBGINFO("&");
-//            rssi = c;
-//            if (c&0x80) rssi -= 256;
-//            rssi /= 2;
-//            rssi -= 74;
 
-}
-
-void Transceiver::setChannel(byte channel)
-{
-//  DBGINFO("CHN");  DBGINFO(channel);  DBGINFO("_");
-  cc1101->SetChannel(channel);
-}
 
 void Transceiver::Deconnect()
 {
@@ -279,12 +225,8 @@ void Transceiver::Prepare(IMFrame & frame)
   frame.Header.crc=0;
   frame.Header.crc=frame.CRC();
 }
-void Transceiver::PrepareTransmit()
-{
-   Prepare(TX_buffer.packet);
-   TX_buffer.len=sizeof(TX_buffer.packet);
-}
 
+/*
 bool Transceiver::Send()
 {
 
@@ -302,12 +244,14 @@ bool Transceiver::Send()
   }
 
 }
+*/
 
 bool Transceiver::TestLow()
 {
-   IMFrame _frame;
+/*   IMFrame _frame;
    IMFrameSetup *setup=_frame.Setup();
    _frame.Reset();
+
   TX_buffer.packet=_frame;
   PrepareTransmit();
   printSend();
@@ -318,15 +262,20 @@ bool Transceiver::TestLow()
     DBGERR("! SEND");
     return false;
   }
+  */
+  return false;
 }
 
 
 bool Transceiver::Send(IMFrame & frame)
 {
-  TX_buffer.packet=frame;
-  PrepareTransmit();
-  printSend();
-  return Send();
+  Prepare(frame);
+  buffer->TX_buffer.packet=frame;
+//  PrepareTransmit();
+  DBGINFO("Send<");
+  printTime();
+  buffer->printSend();
+  return buffer->Send();
 }
 
 bool Transceiver::SendQueue()
@@ -371,7 +320,7 @@ void Transceiver::PrepareSetup(IMFrameSetup &se)
 
 bool Transceiver::SendData(IMFrame & frame)
 {
-   setChannel(HostChannel);
+   buffer->setChannel(HostChannel);
    frame.Header.Function = IMF_DATA;
    frame.Header.SourceId=myId;
    frame.Header.ReceiverId=hostId;
@@ -391,7 +340,7 @@ void Transceiver::Transmit()
       if (SendQueue())
       {
          DBGINFO("transmit:");  DBGINFO(millis());    DBGINFO(" ");
-         DBGINFO(TX_buffer.len);    DBGINFO(",");
+//         DBGINFO(TX_buffer.len);    DBGINFO(",");
       }
       DBGINFO("\r\n");
       delay(1);
@@ -400,16 +349,16 @@ void Transceiver::Transmit()
 
 void Transceiver::ListenBroadcast()
 {
-      setChannel(BroadcastChannel);
+      buffer->setChannel(BroadcastChannel);
       timer.setStage(LISTENBROADCAST);
-      StartReceive();
+      buffer->StartReceive();
 }
 
 void Transceiver::ListenData()
 {
-      setChannel(myChannel);
+      buffer->setChannel(myChannel);
       timer.setStage(LISTENDATA);
-      StartReceive();
+      buffer->StartReceive();
 }
 
 void Transceiver::StopListen()
@@ -467,7 +416,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
 
 bool Transceiver::SendKnock(bool invalid)
 {
-   setChannel(BroadcastChannel);
+   buffer->setChannel(BroadcastChannel);
    IMFrame _frame;
    IMFrameSetup *setup=_frame.Setup();
    _frame.Reset();
@@ -563,7 +512,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    hostId=frame.Header.SourceId;
    HostChannel=sp->hostchannel;
 
-   setChannel(HostChannel);
+   buffer->setChannel(HostChannel);
 
    IMFrameSetup * setup=_frame.Setup();
 
@@ -574,12 +523,9 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    _frame.Header.DestinationId=frame.Header.SourceId;
    _frame.Header.Sequence=frame.Header.Sequence;
    PrepareSetup(*setup);
-    setup->rssi=rssiH;
-    hostRssiListen=rssiH;
+    hostRssiListen=buffer->rssiH;
+    setup->rssi=hostRssiListen;
 
-//   DBGINFO("%");
-//   DBGINFO(_frame.Header.Sequence);
-//   DBGERR2(setup->MAC,HEX);
    Send(_frame);
    return true;   //changed channel
 }
@@ -593,7 +539,7 @@ bool Transceiver::Backward(IMFrame & frame)
    DBGINFO("BACKWARD");
    _frame.Header.Function=frame.Header.Function | IMF_FORWARD;
    _frame.Header.ReceiverId=router.Repeater(frame.Header.DestinationId);
-   setChannel(router.getChannel(_frame.Header.ReceiverId));  //get proper channel form router
+   buffer->setChannel(router.getChannel(_frame.Header.ReceiverId));  //get proper channel form router
    return Send(_frame);
 }
 
@@ -602,7 +548,7 @@ bool Transceiver::Forward(IMFrame & frame)
    IMFrame _frame;
    _frame=frame;
    DBGINFO("FORWARD");
-   setChannel(HostChannel);
+   buffer->setChannel(HostChannel);
    _frame.Header.Function=frame.Header.Function | IMF_FORWARD;
    _frame.Header.ReceiverId=hostId;
    return Send(_frame);
@@ -648,7 +594,7 @@ bool Transceiver::ForwardHello(IMFrame & frame)
       frame.Header.DestinationId=serverId;
       frame.Header.SourceId=myId; // server should know where send welcome
       a=0;                        // register MAC with no addres (no bypass)
-      frame.Setup()->rssi=rssiH;  // send RSSI to server
+      frame.Setup()->rssi=buffer->rssiH;  // send RSSI to server
     }
     router.addMAC(setup_recv.MAC,a);
     return Forward(frame);
@@ -664,12 +610,12 @@ bool Transceiver::BackwardWelcome(IMFrame & frame)
     setup_recv.hostchannel=myChannel;
     frame.Put(&setup_recv);
     if (x==0) {
-      setChannel(BroadcastChannel);        // source hop - listen on broadcast
+      buffer->setChannel(BroadcastChannel);        // source hop - listen on broadcast
       frame.Header.ReceiverId=0;
     } else {
       frame.Header.ReceiverId=x;          //transmiter hop
-      setChannel(router.getChannel(x));  // set to channel of hop
-      setChannel(BroadcastChannel);
+      buffer->setChannel(router.getChannel(x));  // set to channel of hop
+      buffer->setChannel(BroadcastChannel);
     }
     return Send(frame);
 }
@@ -718,7 +664,6 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    HostChannel=0;
    myChannel=0;
    _connected=1;
-//   calibrate=300+myId*30;
    TimerSetup((myId % 9)*40);
 //   BroadcastEnable=(setup->mode && IMS_TRANSCEIVER);
    setupMode(setup->mode);
@@ -802,28 +747,6 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
 }
 
 
-void Transceiver::printReceive()
-{
-      DBGINFO("Receive<");
-      printTime();
-      for (unsigned short i=0;i<rSize ;i++)
-      {
-        DBGINFO2(((uint8_t*)&RX_buffer)[i],HEX);
-        DBGWRITE(' ');
-      }
-      DBGINFO("-> ");
-}
-
-void Transceiver::printSend()
-{
-      DBGINFO("Send<");
-      printTime();
-      for (unsigned short i=0;i<TX_buffer.len ;i++)
-      {
-        DBGINFO2(((uint8_t*)&TX_buffer)[i],HEX);
-        DBGWRITE(' ');
-      }
-}
 
 
 void Transceiver::printStatus()
@@ -881,16 +804,8 @@ bool Transceiver::CycleDataPrev()
 
 void Transceiver::Rupture()
 {
-  ruptures[state]++;
-  if (ruptures[state]>1)
-  {
-     ruptures[state]=0;
-
-     if (state!=TransceiverWrite)
-     {
+  if (buffer->Rupture())
        timer.doneListen();
-     }
-  }
 }
 
 
