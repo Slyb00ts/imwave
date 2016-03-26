@@ -31,11 +31,15 @@ class  IMBuffer
       uint8_t temp;
 
     volatile byte ruptures[3];
-    volatile  byte state;
-    unsigned short crcCheck();
-    void setRssi();
+//    void setRssi();
 
    public:
+    volatile  byte state;
+     byte _IM;
+    IMBuffer() {
+      _IM=99;
+    };
+
     transfer_t RX_buffer ;
     transfer_t TX_buffer ;
     unsigned short rSize;

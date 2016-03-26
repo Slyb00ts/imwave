@@ -1,6 +1,7 @@
 #include <imbufrfm69.h>
 #include <imrfm69.h>
 #include <imrfmregisters.h>
+#include "imdebug.h"
 
 
 RFM69  radio;  //The CC1101 device
@@ -72,46 +73,38 @@ bool IMBuffer::Received()
 
 void IMBuffer::Read()
 {
-//  rSize=cc1101.ReceiveData((uint8_t*)&RX_buffer);
-  setRssi();
+ rssiH=radio.RSSI;
 }
+
 
 
 bool IMBuffer::TestFrame()
 {
-      bool io= ((RX_buffer.len>=sizeof(IMFrameHeader)) && (RX_buffer.len<=sizeof(IMFrame)));
+//      bool io= ((RX_buffer.len>=sizeof(IMFrameHeader)) && (RX_buffer.len<=sizeof(IMFrame)));
+      rssiH=radio.RSSI;
+      rSize=radio.DATALEN;
+      bool io=1;
       if (io) {
-          io=(rSize==sizeof(IMFrame)+3);
+          io=(radio.DATALEN==sizeof(IMFrame));
       } else {
         DBGERR("!Size");
 
       }
       if (io)
       {
-        io=crcCheck();
+
       } else {
         DBGERR("!LEN");
         DBGERR(rSize);
         return io;
       }
-      if (!io){
-//         io =( (RX_buffer.packet.Header.ReceiverId==myId) ||  (RX_buffer.packet.Header.ReceiverId==0));
-//      } else {
-          DBGERR("!CRC");
-          return io;
-      };
 
 
 
       return io;
 
 }
-
-unsigned short IMBuffer::crcCheck()
-{
-         return RX_buffer.packet.checkCRC();
-}
-
+/*
 
 void IMBuffer::setRssi()
 {
@@ -127,11 +120,11 @@ void IMBuffer::setRssi()
 
 }
 
+*/
 
 
 void IMBuffer::StartReceive()
 {
-//  cc1101.StartReceive();
   state=TransceiverRead;
 }
 
@@ -177,7 +170,7 @@ void IMBuffer::printReceive()
       for (unsigned short i=0;i<RX_buffer.len ;i++)
       {
         DBGINFO2(((uint8_t*)&RX_buffer)[i],HEX);
-        DBGWRITE(' ');
+        DBGWRITE(" ");
       }
       DBGINFO("-> ");
 }
@@ -187,7 +180,7 @@ void IMBuffer::printSend()
       for (unsigned short i=0;i<TX_buffer.len ;i++)
       {
         DBGINFO2(((uint8_t*)&TX_buffer)[i],HEX);
-        DBGWRITE(' ');
+        DBGWRITE(" ");
       }
 }
 

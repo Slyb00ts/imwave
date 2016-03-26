@@ -19,12 +19,12 @@
 #include "imdebug.h"
 //#include "imcc1101.h"
 #include "imframe.h"
-#include "imack.h"
-#include "imqueue.h"
+//#include "imack.h"
+//#include "imqueue.h"
 #include "imrouting.h"
 #include "imtimer.h"
 #include "imatmega.h"
-#include "imbufcc1101.h"
+#include "imbuffer.h"
 
 
 
@@ -153,6 +153,7 @@ public:
     bool Connected();
     void printStatus();
     void printTime();
+    void printCycle();
     bool CycleData();
     bool CycleDataPrev();
     float Rssi(byte h); //compute Rssi from byte

@@ -47,9 +47,6 @@ Transceiver::Transceiver()
 void Transceiver::Init(IMBuffer & buf)
 {
    buffer=&buf;
-//  cc1101=&cc;
-//  cc1101->Init();
-//  cc1101->StartReceive();
   buffer->Init();
   TimerSetupAll();
   TimerSetup(0);
@@ -109,7 +106,7 @@ uint8_t Transceiver::GetData()
     return 1;
   } else{
     DBGINFO("[");
-    DBGINFO(buffer->state);
+//    DBGINFO(buffer->state);
     DBGINFO(":EE:");
     DBGINFO(millis());
     DBGINFO("] ");
@@ -150,6 +147,13 @@ bool Transceiver::GetFrame(IMFrame& frame)
           DBGERR("Address");
           DBGERR(frame.Header.ReceiverId);
       };
+       if (io){
+               io= frame.checkCRC();
+       }
+       if (!io) {
+          DBGERR("!CRC");
+       };
+
 //        setRssi();
         DBGINFO(" RSSI: ");           DBGINFO(Rssi());            DBGINFO("dBm  ");
 //    }
@@ -778,7 +782,7 @@ void Transceiver::printTime()
 
 short Transceiver::ClassTest()
 {
-  short x=IMQueue::ClassTest();
+/*  short x=IMQueue::ClassTest();
   if (x)
   {
      DBGERR("IMQueue");
@@ -786,12 +790,22 @@ short Transceiver::ClassTest()
      return x+100;
   }
   return 0;
+  */
 }
 
 
 bool Transceiver::CycleData()
 {
   return       (timer.Cycle() % _cycledata) ==_cycleshift;
+
+}
+
+void Transceiver::printCycle(){
+        DBGINFO("[[cycle:");
+        DBGINFO(timer.Cycle() % _cycledata);
+        DBGINFO("%");
+        DBGINFO(_cycleshift);
+        DBGINFO("]]");
 
 }
 
@@ -810,13 +824,13 @@ void Transceiver::Rupture()
 
 
 
-
+ /*
 
 ISR(PCINT0_vect) // handle pin change interrupt for D8 to D13 here
 {
    Transceiver::ptr->Rupture();
 }
-
+   */
 
 
 //
