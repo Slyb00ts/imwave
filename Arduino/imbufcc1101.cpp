@@ -1,5 +1,8 @@
 #include <imbufcc1101.h>
 
+
+IMCC1101  cc1101;  //The CC1101 device
+
 void IMBuffer::Init()
 {
 //  cc1101=&cc;
@@ -14,10 +17,15 @@ bool IMBuffer::Send()
   state=TransceiverWrite;
   TX_buffer.len=sizeof(TX_buffer.packet);
   if  (cc1101.SendData((uint8_t*)&(TX_buffer.packet),TX_buffer.len)) {
+//    while (state==TransceiverWrite)	// Wait for GDO0 to be cleared -> end of packet
+//       DBGINFO("?");
+//       DBGINFO(state);
+
     return true;
   } else  {
     DBGERR("! SEND");
     DBGERR(cc1101.errState);
+    state=TransceiverIdle;
     cc1101.Reinit();
     return false;
   }
@@ -33,6 +41,13 @@ bool IMBuffer::Received()
          b= TestFrame();
       }
   rSize=0;
+  if (!b){
+    DBGINFO("[");
+    DBGINFO(state);
+    DBGINFO(":EE:");
+    DBGINFO(millis());
+    DBGINFO("] ");
+  }
 
   return b;
 }
@@ -40,7 +55,10 @@ bool IMBuffer::Received()
 void IMBuffer::Read()
 {
   rSize=cc1101.ReceiveData((uint8_t*)&RX_buffer);
-  setRssi();
+  crc = RX_buffer.packet.Body[_frameBodySize+1];
+  rssiH = RX_buffer.packet.Body[_frameBodySize];
+
+//  setRssi();
 }
 
 
@@ -55,7 +73,8 @@ bool IMBuffer::TestFrame()
       }
       if (io)
       {
-        io=crcCheck();
+//        io=crcCheck();
+        return io;
       } else {
         DBGERR("!LEN");
         DBGERR(rSize);
@@ -74,12 +93,15 @@ bool IMBuffer::TestFrame()
 
 }
 
+/*
 unsigned short IMBuffer::crcCheck()
 {
          return RX_buffer.packet.checkCRC();
 }
 
+*/
 
+/*
 void IMBuffer::setRssi()
 {
             crc = RX_buffer.packet.Body[_frameBodySize+1];
@@ -94,7 +116,7 @@ void IMBuffer::setRssi()
 
 }
 
-
+*/
 
 void IMBuffer::StartReceive()
 {
@@ -129,7 +151,10 @@ bool IMBuffer::Rupture()
      {
        Read();
        return true;
+     } else {
+       state=TransceiverIdle;
      }
+
   }
   return false;
 }
@@ -141,7 +166,7 @@ void IMBuffer::printReceive()
       for (unsigned short i=0;i<RX_buffer.len ;i++)
       {
         DBGINFO2(((uint8_t*)&RX_buffer)[i],HEX);
-        DBGWRITE(' ');
+        DBGWRITE(" ");
       }
       DBGINFO("-> ");
 }
