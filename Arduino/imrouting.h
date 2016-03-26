@@ -12,7 +12,7 @@
 #include "imframe.h"
 
 
-#define MAXTableRouting 127
+#define MAXTableRouting 64
 class IMRouting
 {
   private:
