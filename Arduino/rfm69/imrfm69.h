@@ -75,8 +75,12 @@
 // TWS: define CTLbyte bits
 #define RFM69_CTL_SENDACK   0x80
 #define RFM69_CTL_REQACK    0x40
+typedef void( * funTransceiverRF69 )(byte );
 
 class RFM69 {
+  private:
+     static void receivedDataNull(byte){};
+
   public:
     static volatile uint8_t DATA[RF69_MAX_DATA_LEN]; // recv/xmit buf, including header & crc bytes
     static volatile uint8_t DATALEN;
@@ -87,6 +91,7 @@ class RFM69 {
     static volatile uint8_t ACK_RECEIVED; // should be polled immediately after sending a packet with ACK request
     static volatile int16_t RSSI; // most accurate RSSI during reception (closest to the reception)
     static volatile uint8_t _mode; // should be protected?
+    funTransceiverRF69 receivedData;
 
     RFM69(uint8_t slaveSelectPin=RF69_SPI_CS, uint8_t interruptPin=RF69_IRQ_PIN, bool isRFM69HW=false, uint8_t interruptNum=RF69_IRQ_NUM) {
       _slaveSelectPin = slaveSelectPin;
@@ -96,6 +101,7 @@ class RFM69 {
       _promiscuousMode = false;
       _powerLevel = 31;
       _isRFM69HW = isRFM69HW;
+      receivedData=&receivedDataNull;
     }
 
     bool initialize(uint8_t freqBand, uint8_t ID, uint8_t networkID=1);
@@ -105,6 +111,7 @@ class RFM69 {
     virtual void send(uint8_t toAddress, const void* buffer, uint8_t bufferSize, bool requestACK=false);
     virtual bool sendWithRetry(uint8_t toAddress, const void* buffer, uint8_t bufferSize, uint8_t retries=2, uint8_t retryWaitTime=40); // 40ms roundtrip req for 61byte packets
     virtual bool receiveDone();
+    virtual void receiveBegin();
     bool ACKReceived(uint8_t fromNodeID);
     bool ACKRequested();
     virtual void sendACK(const void* buffer = "", uint8_t bufferSize=0);
@@ -142,7 +149,6 @@ class RFM69 {
     uint8_t _SPCR;
     uint8_t _SPSR;
 
-    virtual void receiveBegin();
     virtual void setMode(uint8_t mode);
     virtual void setHighPowerRegs(bool onOff);
     virtual void select();

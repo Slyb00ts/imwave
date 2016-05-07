@@ -49,6 +49,8 @@ void Transceiver::Init(IMBuffer & buf)
 {
   buffer=&buf;
   buffer->Init();
+
+  buffer->setFunction(&timer.doneReceived);
   TimerSetup(0);
   Deconnect();
 }
@@ -790,6 +792,7 @@ short Transceiver::ClassTest()
   }
   return 0;
   */
+  return 0;
 }
 
 
@@ -812,6 +815,11 @@ bool Transceiver::CycleDataPrev()
 {
   return       ((timer.Cycle()+1) % _cycledata) ==_cycleshift;
 
+}
+
+void Transceiver::DisableWatchdog()
+{
+    _cycledata=30000;
 }
 
 

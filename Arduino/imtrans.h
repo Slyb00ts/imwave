@@ -50,7 +50,6 @@
 
 
 extern "C" void PCINT0_vect(void)__attribute__ ((signal)); // handle pin change interrupt for D8 to D13 here
-typedef void( * funTransceiver )(byte );
 
 
 class Transceiver
@@ -160,6 +159,7 @@ public:
     float Rssi(); //return last Rssi
     float RssiListen();
     float RssiSend();
+    void DisableWatchdog();
     static short ClassTest();
 
 private:

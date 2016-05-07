@@ -57,6 +57,7 @@ class  IMBuffer
     void printReceive();
     void printSend();
     void setChannel(byte channel);
+    void setFunction(funTransceiver fun);
 
 } ;
 

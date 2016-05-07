@@ -27,6 +27,7 @@ void IMBuffer::Init()
     radio.initialize(FREQUENCY,NODEID,NETWORKID);
     radio.promiscuous(promiscuousMode);
 
+
 }
 bool IMBuffer::Send()
 {
@@ -50,10 +51,15 @@ bool IMBuffer::Send()
 
 }
 
-
+void IMBuffer::setFunction(funTransceiver fun)
+{
+  radio.receivedData=fun;
+}
 
 bool IMBuffer::Received()
 {
+      DBGINFO("[]");
+
   bool b= radio.receiveDone();
 ///  bool b=(rSize>0);
       if (b) {
@@ -126,6 +132,7 @@ void IMBuffer::setRssi()
 void IMBuffer::StartReceive()
 {
   state=TransceiverRead;
+  radio.receiveBegin();
 }
 
 

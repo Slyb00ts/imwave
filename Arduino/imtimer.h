@@ -79,6 +79,7 @@ class  IMTimer
         void Setup(byte stage, unsigned long waittime);
         byte WaitStage();
         void setStage(byte stage);
+        static void doneReceived(byte __count);
         void doneListen();
         void doneWrite();
         void ResetDeviation();

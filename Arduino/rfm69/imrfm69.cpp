@@ -116,6 +116,7 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   return true;
 }
 
+//static void RFM69::receivedDataNull(byte){}
 // return the frequency (in Hz)
 uint32_t RFM69::getFrequency()
 {
@@ -315,6 +316,7 @@ void RFM69::interruptHandler() {
   //digitalWrite(4, 1);
 //    RSSI = readRSSI(true);
 //    Serial.print(readRSSI(true));
+    Serial.print("*");
   if (_mode == RF69_MODE_RX && (readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PAYLOADREADY))
   {
 //    RSSI = readRSSI();
@@ -334,8 +336,8 @@ void RFM69::interruptHandler() {
       //digitalWrite(4, 0);
       return;
     }
-//    Serial.print("++");
-//    Serial.print(PAYLOADLEN);
+    Serial.print("++");
+    Serial.print(PAYLOADLEN);
 
     DATALEN = PAYLOADLEN - 3;
     SENDERID = SPI.transfer(0);
@@ -353,11 +355,16 @@ void RFM69::interruptHandler() {
     if (DATALEN < RF69_MAX_DATA_LEN) DATA[DATALEN] = 0; // add null at end of string
     unselect();
     setMode(RF69_MODE_RX);
+    receivedData(DATALEN);
+
 //    Serial.print("*");
   }
   RSSI = readRSSI();
   //digitalWrite(4, 0);
 }
+
+//void RFM69::receivedDataNull(byte){}
+
 
 // internal function
 void RFM69::isr0() { selfPointer->interruptHandler(); }
@@ -381,9 +388,9 @@ void RFM69::receiveBegin() {
 bool RFM69::receiveDone() {
 //ATOMIC_BLOCK(ATOMIC_FORCEON)
 //{
-//    Serial.print(">>");
+    Serial.print(">>");
 //    Serial.print(PAYLOADLEN);
-//    Serial.print(_mode);
+    Serial.print(_mode);
   noInterrupts(); // re-enabled in unselect() via setMode() or via receiveBegin()
   if (_mode == RF69_MODE_RX && PAYLOADLEN > 0)
   {

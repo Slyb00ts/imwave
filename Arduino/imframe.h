@@ -63,7 +63,7 @@ typedef struct {
 
 } IMFrameStatus;
 
-
+typedef void( * funTransceiver )(byte );
 static const  IMFrameSetup EmptyIMFrameSetup={0};
 #define _frameBodySize _frameSize - sizeof(IMFrameHeader)
 typedef struct
