@@ -42,13 +42,13 @@ Transceiver::Transceiver()
   _calibrate=0;
   _cycledata=3;
   _calibrateshift=0;
+  TimerSetupAll();
 }
 
 void Transceiver::Init(IMBuffer & buf)
 {
-   buffer=&buf;
+  buffer=&buf;
   buffer->Init();
-  TimerSetupAll();
   TimerSetup(0);
   Deconnect();
 }
@@ -369,7 +369,6 @@ void Transceiver::StopListen()
 {
     if (Connected())
     {
-//       DBGINFO("stop listen");
 //     trx.Idle();
      timer.setStage(IMTimer::IDDLESTAGE);
    }

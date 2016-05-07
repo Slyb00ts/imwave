@@ -142,7 +142,8 @@ void IMTimer::setStage(byte stage)
 
 byte IMTimer::WaitStage()
 {
-/*  DBGINFO("{\r\n");
+
+/*  DBGINFO("\r\n{{");
   DBGINFO(nearTime);
   DBGINFO('%');
   DBGINFO(millis());
@@ -151,13 +152,12 @@ byte IMTimer::WaitStage()
   DBGINFO('%');
   DBGINFO(cycle);
   */
-//  int waits=0;
   set_sleep_mode(SLEEP_MODE_IDLE);
   cli();
 
   while(nearTime >getTime())
   {
-     goSleep();
+    goSleep();
      /*
      long next=nearTime-getTime();
      if (next > 3) {
@@ -173,7 +173,7 @@ byte IMTimer::WaitStage()
      */
      if (_listen){
        _listen=0;
-//       DBGINFO("<()>");
+       DBGINFO("<()>");
 //       DBGINFO(millis());
        return current;
      }

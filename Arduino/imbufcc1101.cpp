@@ -5,7 +5,6 @@ IMCC1101  cc1101;  //The CC1101 device
 
 void IMBuffer::Init()
 {
-//  cc1101=&cc;
   cc1101.Init();
   cc1101.StartReceive();
 }

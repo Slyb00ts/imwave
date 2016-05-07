@@ -87,7 +87,6 @@ private:
 //    unsigned short crcCheck();
 //    uint8_t CRC(IMFrame & p);
 //    void PrepareTransmit();
-    void Rupture();
     bool Forward(IMFrame & frame);
     bool Backward(IMFrame & frame);
     bool Send(IMFrame & frame);
@@ -130,6 +129,7 @@ public:
     void Init(IMBuffer & buf);
     friend void PCINT0_vect(void);
     bool GetFrame(IMFrame&frame);
+    void Rupture();
 
     bool TestLow();
     void Deconnect();
