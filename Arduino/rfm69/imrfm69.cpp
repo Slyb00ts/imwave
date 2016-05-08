@@ -316,7 +316,7 @@ void RFM69::interruptHandler() {
   //digitalWrite(4, 1);
 //    RSSI = readRSSI(true);
 //    Serial.print(readRSSI(true));
-    Serial.print("*");
+//    Serial.print("*");
   if (_mode == RF69_MODE_RX && (readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PAYLOADREADY))
   {
 //    RSSI = readRSSI();
@@ -388,9 +388,9 @@ void RFM69::receiveBegin() {
 bool RFM69::receiveDone() {
 //ATOMIC_BLOCK(ATOMIC_FORCEON)
 //{
-    Serial.print(">>");
+//    Serial.print(">>");
 //    Serial.print(PAYLOADLEN);
-    Serial.print(_mode);
+//    Serial.print(_mode);
   noInterrupts(); // re-enabled in unselect() via setMode() or via receiveBegin()
   if (_mode == RF69_MODE_RX && PAYLOADLEN > 0)
   {

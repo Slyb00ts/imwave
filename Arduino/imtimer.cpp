@@ -200,10 +200,12 @@ byte IMTimer::WaitStage()
 
 }
 
- void IMTimer::doneReceived(byte __count)
+ void IMTimer::doneReceived(byte count)
 {
-       DBGINFO("RECEIVED");
+//       DBGINFO("RECEIVED");
 //  _listen++;
+//  if (count>10)
+    ptrr->doneListen();
 }
 void IMTimer::doneListen()
 {
