@@ -35,11 +35,11 @@
 volatile uint8_t RFM69::DATA[RF69_MAX_DATA_LEN];
 volatile uint8_t RFM69::_mode;        // current transceiver state
 volatile uint8_t RFM69::DATALEN;
-volatile uint8_t RFM69::SENDERID;
-volatile uint8_t RFM69::TARGETID;     // should match _address
+//volatile uint8_t RFM69::SENDERID;
+//volatile uint8_t RFM69::TARGETID;     // should match _address
 volatile uint8_t RFM69::PAYLOADLEN;
-volatile uint8_t RFM69::ACK_REQUESTED;
-volatile uint8_t RFM69::ACK_RECEIVED; // should be polled immediately after sending a packet with ACK request
+//volatile uint8_t RFM69::ACK_REQUESTED;
+//volatile uint8_t RFM69::ACK_RECEIVED; // should be polled immediately after sending a packet with ACK request
 volatile int16_t RFM69::RSSI;          // most accurate RSSI during reception (closest to the reception)
 RFM69* RFM69::selfPointer;
 
@@ -65,6 +65,7 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
     // +20dBm formula: Pout = -11 + OutputPower (with PA1 and PA2)** and high power PA settings (section 3.3.7 in datasheet)
     ///* 0x11 */ { REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | RF_PALEVEL_OUTPUTPOWER_11111},
     ///* 0x13 */ { REG_OCP, RF_OCP_ON | RF_OCP_TRIM_95 }, // over current protection (default is 95mA)
+    /* 0x18 */ { REG_LNA, RF_LNA_ZIN_50 }, // (BitRate < 2 * RxBw)
 
     // RXBW defaults are { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_24 | RF_RXBW_EXP_5} (RxBw: 10.4KHz)
     /* 0x19 */ { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_16 | RF_RXBW_EXP_2 }, // (BitRate < 2 * RxBw)
@@ -223,7 +224,7 @@ void RFM69::send(uint8_t toAddress, const void* buffer, uint8_t bufferSize, bool
   writeReg(REG_PACKETCONFIG2, (readReg(REG_PACKETCONFIG2) & 0xFB) | RF_PACKET2_RXRESTART); // avoid RX deadlocks
   uint32_t now = millis();
   while (!canSend() && millis() - now < RF69_CSMA_LIMIT_MS) receiveDone();
-  sendFrame(toAddress, buffer, bufferSize, requestACK, false);
+  sendFrame(toAddress, buffer, bufferSize);
 }
 
 // to increase the chance of getting a packet across, call this function instead of send
@@ -232,51 +233,10 @@ void RFM69::send(uint8_t toAddress, const void* buffer, uint8_t bufferSize, bool
 // The reason for the semi-automaton is that the lib is interrupt driven and
 // requires user action to read the received data and decide what to do with it
 // replies usually take only 5..8ms at 50kbps@915MHz
-bool RFM69::sendWithRetry(uint8_t toAddress, const void* buffer, uint8_t bufferSize, uint8_t retries, uint8_t retryWaitTime) {
-  uint32_t sentTime;
-  for (uint8_t i = 0; i <= retries; i++)
-  {
-    send(toAddress, buffer, bufferSize, true);
-    sentTime = millis();
-    while (millis() - sentTime < retryWaitTime)
-    {
-      if (ACKReceived(toAddress))
-      {
-        Serial.print(" ~ms:"); Serial.print(millis() - sentTime);
-        return true;
-      }
-    }
-    Serial.print(" RETRY#"); Serial.println(i + 1);
-  }
-  return false;
-}
 
-// should be polled immediately after sending a packet with ACK request
-bool RFM69::ACKReceived(uint8_t fromNodeID) {
-  if (receiveDone())
-    return (SENDERID == fromNodeID || fromNodeID == RF69_BROADCAST_ADDR) && ACK_RECEIVED;
-  return false;
-}
-
-// check whether an ACK was requested in the last received packet (non-broadcasted packet)
-bool RFM69::ACKRequested() {
-  return ACK_REQUESTED && (TARGETID != RF69_BROADCAST_ADDR);
-}
-
-// should be called immediately after reception in case sender wants ACK
-void RFM69::sendACK(const void* buffer, uint8_t bufferSize) {
-  ACK_REQUESTED = 0;   // TWS added to make sure we don't end up in a timing race and infinite loop sending Acks
-  uint8_t sender = SENDERID;
-  int16_t _RSSI = RSSI; // save payload received RSSI value
-  writeReg(REG_PACKETCONFIG2, (readReg(REG_PACKETCONFIG2) & 0xFB) | RF_PACKET2_RXRESTART); // avoid RX deadlocks
-  uint32_t now = millis();
-  while (!canSend() && millis() - now < RF69_CSMA_LIMIT_MS) receiveDone();
-  sendFrame(sender, buffer, bufferSize, false, true);
-  RSSI = _RSSI; // restore payload RSSI
-}
 
 // internal function
-void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize, bool requestACK, bool sendACK)
+void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize)
 {
   setMode(RF69_MODE_STANDBY); // turn off receiver to prevent reception while filling fifo
   while ((readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00); // wait for ModeReady
@@ -284,19 +244,19 @@ void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize,
   if (bufferSize > RF69_MAX_DATA_LEN) bufferSize = RF69_MAX_DATA_LEN;
 
   // control byte
-  uint8_t CTLbyte = 0x00;
+/*  uint8_t CTLbyte = 0x00;
   if (sendACK)
     CTLbyte = RFM69_CTL_SENDACK;
   else if (requestACK)
     CTLbyte = RFM69_CTL_REQACK;
-
+*/
   // write to FIFO
   select();
   SPI.transfer(REG_FIFO | 0x80);
-  SPI.transfer(bufferSize + 3);
-  SPI.transfer(toAddress);
-  SPI.transfer(_address);
-  SPI.transfer(CTLbyte);
+  SPI.transfer(bufferSize );
+//  SPI.transfer(toAddress);
+//  SPI.transfer(_address);
+//  SPI.transfer(CTLbyte);
 
   for (uint8_t i = 0; i < bufferSize; i++)
     SPI.transfer(((uint8_t*) buffer)[i]);
@@ -325,30 +285,19 @@ void RFM69::interruptHandler() {
     SPI.transfer(REG_FIFO & 0x7F);
     PAYLOADLEN = SPI.transfer(0);
     PAYLOADLEN = PAYLOADLEN > 66 ? 66 : PAYLOADLEN; // precaution
-    TARGETID = SPI.transfer(0);
+//    TARGETID = SPI.transfer(0);
 
-    if(!(_promiscuousMode || TARGETID == _address || TARGETID == RF69_BROADCAST_ADDR) // match this node's address, or broadcast address or anything in promiscuous mode
-       || PAYLOADLEN < 3) // address situation could receive packets that are malformed and don't fit this libraries extra fields
-    {
-      PAYLOADLEN = 0;
-      unselect();
-      receiveBegin();
-      //digitalWrite(4, 0);
-      return;
-    }
-    Serial.print("++");
-    Serial.print(PAYLOADLEN);
 
-    DATALEN = PAYLOADLEN - 3;
-    SENDERID = SPI.transfer(0);
-    uint8_t CTLbyte = SPI.transfer(0);
+    DATALEN = PAYLOADLEN ;
+//    SENDERID = SPI.transfer(0);
+//    uint8_t CTLbyte = SPI.transfer(0);
 
-    ACK_RECEIVED = CTLbyte & RFM69_CTL_SENDACK; // extract ACK-received flag
-    ACK_REQUESTED = CTLbyte & RFM69_CTL_REQACK; // extract ACK-requested flag
+//    ACK_RECEIVED = CTLbyte & RFM69_CTL_SENDACK; // extract ACK-received flag
+//    ACK_REQUESTED = CTLbyte & RFM69_CTL_REQACK; // extract ACK-requested flag
     
-    interruptHook(CTLbyte);     // TWS: hook to derived class interrupt function
+//    interruptHook(CTLbyte);     // TWS: hook to derived class interrupt function
 
-    for (uint8_t i = 0; i < DATALEN; i++)
+    for (uint8_t i = 0; i < PAYLOADLEN; i++)
     {
       DATA[i] = SPI.transfer(0);
     }
@@ -372,11 +321,11 @@ void RFM69::isr0() { selfPointer->interruptHandler(); }
 // internal function
 void RFM69::receiveBegin() {
   DATALEN = 0;
-  SENDERID = 0;
-  TARGETID = 0;
+//  SENDERID = 0;
+//  TARGETID = 0;
   PAYLOADLEN = 0;
-  ACK_REQUESTED = 0;
-  ACK_RECEIVED = 0;
+//  ACK_REQUESTED = 0;
+//  ACK_RECEIVED = 0;
   RSSI = 0;
   if (readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PAYLOADREADY)
     writeReg(REG_PACKETCONFIG2, (readReg(REG_PACKETCONFIG2) & 0xFB) | RF_PACKET2_RXRESTART); // avoid RX deadlocks
@@ -385,6 +334,11 @@ void RFM69::receiveBegin() {
 }
 
 // checks if a packet was received and/or puts transceiver in receive (ie RX or listen) mode
+bool RFM69::canRead() {
+  if (_mode == RF69_MODE_RX && PAYLOADLEN > 0)
+      return true;
+  return false;
+}
 bool RFM69::receiveDone() {
 //ATOMIC_BLOCK(ATOMIC_FORCEON)
 //{

@@ -26,7 +26,7 @@ void IMBuffer::Init()
 //  cc1101.StartReceive();
     radio.initialize(FREQUENCY,NODEID,NETWORKID);
     radio.promiscuous(promiscuousMode);
-
+  radio.readAllRegs();
 
 }
 bool IMBuffer::Send()
@@ -58,14 +58,14 @@ void IMBuffer::setFunction(funTransceiver fun)
 
 bool IMBuffer::Received()
 {
-      DBGINFO("[]");
+//      DBGINFO("[=]");
 
-  bool b= radio.receiveDone();
+  bool b= radio.canRead();
 ///  bool b=(rSize>0);
       if (b) {
          b= TestFrame();
       }
-  rSize=0;
+//  rSize=0;
   if (!b){
     DBGINFO("[");
     DBGINFO(state);
@@ -89,9 +89,11 @@ bool IMBuffer::TestFrame()
 //      bool io= ((RX_buffer.len>=sizeof(IMFrameHeader)) && (RX_buffer.len<=sizeof(IMFrame)));
       rssiH=radio.RSSI;
       rSize=radio.DATALEN;
+      radio.DATALEN=0;
+      radio.PAYLOADLEN=0;
       bool io=1;
       if (io) {
-          io=(radio.DATALEN==sizeof(IMFrame));
+          io=(rSize==sizeof(IMFrame));
       } else {
         DBGERR("!Size");
 
@@ -104,6 +106,12 @@ bool IMBuffer::TestFrame()
         DBGERR(rSize);
         return io;
       }
+//      memcpy(&(radio.DATA),&(RX_buffer.packet),sizeof(IMFrame));
+
+            for(unsigned short i=0 ; i<(sizeof(IMFrame)) ; i++)
+            {
+              ((uint8_t*)&RX_buffer.packet)[i]=radio.DATA[i];
+            }
 
 
 
@@ -174,7 +182,7 @@ bool IMBuffer::Rupture()
 
 void IMBuffer::printReceive()
 {
-      for (unsigned short i=0;i<RX_buffer.len ;i++)
+      for (unsigned short i=0;i<rSize ;i++)
       {
         DBGINFO2(((uint8_t*)&RX_buffer)[i],HEX);
         DBGWRITE(" ");

@@ -50,6 +50,7 @@ void Transceiver::Init(IMBuffer & buf)
   buffer=&buf;
   buffer->Init();
 
+
   buffer->setFunction(&timer.doneReceived);
   TimerSetup(0);
   Deconnect();
@@ -102,9 +103,9 @@ uint8_t Transceiver::GetData()
   {
  //   rSize=cc1101->ReceiveData((uint8_t*)&RX_buffer);
 //    rSize=cc1101->GetData((uint8_t*)&RX_buffer);
-    DBGINFO("Receive<");
-    printTime();
-    buffer->printReceive();
+//    DBGINFO("Receive*<");
+//    printTime();
+//   buffer->printReceive();
     return 1;
   } else{
     DBGINFO("[");
@@ -153,7 +154,7 @@ bool Transceiver::GetFrame(IMFrame& frame)
                io= frame.checkCRC();
        }
        if (!io) {
-          DBGERR("!CRC");
+          DBGERR("!!CRC");
        };
 
 //        setRssi();
