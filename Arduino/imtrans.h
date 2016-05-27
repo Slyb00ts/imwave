@@ -98,7 +98,6 @@ private:
     bool myHost(IMFrame & frame);
     void StartReceive();
 //    void setChannel(byte channel);
-//    void Idle();
     bool SendQueue();
     bool RetryData();
     bool Onward(IMFrame & frame);
@@ -129,6 +128,7 @@ public:
     friend void PCINT0_vect(void);
     bool GetFrame(IMFrame&frame);
     void Rupture();
+    void Idle();
 
     bool TestLow();
     void Deconnect();

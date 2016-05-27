@@ -84,6 +84,7 @@ class RFM69 {
   public:
     static volatile uint8_t DATA[RF69_MAX_DATA_LEN]; // recv/xmit buf, including header & crc bytes
     static volatile uint8_t DATALEN;
+    static volatile uint8_t IRQ2;
 //    static volatile uint8_t SENDERID;
 //    static volatile uint8_t TARGETID; // should match _address
     static volatile uint8_t PAYLOADLEN;
@@ -121,6 +122,7 @@ class RFM69 {
     virtual void setHighPower(bool onOFF=true); // has to be called after initialize() for RFM69HW
     virtual void setPowerLevel(uint8_t level); // reduce/increase transmit power level
     void sleep();
+    void idle();
     uint8_t readTemperature(uint8_t calFactor=0); // get CMOS temperature (8bit)
     void rcCalibration(); // calibrate the internal RC oscillator for use in wide temperature variations - see datasheet section [4.3.5. RC Timer Accuracy]
 

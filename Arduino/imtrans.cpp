@@ -70,6 +70,8 @@ void Transceiver::TimerSetup(unsigned long cal)
     timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration+_calibrate);
 }
 
+
+
 /*
 void Transceiver::StartReceive()
 {
@@ -77,12 +79,6 @@ void Transceiver::StartReceive()
   state=TransceiverRead;
 }
 
-void Transceiver::Idle()
-{
-  cc1101->Sleep();
-  state=TransceiverIdle;
-
-}
 
 bool Transceiver::CheckReadState()
 {
@@ -105,7 +101,7 @@ uint8_t Transceiver::GetData()
 //    rSize=cc1101->GetData((uint8_t*)&RX_buffer);
 //    DBGINFO("Receive*<");
 //    printTime();
-//   buffer->printReceive();
+   buffer->printReceive();
     return 1;
   } else{
     DBGINFO("[");
@@ -352,6 +348,14 @@ void Transceiver::Transmit()
       DBGINFO("\r\n");
       delay(1);
       ListenData();
+}
+
+
+void Transceiver::Idle()
+{
+  buffer->Sleep();
+//  state=TransceiverIdle;
+
 }
 
 void Transceiver::ListenBroadcast()

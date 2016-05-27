@@ -91,6 +91,8 @@ bool IMBuffer::TestFrame()
       rSize=radio.DATALEN;
       radio.DATALEN=0;
       radio.PAYLOADLEN=0;
+        DBGINFO("IRQ");
+        DBGINFO(radio.IRQ2);
       bool io=1;
       if (io) {
           io=(rSize==sizeof(IMFrame));
@@ -146,7 +148,7 @@ void IMBuffer::StartReceive()
 
 void IMBuffer::Sleep()
 {
-  radio.sleep();
+  radio.idle();
   state=TransceiverIdle;
 
 }
