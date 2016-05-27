@@ -288,8 +288,9 @@ void RFM69::interruptHandler() {
 //    RSSI = readRSSI(true);
 //    Serial.print(readRSSI(true));
 //    Serial.print("*");
+  if (_mode != RF69_MODE_RX) return;
  uint8_t rr=readReg(REG_IRQFLAGS2);
-  if (_mode == RF69_MODE_RX && (rr & RF_IRQFLAGS2_PAYLOADREADY))
+  if ( (rr & RF_IRQFLAGS2_PAYLOADREADY))
   {
 //    RSSI = readRSSI();
     setMode(RF69_MODE_STANDBY);
@@ -313,6 +314,9 @@ void RFM69::interruptHandler() {
     {
       DATA[i] = SPI.transfer(0);
     }
+
+//      SPI.transfer((uint8_t*)&DATA,32);
+
 //    if (DATALEN < RF69_MAX_DATA_LEN) DATA[DATALEN] = 0; // add null at end of string
     unselect();
     RSSI = readRSSI();
@@ -324,10 +328,10 @@ void RFM69::interruptHandler() {
 //    setMode(RF69_MODE_RX);
 //     receiveMode();
     receivedData(PAYLOADLEN);
-    listenMode();
+    receiveMode();
+    } else{
 
-
-//    Serial.print("*");
+    Serial.print("*");
   }
   //digitalWrite(4, 0);
 }
