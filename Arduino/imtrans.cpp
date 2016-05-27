@@ -73,11 +73,6 @@ void Transceiver::TimerSetup(unsigned long cal)
 
 
 /*
-void Transceiver::StartReceive()
-{
-  cc1101->StartReceive();
-  state=TransceiverRead;
-}
 
 
 bool Transceiver::CheckReadState()

@@ -76,7 +76,7 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
     /* 0x25 */ { REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01 }, // DIO0 is the only IRQ we're using
     /* 0x26 */ { REG_DIOMAPPING2, RF_DIOMAPPING2_CLKOUT_OFF }, // DIO5 ClkOut disable for power saving
     /* 0x28 */ { REG_IRQFLAGS2, RF_IRQFLAGS2_FIFOOVERRUN }, // writing to this bit ensures that the FIFO & status flags are reset
-    /* 0x29 */ { REG_RSSITHRESH, 200 }, // must be set to dBm = (-Sensitivity / 2), default is 0xE4 = 228 so -114dBm
+    /* 0x29 */ { REG_RSSITHRESH, 180 }, // must be set to dBm = (-Sensitivity / 2), default is 0xE4 = 228 so -114dBm
     /* 0x2D */ { REG_PREAMBLELSB, RF_PREAMBLESIZE_LSB_VALUE }, // default 3 preamble bytes 0xAAAAAA
     /* 0x2E */ { REG_SYNCCONFIG, RF_SYNC_ON | RF_SYNC_FIFOFILL_AUTO | RF_SYNC_SIZE_3 | RF_SYNC_TOL_0 },
     /* 0x2F */ { REG_SYNCVALUE1, 0x2D },      // attempt to make this compatible with sync1 byte of RFM12B lib
@@ -166,7 +166,7 @@ void RFM69::setMode(uint8_t newMode)
       writeReg(REG_OPMODE, (readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_SYNTHESIZER);
       break;
     case RF69_MODE_STANDBY:
-      writeReg(REG_OPMODE, (readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_STANDBY);
+      writeReg(REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RF_OPMODE_LISTENABORT| RF_OPMODE_STANDBY);
       break;
     case RF69_MODE_SLEEP:
       writeReg(REG_OPMODE, (readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_SLEEP);
@@ -220,9 +220,9 @@ void RFM69::setPowerLevel(uint8_t powerLevel)
 
 bool RFM69::canSend()
 {
-  if (_mode == RF69_MODE_RX && PAYLOADLEN == 0 && readRSSI() < CSMA_LIMIT) // if signal stronger than -100dBm is detected assume channel activity
+  if (_mode == RF69_MODE_RX && PAYLOADLEN == 0 /*&& readRSSI() < CSMA_LIMIT*/) // if signal stronger than -100dBm is detected assume channel activity
   {
-    setMode(RF69_MODE_STANDBY);
+//    setMode(RF69_MODE_STANDBY);
     return true;
   }
   return false;
@@ -313,14 +313,18 @@ void RFM69::interruptHandler() {
     {
       DATA[i] = SPI.transfer(0);
     }
-    if (DATALEN < RF69_MAX_DATA_LEN) DATA[DATALEN] = 0; // add null at end of string
+//    if (DATALEN < RF69_MAX_DATA_LEN) DATA[DATALEN] = 0; // add null at end of string
     unselect();
-     rr=readReg(REG_LNA);
-    IRQ2=rr;
     RSSI = readRSSI();
 
-    setMode(RF69_MODE_RX);
-    receivedData(DATALEN);
+//     rr=readReg(REG_OPMODE);
+//     rr=readReg(REG_LNA);
+    IRQ2=rr;
+
+//    setMode(RF69_MODE_RX);
+//     receiveMode();
+    receivedData(PAYLOADLEN);
+    listenMode();
 
 
 //    Serial.print("*");
@@ -336,17 +340,13 @@ void RFM69::isr0() { selfPointer->interruptHandler(); }
 
 // internal function
 void RFM69::receiveBegin() {
-  DATALEN = 0;
-//  SENDERID = 0;
-//  TARGETID = 0;
-  PAYLOADLEN = 0;
-//  ACK_REQUESTED = 0;
-//  ACK_RECEIVED = 0;
+//  DATALEN = 0;
+//  PAYLOADLEN = 0;
   RSSI = 0;
-  if (readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PAYLOADREADY)
-    writeReg(REG_PACKETCONFIG2, (readReg(REG_PACKETCONFIG2) & 0xFB) | RF_PACKET2_RXRESTART); // avoid RX deadlocks
-  writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01); // set DIO0 to "PAYLOADREADY" in receive mode
-  setMode(RF69_MODE_RX);
+//  if (readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PAYLOADREADY)
+//    writeReg(REG_PACKETCONFIG2, (readReg(REG_PACKETCONFIG2) & 0xFB) | RF_PACKET2_RXRESTART); // avoid RX deadlocks
+  receiveMode();
+//  listenMode();
 }
 
 // checks if a packet was received and/or puts transceiver in receive (ie RX or listen) mode
@@ -355,6 +355,23 @@ bool RFM69::canRead() {
       return true;
   return false;
 }
+void RFM69::receiveMode(){
+  writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01); // set DIO0 to "PAYLOADREADY" in receive mode
+  setMode(RF69_MODE_RX);
+}
+
+void RFM69::listenMode(){
+  setMode(RF69_MODE_STANDBY);
+
+  writeReg(REG_LISTEN1, RF_LISTEN1_RESOL_64 | RF_LISTEN1_RESOL_IDLE_64 |RF_LISTEN1_CRITERIA_RSSI |RF_LISTEN1_END_10); // set DIO0 to "PAYLOADREADY" in receive mode
+  writeReg(REG_LISTEN2, 48);
+  writeReg(REG_LISTEN3, 24);
+  _mode=RF69_MODE_RX;
+    writeReg(REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_ON | RF_OPMODE_STANDBY );
+  interrupts(); // explicitly re-enable interrupts
+
+}
+
 bool RFM69::receiveDone() {
 //ATOMIC_BLOCK(ATOMIC_FORCEON)
 //{

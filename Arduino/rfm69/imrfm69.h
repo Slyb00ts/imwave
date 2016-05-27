@@ -80,6 +80,8 @@ typedef void( * funTransceiverRF69 )(byte );
 class RFM69 {
   private:
      static void receivedDataNull(byte){};
+    void listenMode();
+    void receiveMode();
 
   public:
     static volatile uint8_t DATA[RF69_MAX_DATA_LEN]; // recv/xmit buf, including header & crc bytes
@@ -152,6 +154,7 @@ class RFM69 {
     virtual void setHighPowerRegs(bool onOff);
     virtual void select();
     virtual void unselect();
+
 };
 
 #endif

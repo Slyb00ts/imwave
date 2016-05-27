@@ -23,7 +23,6 @@ void IMBuffer::Init()
 {
 //  cc1101=&cc;
   bool promiscuousMode = true; //set to 'true' to sniff all packets on the same network
-//  cc1101.StartReceive();
     radio.initialize(FREQUENCY,NODEID,NETWORKID);
     radio.promiscuous(promiscuousMode);
   radio.readAllRegs();
@@ -93,6 +92,7 @@ bool IMBuffer::TestFrame()
       radio.PAYLOADLEN=0;
         DBGINFO("IRQ");
         DBGINFO(radio.IRQ2);
+        DBGINFO("=");
       bool io=1;
       if (io) {
           io=(rSize==sizeof(IMFrame));
@@ -143,6 +143,7 @@ void IMBuffer::StartReceive()
 {
   state=TransceiverRead;
   radio.receiveBegin();
+//  radio.listenMode();
 }
 
 
