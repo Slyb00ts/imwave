@@ -149,10 +149,21 @@ void IMBuffer::StartReceive()
 
 void IMBuffer::Sleep()
 {
-  radio.idle();
-  state=TransceiverIdle;
+  radio.sleep();
+  state=TransceiverSleep;
+   DBGINFO("{{");
+   DBGINFO(millis());
 
 }
+void IMBuffer::Wakeup()
+{
+  radio.idle();
+  state=TransceiverIdle;
+   DBGINFO("}}");
+   DBGINFO(millis());
+
+}
+
 
 void IMBuffer::setChannel(byte channel)
 {

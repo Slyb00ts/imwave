@@ -131,6 +131,11 @@ void IMBuffer::Sleep()
 
 }
 
+void IMBuffer::Wakeup()
+{
+}
+
+
 void IMBuffer::setChannel(byte channel)
 {
 //  DBGINFO("CHN");  DBGINFO(channel);  DBGINFO("_");

@@ -65,6 +65,7 @@ private:
 
     int _knocked;
     int _helloed;
+    int _KnockCycle;
     byte myHop;
     byte myChannel;
     IMAddress myId;
@@ -136,6 +137,7 @@ public:
     void ListenData();
     void ListenBroadcast();
     void StopListen();
+    void StopListenBroadcast();
     bool ParseFrame(IMFrame & rxFrame);
     void Transmit();
 

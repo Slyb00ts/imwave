@@ -73,6 +73,11 @@ void Transceiver::TimerSetup(unsigned long cal)
 
 
 /*
+void Transceiver::StartReceive()
+{
+  cc1101->StartReceive();
+  state=TransceiverRead;
+}
 
 
 bool Transceiver::CheckReadState()
@@ -141,9 +146,9 @@ bool Transceiver::GetFrame(IMFrame& frame)
           DBGERR("Address");
           DBGERR(frame.Header.ReceiverId);
       };
-       if (io){
+//       if (io){
                io= frame.checkCRC();
-       }
+//       }
        if (!io) {
           DBGERR("!!CRC");
        };
@@ -164,9 +169,9 @@ bool Transceiver::GetFrame(IMFrame& frame)
 float Transceiver::Rssi(byte h  )
 {
             float rssi = h;
-            if (h&0x80) rssi -= 256;
+/*            if (h&0x80) rssi -= 256;
             rssi /= 2;
-            rssi -= 74;
+            rssi -= 744;*/
   return rssi;
 }
 float Transceiver::Rssi()
@@ -355,6 +360,14 @@ void Transceiver::Idle()
 
 void Transceiver::ListenBroadcast()
 {
+   if (Connected()){
+     if ((timer.Cycle()-_KnockCycle)==1 ){ //Knock send every third cycle
+           return;
+     }
+     if ((timer.Cycle()-_KnockCycle)==2 ){
+           return;
+     }
+   }
       buffer->setChannel(BroadcastChannel);
       timer.setStage(LISTENBROADCAST);
       buffer->StartReceive();
@@ -362,16 +375,28 @@ void Transceiver::ListenBroadcast()
 
 void Transceiver::ListenData()
 {
+   if (BroadcastEnable){
+
       buffer->setChannel(myChannel);
       timer.setStage(LISTENDATA);
       buffer->StartReceive();
+   }
 }
 
 void Transceiver::StopListen()
 {
     if (Connected())
     {
-//     trx.Idle();
+     buffer->Sleep();
+     timer.setStage(IMTimer::IDDLESTAGE);
+   }
+}
+
+void Transceiver::StopListenBroadcast()
+{
+   if (Connected())
+    {
+     buffer->Sleep();
      timer.setStage(IMTimer::IDDLESTAGE);
    }
 }
@@ -386,7 +411,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                    Deconnect();
                    DBGINFO("HOST REBOOT");
                 } else {
-                   timer.Calibrate(millis()-BroadcastDelay-100);
+ //                  timer.Calibrate(millis()-BroadcastDelay-100);
                 }
               } else {
                         DBGINFO(" alien host ");
@@ -402,17 +427,20 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                       DBGINFO(" invalid ");
                       return false;
            }
+             timer.Calibrate(millis()-BroadcastDelay-100);
 
 //           if (myHost(frame)){
 //             if (sp->salt!=_salt){   //host reboot
 //                 Deconnect();
 //                 DBGINFO("HOST REBBOT");
 
+           _KnockCycle=timer.Cycle();
            _salt=sp->salt; //accept new value
            if (ResponseHello(frame)){
                  ListenBroadcast();      //return to broadcas channel (wait to WELCOME)
                  return true;
            }
+           StopListenBroadcast(); // no listen until data stage
 
            return false;
 
@@ -455,6 +483,8 @@ void Transceiver::Knock()
             DBGINFO("\r\n");
          }
          ListenData();
+     } else{
+       StopListenBroadcast();
      }
    } else {
        if ((timer.Cycle() % (TimerKnockCycle))==0){

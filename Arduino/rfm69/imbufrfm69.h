@@ -17,6 +17,7 @@
 #define TransceiverIdle  0
 #define TransceiverRead  1
 #define TransceiverWrite  2
+#define TransceiverSleep  9
 
 
 #include "imbuffer.h"

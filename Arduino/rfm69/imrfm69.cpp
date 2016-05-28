@@ -65,9 +65,9 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
     // +17dBm formula: Pout = -14 + OutputPower (with PA1 and PA2)**
     // +20dBm formula: Pout = -11 + OutputPower (with PA1 and PA2)** and high power PA settings (section 3.3.7 in datasheet)
     ///* 0x11 */ { REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | RF_PALEVEL_OUTPUTPOWER_11111},
-    /* 0x11 */ { REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | RF_PALEVEL_OUTPUTPOWER_01010},
+    /* 0x11 */ { REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | RF_PALEVEL_OUTPUTPOWER_11011},
     /* 0x13 */ { REG_OCP, RF_OCP_OFF  }, // over current protection (default is 95mA)
-    /* 0x18 */ { REG_LNA, RF_LNA_ZIN_50| RF_LNA_GAINSELECT_AUTO  },
+    /* 0x18 */ { REG_LNA, RF_LNA_ZIN_50| RF_LNA_GAINSELECT_MAXMINUS6  },
 
     // RXBW defaults are { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_24 | RF_RXBW_EXP_5} (RxBw: 10.4KHz)
     /* 0x19 */ { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_16 | RF_RXBW_EXP_2 }, // (BitRate < 2 * RxBw)
@@ -96,6 +96,10 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   digitalWrite(_slaveSelectPin, HIGH);
   pinMode(_slaveSelectPin, OUTPUT);
   SPI.begin();
+  SPI.setDataMode(SPI_MODE0);
+  SPI.setBitOrder(MSBFIRST);
+  SPI.setClockDivider(SPI_CLOCK_DIV2); // decided to slow down from DIV2 after SPI stalling in some instances, especially visible on mega1284p when RFM69 and FLASH chip both present
+
   unsigned long start = millis();
   uint8_t timeout = 50;
   do writeReg(REG_SYNCVALUE1, 0xAA); while (readReg(REG_SYNCVALUE1) != 0xaa && millis()-start < timeout);
@@ -166,7 +170,7 @@ void RFM69::setMode(uint8_t newMode)
       writeReg(REG_OPMODE, (readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_SYNTHESIZER);
       break;
     case RF69_MODE_STANDBY:
-      writeReg(REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RF_OPMODE_LISTENABORT| RF_OPMODE_STANDBY);
+      writeReg(REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF |  RF_OPMODE_STANDBY);
       break;
     case RF69_MODE_SLEEP:
       writeReg(REG_OPMODE, (readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_SLEEP);
@@ -367,9 +371,9 @@ void RFM69::receiveMode(){
 void RFM69::listenMode(){
   setMode(RF69_MODE_STANDBY);
 
-  writeReg(REG_LISTEN1, RF_LISTEN1_RESOL_64 | RF_LISTEN1_RESOL_IDLE_64 |RF_LISTEN1_CRITERIA_RSSI |RF_LISTEN1_END_10); // set DIO0 to "PAYLOADREADY" in receive mode
-  writeReg(REG_LISTEN2, 48);
-  writeReg(REG_LISTEN3, 24);
+  writeReg(REG_LISTEN1, RF_LISTEN1_RESOL_64 | RF_LISTEN1_RESOL_IDLE_64 |RF_LISTEN1_CRITERIA_RSSI |RF_LISTEN1_END_00); // set DIO0 to "PAYLOADREADY" in receive mode
+  writeReg(REG_LISTEN2, 72);
+  writeReg(REG_LISTEN3, 10);
   _mode=RF69_MODE_RX;
     writeReg(REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_ON | RF_OPMODE_STANDBY );
   interrupts(); // explicitly re-enable interrupts
@@ -420,12 +424,19 @@ int16_t RFM69::readRSSI(bool forceTrigger) {
   int16_t rssi = 0;
   if (forceTrigger)
   {
+    Serial.print("*");
     // RSSI trigger not needed if DAGC is in continuous mode
     writeReg(REG_RSSICONFIG, RF_RSSI_START);
     while ((readReg(REG_RSSICONFIG) & RF_RSSI_DONE) == 0x00); // wait for RSSI_Ready
   }
-  rssi = -readReg(REG_RSSIVALUE);
-  rssi >>= 1;
+  rssi = readReg(REG_RSSIVALUE);
+  if (rssi=255){
+//    while ((readReg(REG_RSSICONFIG) & RF_RSSI_DONE) == 0x00); // wait for RSSI_Ready
+    Serial.print("~~~");
+    Serial.print(readReg(REG_RSSICONFIG));
+    rssi = readReg(REG_RSSIVALUE);
+  }
+//  rssi >>= 1;
   return rssi;
 }
 
@@ -455,7 +466,7 @@ void RFM69::select() {
   // set RFM69 SPI settings
   SPI.setDataMode(SPI_MODE0);
   SPI.setBitOrder(MSBFIRST);
-  SPI.setClockDivider(SPI_CLOCK_DIV4); // decided to slow down from DIV2 after SPI stalling in some instances, especially visible on mega1284p when RFM69 and FLASH chip both present
+//  SPI.setClockDivider(SPI_CLOCK_DIV2); // decided to slow down from DIV2 after SPI stalling in some instances, especially visible on mega1284p when RFM69 and FLASH chip both present
   digitalWrite(_slaveSelectPin, LOW);
 }
 

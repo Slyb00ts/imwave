@@ -53,6 +53,7 @@ class  IMBuffer
     bool Received();
     void StartReceive();
     void Sleep();
+    void Wakeup();
     bool Rupture();
     void printReceive();
     void printSend();
