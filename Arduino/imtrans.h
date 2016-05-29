@@ -65,7 +65,7 @@ private:
 
     int _knocked;
     int _helloed;
-    int _KnockCycle;
+    long _KnockCycle;
     byte myHop;
     byte myChannel;
     IMAddress myId;
@@ -130,6 +130,7 @@ public:
     bool GetFrame(IMFrame&frame);
     void Rupture();
     void Idle();
+    void Wakeup();
 
     bool TestLow();
     void Deconnect();

@@ -82,8 +82,8 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
     /* 0x2F */ { REG_SYNCVALUE1, 0x2D },      // attempt to make this compatible with sync1 byte of RFM12B lib
     /* 0x30 */ { REG_SYNCVALUE2, networkID }, // NETWORK ID
     /* 0x31 */ { REG_SYNCVALUE3, 0xAA }, // NETWORK ID
-    /* 0x37 */ { REG_PACKETCONFIG1, RF_PACKET1_FORMAT_VARIABLE | RF_PACKET1_DCFREE_OFF | RF_PACKET1_CRC_ON | RF_PACKET1_CRCAUTOCLEAR_OFF | RF_PACKET1_ADRSFILTERING_OFF },
-    /* 0x38 */ { REG_PAYLOADLENGTH, 66 }, // in variable length mode: the max frame size, not used in TX
+    /* 0x37 */ { REG_PACKETCONFIG1, RF_PACKET1_FORMAT_FIXED | RF_PACKET1_DCFREE_OFF | RF_PACKET1_CRC_ON | RF_PACKET1_CRCAUTOCLEAR_OFF | RF_PACKET1_ADRSFILTERING_OFF },
+    /* 0x38 */ { REG_PAYLOADLENGTH, 32 }, // in variable length mode: the max frame size, not used in TX
     ///* 0x39 */ { REG_NODEADRS, nodeID }, // turned off because we're not using address filtering
     /* 0x3C */ { REG_FIFOTHRESH, RF_FIFOTHRESH_TXSTART_FIFOTHRESH  | RF_FIFOTHRESH_VALUE }, // TX on FIFO not empty
     /* 0x3D */ { REG_PACKETCONFIG2, RF_PACKET2_RXRESTARTDELAY_2BITS | RF_PACKET2_AUTORXRESTART_OFF | RF_PACKET2_AES_OFF }, // RXRESTARTDELAY must match transmitter PA ramp-down time (bitrate dependent)
@@ -267,7 +267,7 @@ void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize)
   // write to FIFO
   select();
   SPI.transfer(REG_FIFO | 0x80);
-  SPI.transfer(bufferSize );
+//  SPI.transfer(bufferSize );
 //  SPI.transfer(toAddress);
 //  SPI.transfer(_address);
 //  SPI.transfer(CTLbyte);
@@ -291,17 +291,19 @@ void RFM69::interruptHandler() {
   //digitalWrite(4, 1);
 //    RSSI = readRSSI(true);
 //    Serial.print(readRSSI(true));
-//    Serial.print("*");
   if (_mode != RF69_MODE_RX) return;
+    Serial.print("*");
  uint8_t rr=readReg(REG_IRQFLAGS2);
+ uint8_t rr1=readReg(REG_IRQFLAGS1);
   if ( (rr & RF_IRQFLAGS2_PAYLOADREADY))
   {
 //    RSSI = readRSSI();
     setMode(RF69_MODE_STANDBY);
     select();
     SPI.transfer(REG_FIFO & 0x7F);
-    PAYLOADLEN = SPI.transfer(0);
-    PAYLOADLEN = PAYLOADLEN > 66 ? 66 : PAYLOADLEN; // precaution
+    PAYLOADLEN=32;
+//    PAYLOADLEN = SPI.transfer(0);
+//    PAYLOADLEN = PAYLOADLEN > 66 ? 66 : PAYLOADLEN; // precaution
 //    TARGETID = SPI.transfer(0);
 
 
@@ -327,7 +329,7 @@ void RFM69::interruptHandler() {
 
 //     rr=readReg(REG_OPMODE);
 //     rr=readReg(REG_LNA);
-    IRQ2=rr;
+    IRQ2=rr1;
 
 //    setMode(RF69_MODE_RX);
 //     receiveMode();
@@ -335,7 +337,7 @@ void RFM69::interruptHandler() {
     receiveMode();
     } else{
 
-    Serial.print("*");
+    Serial.print("****");
   }
   //digitalWrite(4, 0);
 }
@@ -350,7 +352,8 @@ void RFM69::isr0() { selfPointer->interruptHandler(); }
 void RFM69::receiveBegin() {
 //  DATALEN = 0;
 //  PAYLOADLEN = 0;
-  RSSI = 0;
+//    setMode(RF69_MODE_STANDBY);
+//  RSSI = readRSSI(true);
 //  if (readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PAYLOADREADY)
 //    writeReg(REG_PACKETCONFIG2, (readReg(REG_PACKETCONFIG2) & 0xFB) | RF_PACKET2_RXRESTART); // avoid RX deadlocks
   receiveMode();

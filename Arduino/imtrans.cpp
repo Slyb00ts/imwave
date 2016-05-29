@@ -354,9 +354,15 @@ void Transceiver::Transmit()
 void Transceiver::Idle()
 {
   buffer->Sleep();
-//  state=TransceiverIdle;
 
 }
+
+void Transceiver::Wakeup()
+{
+  buffer->Wakeup();
+
+}
+
 
 void Transceiver::ListenBroadcast()
 {
@@ -367,6 +373,7 @@ void Transceiver::ListenBroadcast()
      if ((timer.Cycle()-_KnockCycle)==2 ){
            return;
      }
+
    }
       buffer->setChannel(BroadcastChannel);
       timer.setStage(LISTENBROADCAST);
@@ -385,8 +392,9 @@ void Transceiver::ListenData()
 
 void Transceiver::StopListen()
 {
-    if (Connected())
-    {
+   if (Connected() &&       (timer.Cycle()<_KnockCycle+7) ){
+
+
      buffer->Sleep();
      timer.setStage(IMTimer::IDDLESTAGE);
    }
@@ -394,7 +402,7 @@ void Transceiver::StopListen()
 
 void Transceiver::StopListenBroadcast()
 {
-   if (Connected())
+   if (Connected()&& (timer.Cycle()<_KnockCycle+7) )
     {
      buffer->Sleep();
      timer.setStage(IMTimer::IDDLESTAGE);
