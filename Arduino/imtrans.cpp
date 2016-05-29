@@ -275,10 +275,11 @@ bool Transceiver::Send(IMFrame & frame)
   Prepare(frame);
   buffer->TX_buffer.packet=frame;
 //  PrepareTransmit();
-  DBGINFO("Send<");
-  printTime();
-  buffer->printSend();
+//  DBGINFO("Send<");
+//  printTime();
+//  buffer->printSend();
   return buffer->Send();
+
 }
 
 bool Transceiver::SendQueue()
@@ -479,6 +480,7 @@ void Transceiver::Knock()
    {
       DBGINFO("WATCHDOG");
       Deconnect();
+      buffer->Reboot();
       reboot();
 
    }

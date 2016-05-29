@@ -35,7 +35,7 @@ bool IMBuffer::Send()
   }
   state=TransceiverWrite;
   TX_buffer.len=sizeof(TX_buffer.packet);
-  if (radio.send(GATEWAYID, (const void*)(&TX_buffer.packet), sizeof(TX_buffer.packet)),false) {
+  if (radio.send(GATEWAYID, (const void*)(&TX_buffer.packet), sizeof(IMFrame)),false) {
 
 //  if  (cc1101.SendData((uint8_t*)&(TX_buffer.packet),TX_buffer.len)) {
 
@@ -43,7 +43,7 @@ bool IMBuffer::Send()
   } else  {
 //    DBGERR("! SEND");
 //    DBGERR(radio.errState);
-    state=TransceiverIdle;
+//    state=TransceiverIdle;
 //    cc1101.Reinit();
     return false;
   }
@@ -163,6 +163,9 @@ void IMBuffer::Wakeup()
    DBGINFO(millis());
 
 }
+void IMBuffer::Reboot()
+{
+}
 
 
 void IMBuffer::setChannel(byte channel)
@@ -206,7 +209,7 @@ void IMBuffer::printReceive()
 
 void IMBuffer::printSend()
 {
-      for (unsigned short i=0;i<TX_buffer.len ;i++)
+      for (unsigned short i=0;i<sizeof(IMFrame) ;i++)
       {
         DBGINFO2(((uint8_t*)&TX_buffer)[i],HEX);
         DBGWRITE(" ");

@@ -54,6 +54,7 @@ class  IMBuffer
     void StartReceive();
     void Sleep();
     void Wakeup();
+    void Reboot();
     bool Rupture();
     void printReceive();
     void printSend();

@@ -135,6 +135,11 @@ void IMBuffer::Wakeup()
 {
 }
 
+void IMBuffer::Reboot()
+{
+}
+
+
 
 void IMBuffer::setChannel(byte channel)
 {

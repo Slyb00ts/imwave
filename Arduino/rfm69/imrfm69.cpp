@@ -50,8 +50,8 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   {
     /* 0x01 */ { REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RF_OPMODE_STANDBY },
     /* 0x02 */ { REG_DATAMODUL, RF_DATAMODUL_DATAMODE_PACKET | RF_DATAMODUL_MODULATIONTYPE_FSK | RF_DATAMODUL_MODULATIONSHAPING_01 }, // no shaping
-    /* 0x03 */ { REG_BITRATEMSB, RF_BITRATEMSB_38400}, // default: 4.8 KBPS
-    /* 0x04 */ { REG_BITRATELSB, RF_BITRATELSB_38400},
+    /* 0x03 */ { REG_BITRATEMSB, RF_BITRATEMSB_100000}, // default: 4.8 KBPS
+    /* 0x04 */ { REG_BITRATELSB, RF_BITRATELSB_100000},
     /* 0x05 */ { REG_FDEVMSB, RF_FDEVMSB_100000}, // default: 5KHz, (FDEV + BitRate / 2 <= 500KHz)
     /* 0x06 */ { REG_FDEVLSB, RF_FDEVLSB_100000},
 
@@ -67,10 +67,10 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
     ///* 0x11 */ { REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | RF_PALEVEL_OUTPUTPOWER_11111},
     /* 0x11 */ { REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | RF_PALEVEL_OUTPUTPOWER_11011},
     /* 0x13 */ { REG_OCP, RF_OCP_OFF  }, // over current protection (default is 95mA)
-    /* 0x18 */ { REG_LNA, RF_LNA_ZIN_50| RF_LNA_GAINSELECT_MAXMINUS6  },
+    /* 0x18 */ { REG_LNA, RF_LNA_ZIN_50| RF_LNA_GAINSELECT_MAX  },
 
     // RXBW defaults are { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_24 | RF_RXBW_EXP_5} (RxBw: 10.4KHz)
-    /* 0x19 */ { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_16 | RF_RXBW_EXP_2 }, // (BitRate < 2 * RxBw)
+    /* 0x19 */ { REG_RXBW, RF_RXBW_DCCFREQ_000 | RF_RXBW_MANT_16 | RF_RXBW_EXP_2 }, // (BitRate < 2 * RxBw)
 //     /* 0x1E */ { REG_AFCFEI, RF_AFCFEI_AFCAUTO_ON | RF_AFCFEI_AFCAUTOCLEAR_ON },                         // Automatic AFC on, clear after each packet
     //for BR-19200: /* 0x19 */ { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_24 | RF_RXBW_EXP_3 },
     /* 0x25 */ { REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01 }, // DIO0 is the only IRQ we're using
@@ -154,8 +154,8 @@ void RFM69::setMode(uint8_t newMode)
 {
   if (newMode == _mode)
     return;
-//    Serial.print("mode:");
-//    Serial.print(newMode);
+    Serial.print("mode:");
+    Serial.print(newMode);
 
   switch (newMode) {
     case RF69_MODE_TX:
@@ -224,11 +224,14 @@ void RFM69::setPowerLevel(uint8_t powerLevel)
 
 bool RFM69::canSend()
 {
+  if (_mode == RF69_MODE_STANDBY)
+     return true;
   if (_mode == RF69_MODE_RX && PAYLOADLEN == 0 /*&& readRSSI() < CSMA_LIMIT*/) // if signal stronger than -100dBm is detected assume channel activity
   {
 //    setMode(RF69_MODE_STANDBY);
     return true;
   }
+
   return false;
 }
 
@@ -292,9 +295,8 @@ void RFM69::interruptHandler() {
 //    RSSI = readRSSI(true);
 //    Serial.print(readRSSI(true));
   if (_mode != RF69_MODE_RX) return;
-    Serial.print("*");
  uint8_t rr=readReg(REG_IRQFLAGS2);
- uint8_t rr1=readReg(REG_IRQFLAGS1);
+// uint8_t rr1=readReg(REG_IRQFLAGS1);
   if ( (rr & RF_IRQFLAGS2_PAYLOADREADY))
   {
 //    RSSI = readRSSI();
@@ -329,7 +331,7 @@ void RFM69::interruptHandler() {
 
 //     rr=readReg(REG_OPMODE);
 //     rr=readReg(REG_LNA);
-    IRQ2=rr1;
+//    IRQ2=rr1;
 
 //    setMode(RF69_MODE_RX);
 //     receiveMode();
@@ -464,11 +466,11 @@ void RFM69::writeReg(uint8_t addr, uint8_t value)
 void RFM69::select() {
   noInterrupts();
   // save current SPI settings
-  _SPCR = SPCR;
-  _SPSR = SPSR;
+//  _SPCR = SPCR;
+//  _SPSR = SPSR;
   // set RFM69 SPI settings
-  SPI.setDataMode(SPI_MODE0);
-  SPI.setBitOrder(MSBFIRST);
+//  SPI.setDataMode(SPI_MODE0);
+//  SPI.setBitOrder(MSBFIRST);
 //  SPI.setClockDivider(SPI_CLOCK_DIV2); // decided to slow down from DIV2 after SPI stalling in some instances, especially visible on mega1284p when RFM69 and FLASH chip both present
   digitalWrite(_slaveSelectPin, LOW);
 }
@@ -477,8 +479,8 @@ void RFM69::select() {
 void RFM69::unselect() {
   digitalWrite(_slaveSelectPin, HIGH);
   // restore SPI settings to what they were before talking to RFM69
-  SPCR = _SPCR;
-  SPSR = _SPSR;
+//  SPCR = _SPCR;
+//  SPSR = _SPSR;
   interrupts();
 }
 
