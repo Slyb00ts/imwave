@@ -126,6 +126,12 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   return true;
 }
 
+void RFM69::reset()
+{
+     writeReg(REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF |  RF_OPMODE_STANDBY);
+     writeReg( REG_IRQFLAGS2, RF_IRQFLAGS2_FIFOOVERRUN );
+
+}
 //static void RFM69::receivedDataNull(byte){}
 // return the frequency (in Hz)
 uint32_t RFM69::getFrequency()
@@ -154,8 +160,8 @@ void RFM69::setMode(uint8_t newMode)
 {
   if (newMode == _mode)
     return;
-    Serial.print("mode:");
-    Serial.print(newMode);
+//    Serial.print("mode:");
+//    Serial.print(newMode);
 
   switch (newMode) {
     case RF69_MODE_TX:

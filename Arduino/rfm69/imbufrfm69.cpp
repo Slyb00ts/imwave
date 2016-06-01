@@ -165,6 +165,7 @@ void IMBuffer::Wakeup()
 }
 void IMBuffer::Reboot()
 {
+   radio.reset();
 }
 
 
