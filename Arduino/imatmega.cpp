@@ -11,6 +11,9 @@
 
 #include "imatmega.h"
 
+
+long counterTimer2=0;
+
 // http://code.google.com/p/tinkerit/wiki/SecretVoltmeter
 long internalVccOld() {
   long result;
@@ -95,7 +98,17 @@ long internalTemp328() {
 
 
 
+
+
 #endif
+
+long millisT2(){
+  return counterTimer2;
+}
+long incTimer2(){
+  return counterTimer2++;
+}
+
 
 int freeRam ()
 {
@@ -128,8 +141,86 @@ void delaySleep( unsigned long t)
   while( (current - startMillis) <= t);
 }
 
+void enterSleep(void)
+ {
+  set_sleep_mode(SLEEP_MODE_PWR_SAVE);
+  sleep_enable();
+
+  sleep_mode();
+  /** The program will continue from here. **/
+  /* First thing to do is disable sleep. */
+  sleep_disable();
+ }
+
+
+void disableADCB()
+{
+ // disable ADC
+  ADCSRA = 0;
+   // turn off brown-out enable in software
+  MCUCR = bit (BODS) | bit (BODSE);  // turn on brown-out enable select
+  MCUCR = bit (BODS);        // this must be done within 4 clock cycles of above
+//ower Reduction Register (PRR)
+    power_adc_disable(); // ADC converter
+//    power_spi_enable(); // SPI
+//    power_usart0_enable(); // Serial (USART)
+//    power_timer0_enable(); // Timer 0
+//    power_timer1_enable(); // Timer 1
+//    power_timer2_enable(); // Timer 2
+    power_twi_disable(); // TWI (I2C)
+
+
+}
+
+
+void setupTimer2()
+{
+//http://electronics.stackexchange.com/questions/26363/how-do-i-create-a-timer-interrupt-with-arduino
+  TCCR2B = 0x00;        //Disable Timer2 while we set it up
+  TIFR2  = 0x00;        //Timer2 INT Flag Reg: Clear Timer Overflow Flag
+
+   /* First disable the timer overflow interrupt while we're configuring */
+  TIMSK2 &= ~(1<<TOIE2);
+
+  /* Configure timer2 in normal mode (pure counting, no PWM etc.) */
+  TCCR2A &= ~((1<<WGM21) | (1<<WGM20));
+  TCCR2B &= ~(1<<WGM22);
+
+  /* Select clock source: internal I/O clock */
+  ASSR &= ~(1<<AS2);
+
+  /* Disable Compare Match A interrupt enable (only want overflow) */
+  TIMSK2 &= ~(1<<OCIE2A);
+
+  /* Now configure the prescaler to CPU clock divided by 128 */
+  TCCR2B |= (1<<CS22)  | (1<<CS20); // Set bits
+  TCCR2B &= ~(1<<CS21);             // Clear bit
+
+  /* We need to calculate a proper value to load the timer counter.
+   * The following loads the value 131 into the Timer 2 counter register
+   * The math behind this is:
+   * (CPU frequency) / (prescaler value) = 125000 Hz = 8us.
+   * (desired period) / 8us = 125.
+   * MAX(uint8) + 1 - 125 = 131;
+   */
+  /* Save value globally for later reload in ISR */
+
+  //Setup Timer2 to fire every 1ms
+  /* Finally load end enable the timer */
+  TCNT2 = counterTCNT2;
+  TIMSK2 |= (1<<TOIE2);
+
+
+//  TIFR2  = 0x00;        //Timer2 INT Flag Reg: Clear Timer Overflow Flag
+//  TIMSK2 = 0x01;        //Timer2 INT Reg: Timer2 Overflow Interrupt Enable
+//  TCCR2A = 0x00;        //Timer2 Control Reg A: Wave Gen Mode normal
+//  TCCR2B = 0x05;        //Timer2 Control Reg B: Timer Prescaler set to 128
+}
+
+
 void pciSetup(uint8_t pin)
 {
+//http://arduinomega.blogspot.com/2011/05/setting-interrupts-manually-real-int0.html
     *digitalPinToPCMSK(pin) |= bit (digitalPinToPCMSKbit(pin));  // enable pin
     PCIFR  |= bit (digitalPinToPCICRbit(pin)); // clear any outstanding interrupt
     PCICR  |= bit (digitalPinToPCICRbit(pin)); // enable interrupt for the group

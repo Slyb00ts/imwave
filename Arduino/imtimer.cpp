@@ -6,6 +6,7 @@ IMTimer* IMTimer::ptrr = 0;
 IMTimer::IMTimer()
 {
 	ptrr = this;	//the ptr points to this object
+        setupTimer2();
 }
 
 void IMTimer::Calibrate(unsigned long time)
@@ -40,7 +41,7 @@ void IMTimer::ResetDeviation()
 
 unsigned long IMTimer::getTime()
 {
-  return getTime(millis());
+  return getTime(millisT2());
 }
 
 unsigned long IMTimer::getTime(unsigned long time)
@@ -152,7 +153,9 @@ byte IMTimer::WaitStage()
   DBGINFO('%');
   DBGINFO(cycle);
   */
-  set_sleep_mode(SLEEP_MODE_IDLE);
+  Serial.flush();
+  set_sleep_mode(SLEEP_MODE_PWR_SAVE);
+//  set_sleep_mode(SLEEP_MODE_IDLE);
   cli();
 
   while(nearTime >getTime())
@@ -174,6 +177,7 @@ byte IMTimer::WaitStage()
      if (_listen){
        _listen=0;
 //       DBGINFO("<()>");
+//       printTime();
 //       DBGINFO(millis());
        return current;
      }
@@ -242,6 +246,17 @@ short IMTimer::ClassTest()
 
 
 //http://www.engblaze.com/microcontroller-tutorial-avr-and-arduino-timer-interrupts/
+
+ISR(TIMER2_OVF_vect) {
+  /* Reload the timer */
+//  TCNT2 = tcnt2;
+  /* Write to a digital pin so that we can confirm our timer */
+//  toggle = ~toggle;
+  incTimer2();
+//  counterTimer2++;               //Increments the interrupt counter
+  TCNT2 = counterTCNT2;           //Reset Timer to 130 out of 255
+  TIFR2 = 0x00;
+}
 
 
 
