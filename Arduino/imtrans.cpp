@@ -80,16 +80,6 @@ void Transceiver::StartReceive()
 }
 
 
-bool Transceiver::CheckReadState()
-{
-   DBGINFO(ruptures[TransceiverRead]);
-   if (ruptures[TransceiverRead]>1){
-      ruptures[TransceiverRead]=0;
-      return true;
-   }
-   return false;
-
-}
 
 */
 uint8_t Transceiver::GetData()
@@ -97,8 +87,6 @@ uint8_t Transceiver::GetData()
 
   if (buffer->Received())
   {
- //   rSize=cc1101->ReceiveData((uint8_t*)&RX_buffer);
-//    rSize=cc1101->GetData((uint8_t*)&RX_buffer);
 //    DBGINFO("Receive*<");
 //    printTime();
    buffer->printReceive();
@@ -106,9 +94,6 @@ uint8_t Transceiver::GetData()
   } else{
     DBGINFO("[");
 //    DBGINFO(buffer->state);
-    DBGINFO(":EE:");
-    DBGINFO(millis());
-    DBGINFO("] ");
 
     return 0;
   }
@@ -150,7 +135,8 @@ bool Transceiver::GetFrame(IMFrame& frame)
                io= frame.checkCRC();
 //       }
        if (!io) {
-          DBGERR("!!CRC");
+          DBGERR("!!CRC ");
+          DBGERR(frame.CRC());
        };
 
 //        setRssi();
@@ -341,11 +327,6 @@ void Transceiver::Transmit()
       {
          DBGINFO("Retry");
       }
-      if (SendQueue())
-      {
-         DBGINFO("transmit:");  DBGINFO(millis());    DBGINFO(" ");
-//         DBGINFO(TX_buffer.len);    DBGINFO(",");
-      }
       DBGINFO("\r\n");
       delay(1);
       ListenData();
@@ -436,7 +417,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                       DBGINFO(" invalid ");
                       return false;
            }
-             timer.Calibrate(millis()-BroadcastDelay-100);
+             timer.Calibrate(millisT2()-BroadcastDelay-100);
 
 //           if (myHost(frame)){
 //             if (sp->salt!=_salt){   //host reboot

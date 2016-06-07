@@ -141,6 +141,19 @@ void delaySleep( unsigned long t)
   while( (current - startMillis) <= t);
 }
 
+void delaySleepT2( unsigned long t)
+{
+  unsigned long startMillis = millisT2();
+
+  set_sleep_mode(SLEEP_MODE_PWR_SAVE);
+  do
+  {
+    sleep_mode();
+  }
+  while( (millisT2() - startMillis) <= t);
+}
+
+
 void enterSleep(void)
  {
   set_sleep_mode(SLEEP_MODE_PWR_SAVE);

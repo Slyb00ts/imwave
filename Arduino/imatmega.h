@@ -73,6 +73,7 @@ do {                                   \
   sei();
 */
 void delaySleep(unsigned long t);
+void delaySleepT2(unsigned long t);
 void reboot();
 void disableADCB();
 #define  counterTCNT2  131;

@@ -52,7 +52,11 @@ unsigned long IMTimer::getTime(unsigned long time)
 
 void IMTimer::printTime()
 {
+   DBGINFO(millisT2());
+          DBGINFO(":");
    DBGINFO(millis());
+          DBGINFO(":");
+   DBGINFO(millis()-millisT2());
           DBGINFO(":");
    DBGINFO(getTime());
           DBGINFO(">");
@@ -143,7 +147,8 @@ void IMTimer::setStage(byte stage)
 
 byte IMTimer::WaitStage()
 {
-
+  DBGINFO("\r\n{{");
+  printTime();
 /*  DBGINFO("\r\n{{");
   DBGINFO(nearTime);
   DBGINFO('%');
@@ -154,8 +159,8 @@ byte IMTimer::WaitStage()
   DBGINFO(cycle);
   */
   Serial.flush();
-  set_sleep_mode(SLEEP_MODE_PWR_SAVE);
-//  set_sleep_mode(SLEEP_MODE_IDLE);
+//  set_sleep_mode(SLEEP_MODE_PWR_SAVE);
+  set_sleep_mode(SLEEP_MODE_IDLE);
   cli();
 
   while(nearTime >getTime())
@@ -252,10 +257,11 @@ ISR(TIMER2_OVF_vect) {
 //  TCNT2 = tcnt2;
   /* Write to a digital pin so that we can confirm our timer */
 //  toggle = ~toggle;
-  incTimer2();
 //  counterTimer2++;               //Increments the interrupt counter
   TCNT2 = counterTCNT2;           //Reset Timer to 130 out of 255
   TIFR2 = 0x00;
+  incTimer2();
+
 }
 
 
