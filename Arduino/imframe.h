@@ -73,12 +73,16 @@ typedef struct
 
         byte CRC()
         {
-            unsigned short c=42;
-            for(unsigned short i=0 ; i<(_frameSize) ; i++)
+            byte c=42;
+            uint8_t* pp=(uint8_t*)&Header;
+            for(unsigned short i=1 ; i<_frameSize ; i++)
             {
-              c+=((uint8_t*)&Header)[i];
+             c+= *pp;
+             pp++;
+//              c+=((uint8_t*)&Header)[i];
             }
-            return 0x100-c;
+//            return 0x100-c;
+            return c;
 
         }
         byte checkCRC()

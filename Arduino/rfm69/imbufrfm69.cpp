@@ -149,18 +149,18 @@ void IMBuffer::StartReceive()
 
 void IMBuffer::Sleep()
 {
-  radio.sleep();
+//  radio.sleep();
   state=TransceiverSleep;
-   DBGINFO("{{");
-   DBGINFO(millis());
+//   DBGINFO("{{");
+//   DBGINFO(millis());
 
 }
 void IMBuffer::Wakeup()
 {
-  radio.idle();
+//  radio.idle();
   state=TransceiverIdle;
-   DBGINFO("}}");
-   DBGINFO(millis());
+//   DBGINFO("}}");
+//   DBGINFO(millis());
 
 }
 void IMBuffer::Reboot()
@@ -200,17 +200,19 @@ bool IMBuffer::Rupture()
 
 void IMBuffer::printReceive()
 {
-      for (unsigned short i=0;i<rSize ;i++)
+      for (unsigned short i=0;i<=sizeof(IMFrame)  ;i++)
       {
         DBGINFO2(((uint8_t*)&RX_buffer)[i],HEX);
         DBGWRITE(" ");
       }
+//      DBGINFO(RX_buffer.packet.CRC());
+
       DBGINFO("-> ");
 }
 
 void IMBuffer::printSend()
 {
-      for (unsigned short i=0;i<sizeof(IMFrame) ;i++)
+      for (unsigned short i=0;i<=sizeof(IMFrame) ;i++)
       {
         DBGINFO2(((uint8_t*)&TX_buffer)[i],HEX);
         DBGWRITE(" ");

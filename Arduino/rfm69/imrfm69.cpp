@@ -66,6 +66,9 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
     // +20dBm formula: Pout = -11 + OutputPower (with PA1 and PA2)** and high power PA settings (section 3.3.7 in datasheet)
     ///* 0x11 */ { REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | RF_PALEVEL_OUTPUTPOWER_11111},
     /* 0x11 */ { REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | RF_PALEVEL_OUTPUTPOWER_11011},
+
+//    {REG_PALEVEL, RF_PALEVEL_PA0_OFF | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_ON  | RF_PALEVEL_OUTPUTPOWER_11111}, // enable P1 & P2 amplifier stages
+
     /* 0x13 */ { REG_OCP, RF_OCP_OFF  }, // over current protection (default is 95mA)
     /* 0x18 */ { REG_LNA, RF_LNA_ZIN_50| RF_LNA_GAINSELECT_MAX  },
 
@@ -98,7 +101,7 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   SPI.begin();
   SPI.setDataMode(SPI_MODE0);
   SPI.setBitOrder(MSBFIRST);
-  SPI.setClockDivider(SPI_CLOCK_DIV2); // decided to slow down from DIV2 after SPI stalling in some instances, especially visible on mega1284p when RFM69 and FLASH chip both present
+  SPI.setClockDivider(SPI_CLOCK_DIV4); // decided to slow down from DIV2 after SPI stalling in some instances, especially visible on mega1284p when RFM69 and FLASH chip both present
 
   unsigned long start = millis();
   uint8_t timeout = 50;
@@ -112,6 +115,7 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   // Encryption is persistent between resets and can trip you up during debugging.
   // Disable it during initialization so we always start from a known state.
   encrypt(0);
+  setHighPower(true); // called regardless if it's a RFM69W or RFM69HW
 
 //  setHighPower(_isRFM69HW); // called regardless if it's a RFM69W or RFM69HW
   setMode(RF69_MODE_STANDBY);
@@ -119,7 +123,8 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   while (((readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00) && millis()-start < timeout); // wait for ModeReady
   if (millis()-start >= timeout)
     return false;
-  attachInterrupt(_interruptNum, RFM69::isr0, RISING);
+//  attachInterrupt(RF69_IRQ_NUM, RFM69::isr0, RISING);
+  attachInterrupt(RF69_IRQ_NUM, RFM69::isr0, RISING);
 
   selfPointer = this;
   _address = nodeID;
@@ -244,8 +249,8 @@ bool RFM69::canSend()
 void RFM69::send(uint8_t toAddress, const void* buffer, uint8_t bufferSize, bool requestACK)
 {
   writeReg(REG_PACKETCONFIG2, (readReg(REG_PACKETCONFIG2) & 0xFB) | RF_PACKET2_RXRESTART); // avoid RX deadlocks
-  uint32_t now = millis();
-  while (!canSend() && millis() - now < RF69_CSMA_LIMIT_MS);
+  uint32_t now = millisT2();
+  while (!canSend() && millisT2() - now < RF69_CSMA_LIMIT_MS);
     // receiveDone();
   sendFrame(toAddress, buffer, bufferSize);
 }
@@ -287,8 +292,8 @@ void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize)
 
   // no need to wait for transmit mode to be ready since its handled by the radio
   setMode(RF69_MODE_TX);
-  uint32_t txStart = millis();
-  while (digitalRead(_interruptPin) == 0 && millis() - txStart < RF69_TX_LIMIT_MS); // wait for DIO0 to turn HIGH signalling transmission finish
+  uint32_t txStart = millisT2();
+  while (digitalRead(RF69_IRQ_PIN) == 0 && millisT2() - txStart < RF69_TX_LIMIT_MS); // wait for DIO0 to turn HIGH signalling transmission finish
   //while (readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PACKETSENT == 0x00); // wait for ModeReady
 //  setMode(RF69_MODE_STANDBY);
    receiveBegin();
@@ -301,12 +306,17 @@ void RFM69::interruptHandler() {
 //    RSSI = readRSSI(true);
 //    Serial.print(readRSSI(true));
   if (_mode != RF69_MODE_RX) return;
+//   digitalWrite(4,HIGH);
+    RSSI = readRSSI();
  uint8_t rr=readReg(REG_IRQFLAGS2);
+//  digitalWrite(4,LOW);
 // uint8_t rr1=readReg(REG_IRQFLAGS1);
   if ( (rr & RF_IRQFLAGS2_PAYLOADREADY))
   {
 //    RSSI = readRSSI();
+    rr=readReg(REG_IRQFLAGS2);
     setMode(RF69_MODE_STANDBY);
+//    RSSI = readRSSI();
     select();
     SPI.transfer(REG_FIFO & 0x7F);
     PAYLOADLEN=32;
@@ -333,11 +343,11 @@ void RFM69::interruptHandler() {
 
 //    if (DATALEN < RF69_MAX_DATA_LEN) DATA[DATALEN] = 0; // add null at end of string
     unselect();
-    RSSI = readRSSI();
+//    RSSI = readRSSI();
 
 //     rr=readReg(REG_OPMODE);
 //     rr=readReg(REG_LNA);
-//    IRQ2=rr1;
+    IRQ2=rr;
 
 //    setMode(RF69_MODE_RX);
 //     receiveMode();
@@ -387,7 +397,7 @@ void RFM69::listenMode(){
   writeReg(REG_LISTEN3, 10);
   _mode=RF69_MODE_RX;
     writeReg(REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_ON | RF_OPMODE_STANDBY );
-  interrupts(); // explicitly re-enable interrupts
+//  interrupts(); // explicitly re-enable interrupts
 
 }
 
@@ -397,7 +407,7 @@ bool RFM69::receiveDone() {
 //    Serial.print(">>");
 //    Serial.print(PAYLOADLEN);
 //    Serial.print(_mode);
-  noInterrupts(); // re-enabled in unselect() via setMode() or via receiveBegin()
+//  noInterrupts(); // re-enabled in unselect() via setMode() or via receiveBegin()
   if (_mode == RF69_MODE_RX && PAYLOADLEN > 0)
   {
 //    Serial.print("<>");
@@ -406,7 +416,7 @@ bool RFM69::receiveDone() {
   }
   else if (_mode == RF69_MODE_RX) // already in RX no payload yet
   {
-    interrupts(); // explicitly re-enable interrupts
+//    interrupts(); // explicitly re-enable interrupts
     return false;
   }
   receiveBegin();
@@ -443,8 +453,8 @@ int16_t RFM69::readRSSI(bool forceTrigger) {
   rssi = readReg(REG_RSSIVALUE);
   if (rssi=255){
 //    while ((readReg(REG_RSSICONFIG) & RF_RSSI_DONE) == 0x00); // wait for RSSI_Ready
-    Serial.print("~~~");
-    Serial.print(readReg(REG_RSSICONFIG));
+//    Serial.print("~~~");
+//    Serial.print(readReg(REG_RSSICONFIG));
     rssi = readReg(REG_RSSIVALUE);
   }
 //  rssi >>= 1;
@@ -470,7 +480,7 @@ void RFM69::writeReg(uint8_t addr, uint8_t value)
 
 // select the RFM69 transceiver (save SPI settings, set CS low)
 void RFM69::select() {
-  noInterrupts();
+//  noInterrupts();
   // save current SPI settings
 //  _SPCR = SPCR;
 //  _SPSR = SPSR;
@@ -487,7 +497,7 @@ void RFM69::unselect() {
   // restore SPI settings to what they were before talking to RFM69
 //  SPCR = _SPCR;
 //  SPSR = _SPSR;
-  interrupts();
+//  interrupts();
 }
 
 // true  = disable filtering to capture all frames on network

@@ -148,6 +148,7 @@ void delaySleepT2( unsigned long t)
   set_sleep_mode(SLEEP_MODE_PWR_SAVE);
   do
   {
+    incTimer2();
     sleep_mode();
   }
   while( (millisT2() - startMillis) <= t);
@@ -197,6 +198,9 @@ void setupTimer2()
 
   /* Configure timer2 in normal mode (pure counting, no PWM etc.) */
   TCCR2A &= ~((1<<WGM21) | (1<<WGM20));
+
+  TCCR2A |= ((1<<WGM21) );
+
   TCCR2B &= ~(1<<WGM22);
 
   /* Select clock source: internal I/O clock */
@@ -220,8 +224,13 @@ void setupTimer2()
 
   //Setup Timer2 to fire every 1ms
   /* Finally load end enable the timer */
-  TCNT2 = counterTCNT2;
-  TIMSK2 |= (1<<TOIE2);
+  OCR2A= 124;
+  // (clock /prescaler*desired_time )-1
+  // 16000000 /126*0.001 = 125
+
+//  TCNT2 = counterTCNT2;
+//  TIMSK2 |= (1<<TOIE2);
+  TIMSK2 |= (1<<OCIE2A);
 
 
 //  TIFR2  = 0x00;        //Timer2 INT Flag Reg: Clear Timer Overflow Flag

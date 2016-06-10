@@ -32,14 +32,15 @@
 #define RFM69_h
 #include <Arduino.h>            // assumes Arduino IDE v1.0 or greater
 #include "SPI.h"
+#include "imatmega.h"
 
 #define RF69_MAX_DATA_LEN       61 // to take advantage of the built in AES/CRC we want to limit the frame size to the internal FIFO size (66 bytes - 3 bytes overhead - 2 bytes crc)
 #define RF69_SPI_CS             SS // SS is the SPI slave select pin, for instance D10 on ATmega328
 
 // INT0 on AVRs should be connected to RFM69's DIO0 (ex on ATmega328 it's D2, on ATmega644/1284 it's D2)
 #if defined(__AVR_ATmega168__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega88) || defined(__AVR_ATmega8__) || defined(__AVR_ATmega88__)
-  #define RF69_IRQ_PIN          2
-  #define RF69_IRQ_NUM          0
+  #define RF69_IRQ_PIN          3
+  #define RF69_IRQ_NUM          1
 #elif defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)
   #define RF69_IRQ_PIN          2
   #define RF69_IRQ_NUM          2
@@ -47,8 +48,8 @@
   #define RF69_IRQ_PIN          3
   #define RF69_IRQ_NUM          0
 #else 
-  #define RF69_IRQ_PIN          2
-  #define RF69_IRQ_NUM          0  
+  #define RF69_IRQ_PIN          3
+  #define RF69_IRQ_NUM          1
 #endif
 
 
@@ -69,7 +70,7 @@
 #define COURSE_TEMP_COEF    -90 // puts the temperature reading in the ballpark, user can fine tune the returned value
 #define RF69_BROADCAST_ADDR 255
 #define RF69_CSMA_LIMIT_MS 1000
-#define RF69_TX_LIMIT_MS   1000
+#define RF69_TX_LIMIT_MS   100
 #define RF69_FSTEP  61.03515625 // == FXOSC / 2^19 = 32MHz / 2^19 (p13 in datasheet)
 
 // TWS: define CTLbyte bits
@@ -96,13 +97,13 @@ class RFM69 {
     static volatile uint8_t _mode; // should be protected?
     funTransceiverRF69 receivedData;
 
-    RFM69(uint8_t slaveSelectPin=RF69_SPI_CS, uint8_t interruptPin=RF69_IRQ_PIN, bool isRFM69HW=false, uint8_t interruptNum=RF69_IRQ_NUM) {
+    RFM69(uint8_t slaveSelectPin=RF69_SPI_CS, /*uint8_t interruptPin=RF69_IRQ_PIN,*/ bool isRFM69HW=true) {
       _slaveSelectPin = slaveSelectPin;
-      _interruptPin = interruptPin;
-      _interruptNum = interruptNum;
+//      _interruptPin = interruptPin;
+//      _interruptNum = interruptNum;
       _mode = RF69_MODE_STANDBY;
       _promiscuousMode = false;
-      _powerLevel = 31;
+      _powerLevel = 28;
       _isRFM69HW = isRFM69HW;
       receivedData=&receivedDataNull;
     }
@@ -143,13 +144,13 @@ class RFM69 {
     static RFM69* selfPointer;
     uint8_t _slaveSelectPin;
     uint8_t _interruptPin;
-    uint8_t _interruptNum;
+//    uint8_t _interruptNum;
     uint8_t _address;
     bool _promiscuousMode;
     uint8_t _powerLevel;
     bool _isRFM69HW;
-    uint8_t _SPCR;
-    uint8_t _SPSR;
+//    uint8_t _SPCR;
+//    uint8_t _SPSR;
 
     virtual void setMode(uint8_t mode);
     virtual void setHighPowerRegs(bool onOff);

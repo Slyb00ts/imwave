@@ -56,8 +56,8 @@ void IMTimer::printTime()
           DBGINFO(":");
    DBGINFO(millis());
           DBGINFO(":");
-   DBGINFO(millis()-millisT2());
-          DBGINFO(":");
+//   DBGINFO(millis()-millisT2());
+//          DBGINFO(":");
    DBGINFO(getTime());
           DBGINFO(">");
 }
@@ -147,8 +147,6 @@ void IMTimer::setStage(byte stage)
 
 byte IMTimer::WaitStage()
 {
-  DBGINFO("\r\n{{");
-  printTime();
 /*  DBGINFO("\r\n{{");
   DBGINFO(nearTime);
   DBGINFO('%');
@@ -159,12 +157,12 @@ byte IMTimer::WaitStage()
   DBGINFO(cycle);
   */
   Serial.flush();
-//  set_sleep_mode(SLEEP_MODE_PWR_SAVE);
-  set_sleep_mode(SLEEP_MODE_IDLE);
-  cli();
+  set_sleep_mode(SLEEP_MODE_PWR_SAVE);
 
+  sei();                             \
   while(nearTime >getTime())
   {
+    incTimer2();
     goSleep();
      /*
      long next=nearTime-getTime();
@@ -184,19 +182,23 @@ byte IMTimer::WaitStage()
 //       DBGINFO("<()>");
 //       printTime();
 //       DBGINFO(millis());
+//       OCR2A= 124;
+//       TCCR2B |= (1<<CS20);
        return current;
      }
 
-    cli();
+//    cli();
 
   }
+
+//TCCR2B |= (1<<CS20);
   sei();
 
   byte r= nearStage;
   if (r==PERIOD) {
      cycle++;
 //     watchdog++;
-     delaySleep(30);
+     delaySleepT2(30);
      if ((cycle % CycleHour()) ==0){
        r=CRONHOUR;
 
@@ -247,15 +249,20 @@ short IMTimer::ClassTest()
 }
 
 
+byte toggle;
 
-
+ISR(TIMER2_COMPA_vect) {
+//  toggle = ~toggle;
+  incTimer2();
+//  digitalWrite(4,toggle);
+}
 
 //http://www.engblaze.com/microcontroller-tutorial-avr-and-arduino-timer-interrupts/
 
+
+/*
 ISR(TIMER2_OVF_vect) {
-  /* Reload the timer */
 //  TCNT2 = tcnt2;
-  /* Write to a digital pin so that we can confirm our timer */
 //  toggle = ~toggle;
 //  counterTimer2++;               //Increments the interrupt counter
   TCNT2 = counterTCNT2;           //Reset Timer to 130 out of 255
@@ -263,6 +270,7 @@ ISR(TIMER2_OVF_vect) {
   incTimer2();
 
 }
+*/
 
 
 
