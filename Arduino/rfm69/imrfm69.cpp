@@ -76,7 +76,7 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
     /* 0x19 */ { REG_RXBW, RF_RXBW_DCCFREQ_000 | RF_RXBW_MANT_16 | RF_RXBW_EXP_2 }, // (BitRate < 2 * RxBw)
 //     /* 0x1E */ { REG_AFCFEI, RF_AFCFEI_AFCAUTO_ON | RF_AFCFEI_AFCAUTOCLEAR_ON },                         // Automatic AFC on, clear after each packet
     //for BR-19200: /* 0x19 */ { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_24 | RF_RXBW_EXP_3 },
-    /* 0x25 */ { REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01 }, // DIO0 is the only IRQ we're using
+    /* 0x25 */ { REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_11 }, // DIO0 is the only IRQ we're using
     /* 0x26 */ { REG_DIOMAPPING2, RF_DIOMAPPING2_CLKOUT_OFF }, // DIO5 ClkOut disable for power saving
     /* 0x28 */ { REG_IRQFLAGS2, RF_IRQFLAGS2_FIFOOVERRUN }, // writing to this bit ensures that the FIFO & status flags are reset
     /* 0x29 */ { REG_RSSITHRESH, 180 }, // must be set to dBm = (-Sensitivity / 2), default is 0xE4 = 228 so -114dBm
@@ -123,7 +123,6 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   while (((readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00) && millis()-start < timeout); // wait for ModeReady
   if (millis()-start >= timeout)
     return false;
-//  attachInterrupt(RF69_IRQ_NUM, RFM69::isr0, RISING);
   attachInterrupt(RF69_IRQ_NUM, RFM69::isr0, RISING);
 
   selfPointer = this;
@@ -308,13 +307,19 @@ void RFM69::interruptHandler() {
   if (_mode != RF69_MODE_RX) return;
 //   digitalWrite(4,HIGH);
     RSSI = readRSSI();
- uint8_t rr=readReg(REG_IRQFLAGS2);
-//  digitalWrite(4,LOW);
+  uint8_t ii=0;
+  uint8_t rr;
+   do{
+     rr=readReg(REG_IRQFLAGS2);
+     ii++;
+    }
+   while (!(rr & RF_IRQFLAGS2_PAYLOADREADY)|| (ii>28));
 // uint8_t rr1=readReg(REG_IRQFLAGS1);
+
   if ( (rr & RF_IRQFLAGS2_PAYLOADREADY))
   {
 //    RSSI = readRSSI();
-    rr=readReg(REG_IRQFLAGS2);
+//    rr=readReg(REG_IRQFLAGS2);
     setMode(RF69_MODE_STANDBY);
 //    RSSI = readRSSI();
     select();
@@ -347,7 +352,7 @@ void RFM69::interruptHandler() {
 
 //     rr=readReg(REG_OPMODE);
 //     rr=readReg(REG_LNA);
-    IRQ2=rr;
+    IRQ2=ii;
 
 //    setMode(RF69_MODE_RX);
 //     receiveMode();
@@ -385,7 +390,7 @@ bool RFM69::canRead() {
   return false;
 }
 void RFM69::receiveMode(){
-  writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01); // set DIO0 to "PAYLOADREADY" in receive mode
+  writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_10); // set DIO0 to "PAYLOADREADY" in receive mode
   setMode(RF69_MODE_RX);
 }
 
