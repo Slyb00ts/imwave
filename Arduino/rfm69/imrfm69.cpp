@@ -34,7 +34,7 @@
 
 volatile uint8_t RFM69::DATA[RF69_MAX_DATA_LEN];
 volatile uint8_t RFM69::_mode;        // current transceiver state
-volatile uint8_t RFM69::DATALEN;
+//volatile uint8_t RFM69::DATALEN;
 volatile uint8_t RFM69::IRQ2;
 //volatile uint8_t RFM69::SENDERID;
 //volatile uint8_t RFM69::TARGETID;     // should match _address
@@ -306,7 +306,7 @@ void RFM69::interruptHandler() {
 //    Serial.print(readRSSI(true));
   if (_mode != RF69_MODE_RX) return;
 //   digitalWrite(4,HIGH);
-    RSSI = readRSSI();
+  RSSI = readRSSI();
   uint8_t ii=0;
   uint8_t rr;
    do{
@@ -320,7 +320,9 @@ void RFM69::interruptHandler() {
   {
 //    RSSI = readRSSI();
 //    rr=readReg(REG_IRQFLAGS2);
+         rr=readReg(REG_IRQFLAGS2);
     setMode(RF69_MODE_STANDBY);
+
 //    RSSI = readRSSI();
     select();
     SPI.transfer(REG_FIFO & 0x7F);
@@ -330,14 +332,9 @@ void RFM69::interruptHandler() {
 //    TARGETID = SPI.transfer(0);
 
 
-    DATALEN = PAYLOADLEN ;
+//    DATALEN = PAYLOADLEN ;
 //    SENDERID = SPI.transfer(0);
 //    uint8_t CTLbyte = SPI.transfer(0);
-
-//    ACK_RECEIVED = CTLbyte & RFM69_CTL_SENDACK; // extract ACK-received flag
-//    ACK_REQUESTED = CTLbyte & RFM69_CTL_REQACK; // extract ACK-requested flag
-    
-//    interruptHook(CTLbyte);     // TWS: hook to derived class interrupt function
 
     for (uint8_t i = 0; i < PAYLOADLEN; i++)
     {
@@ -352,13 +349,12 @@ void RFM69::interruptHandler() {
 
 //     rr=readReg(REG_OPMODE);
 //     rr=readReg(REG_LNA);
-    IRQ2=ii;
+   IRQ2=rr;
 
-//    setMode(RF69_MODE_RX);
 //     receiveMode();
     receivedData(PAYLOADLEN);
     receiveMode();
-    } else{
+  } else{
 
     Serial.print("****");
   }

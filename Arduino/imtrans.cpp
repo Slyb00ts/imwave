@@ -121,8 +121,6 @@ bool Transceiver::Routing(IMFrame & frame)
 bool Transceiver::GetFrame(IMFrame& frame)
 {
   if (GetData()) {
-//    bool io = TestFrame();
-//      bool io =( (buffer->RX_buffer.packet.Header.ReceiverId==myId) ||  (RX_buffer.packet.Header.ReceiverId==0));
 
 //    if (io) {
         frame=buffer->RX_buffer.packet;
@@ -215,25 +213,6 @@ void Transceiver::Prepare(IMFrame & frame)
   frame.Header.crc=frame.CRC();
 }
 
-/*
-bool Transceiver::Send()
-{
-
-  if (ruptures[TransceiverRead]){
-    DBGERR("?? READ ??");
-  }
-  state=TransceiverWrite;
-  if  (cc1101->SendData((uint8_t*)&(TX_buffer.packet),TX_buffer.len)) {
-    return true;
-  } else  {
-    DBGERR("! SEND");
-    DBGERR(cc1101->errState);
-    cc1101->Reinit();
-    return false;
-  }
-
-}
-*/
 
 bool Transceiver::TestLow()
 {

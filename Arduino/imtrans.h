@@ -111,8 +111,6 @@ public:
     Transceiver();
     IMTimer  timer;
 
-//    transfer_t RX_buffer ;
-//    transfer_t TX_buffer ;
     IMAddress hostId;
     IMAddress serverId;
     IMMAC myMAC;

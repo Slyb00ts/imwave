@@ -87,10 +87,9 @@ bool IMBuffer::TestFrame()
 {
 //      bool io= ((RX_buffer.len>=sizeof(IMFrameHeader)) && (RX_buffer.len<=sizeof(IMFrame)));
       rssiH=radio.RSSI;
-      rSize=radio.DATALEN;
-      radio.DATALEN=0;
+      rSize=radio.PAYLOADLEN;
       radio.PAYLOADLEN=0;
-        DBGINFO("IRQ");
+        DBGINFO("IRQ ");
         DBGINFO(radio.IRQ2);
         DBGINFO("=");
       bool io=1;
@@ -146,23 +145,22 @@ void IMBuffer::StartReceive()
 //  radio.listenMode();
 }
 
-
 void IMBuffer::Sleep()
 {
-//  radio.sleep();
+  radio.sleep();
   state=TransceiverSleep;
 //   DBGINFO("{{");
-//   DBGINFO(millis());
-
+//   DBGINFO(millisT2());
 }
+
 void IMBuffer::Wakeup()
 {
-//  radio.idle();
+  radio.idle();
   state=TransceiverIdle;
 //   DBGINFO("}}");
-//   DBGINFO(millis());
-
+//   DBGINFO(millisT2());
 }
+
 void IMBuffer::Reboot()
 {
    radio.reset();
@@ -200,12 +198,17 @@ bool IMBuffer::Rupture()
 
 void IMBuffer::printReceive()
 {
-      for (unsigned short i=0;i<=sizeof(IMFrame)  ;i++)
+      DBGINFO("[[");
+      DBGINFO(RX_buffer.len);
+      DBGINFO(":");
+      for (unsigned short i=0;i<=sizeof(IMFrame)+2  ;i++)
       {
         DBGINFO2(((uint8_t*)&RX_buffer)[i],HEX);
         DBGWRITE(" ");
       }
+        DBGWRITE(":");
 //      DBGINFO(RX_buffer.packet.CRC());
+      DBGINFO(RX_buffer.appended);
 
       DBGINFO("-> ");
 }

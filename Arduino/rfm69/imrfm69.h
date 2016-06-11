@@ -86,7 +86,6 @@ class RFM69 {
 
   public:
     static volatile uint8_t DATA[RF69_MAX_DATA_LEN]; // recv/xmit buf, including header & crc bytes
-    static volatile uint8_t DATALEN;
     static volatile uint8_t IRQ2;
 //    static volatile uint8_t SENDERID;
 //    static volatile uint8_t TARGETID; // should match _address

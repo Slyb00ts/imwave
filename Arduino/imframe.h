@@ -75,14 +75,14 @@ typedef struct
         {
             byte c=42;
             uint8_t* pp=(uint8_t*)&Header;
-            for(unsigned short i=1 ; i<_frameSize ; i++)
+            for(unsigned short i=1 ; i<=_frameSize ; i++)
             {
              c+= *pp;
              pp++;
 //              c+=((uint8_t*)&Header)[i];
             }
-//            return 0x100-c;
-            return c;
+            return 0x100-c;
+//            return c;
 
         }
         byte checkCRC()
