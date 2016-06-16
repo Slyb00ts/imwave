@@ -148,7 +148,8 @@ void delaySleepT2( unsigned long t)
   set_sleep_mode(SLEEP_MODE_PWR_SAVE);
   do
   {
-    incTimer2();
+    if (F_CPU==16000000L)
+       incTimer2();
     sleep_mode();
   }
   while( (millisT2() - startMillis) <= t);
@@ -248,11 +249,20 @@ void pciSetup(uint8_t pin)
     PCICR  |= bit (digitalPinToPCICRbit(pin)); // enable interrupt for the group
 }
 
+void(* SoftResetFuncA) (void) = 0; //declare reset function @ address 0
 
-void reboot() {
+void SoftReset(){
+  SoftResetFuncA();
+}
+
+void reboot(){
+//http://wiblocks.luciani.org/docs/app-notes/software-reset.html
+//nedeed modification of bootloader
+  cli();
   wdt_disable();
   do{
   wdt_enable(WDTO_15MS);
+  delay(100);
   for(;;){};
 //  while (1) {}
   }while(0);

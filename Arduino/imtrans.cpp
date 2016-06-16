@@ -122,9 +122,8 @@ bool Transceiver::GetFrame(IMFrame& frame)
 {
   if (GetData()) {
 
-//    if (io) {
-        frame=buffer->RX_buffer.packet;
-        bool io =( (frame.Header.ReceiverId==myId) ||  (frame.Header.ReceiverId==0));
+       frame=buffer->RX_buffer.packet;
+       bool io =( (frame.Header.ReceiverId==myId) ||  (frame.Header.ReceiverId==0));
        if (!io) {
           DBGERR("Address");
           DBGERR(frame.Header.ReceiverId);
@@ -137,9 +136,7 @@ bool Transceiver::GetFrame(IMFrame& frame)
           DBGERR(frame.CRC());
        };
 
-//        setRssi();
         DBGINFO(" RSSI: ");           DBGINFO(Rssi());            DBGINFO("dBm  ");
-//    }
     return io;
 
   } else {
@@ -152,11 +149,8 @@ bool Transceiver::GetFrame(IMFrame& frame)
 
 float Transceiver::Rssi(byte h  )
 {
-            float rssi = h;
-/*            if (h&0x80) rssi -= 256;
-            rssi /= 2;
-            rssi -= 744;*/
-  return rssi;
+   float rssi = h;
+   return rssi;
 }
 float Transceiver::Rssi()
 {
@@ -282,8 +276,6 @@ void Transceiver::PrepareSetup(IMFrameSetup &se)
    se.salt=_salt;
 //   se.device1= myDevice;
    se.hostchannel=myChannel;
-//   se.hop=myHop;
-
 }
 
 
@@ -314,14 +306,12 @@ void Transceiver::Transmit()
 
 void Transceiver::Idle()
 {
-  buffer->Sleep();
-
+   buffer->Sleep();
 }
 
 void Transceiver::Wakeup()
 {
-  buffer->Wakeup();
-
+   buffer->Wakeup();
 }
 
 
@@ -354,10 +344,8 @@ void Transceiver::ListenData()
 void Transceiver::StopListen()
 {
    if (Connected() &&       (timer.Cycle()<_KnockCycle+7) ){
-
-
-     buffer->Sleep();
-     timer.setStage(IMTimer::IDDLESTAGE);
+      buffer->Sleep();
+      timer.setStage(IMTimer::IDDLESTAGE);
    }
 }
 
@@ -441,7 +429,7 @@ void Transceiver::Knock()
       DBGINFO("WATCHDOG");
       Deconnect();
       buffer->Reboot();
-      reboot();
+//      reboot();
 
    }
    if (Connected())

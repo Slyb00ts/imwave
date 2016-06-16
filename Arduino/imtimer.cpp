@@ -7,6 +7,10 @@ IMTimer::IMTimer()
 {
 	ptrr = this;	//the ptr points to this object
         setupTimer2();
+        DeviationPlus=0;
+        DeviationMinus=0;
+        watchdog=0;
+        cycle=0;
 }
 
 void IMTimer::Calibrate(unsigned long time)
@@ -162,7 +166,8 @@ byte IMTimer::WaitStage()
   sei();                             \
   while(nearTime >getTime())
   {
-    incTimer2();
+    if (F_CPU==16000000L)
+       incTimer2();
     goSleep();
      /*
      long next=nearTime-getTime();

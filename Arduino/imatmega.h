@@ -79,7 +79,10 @@ void disableADCB();
 #define  counterTCNT2  131;
 
 void enterSleep(void);
+//void  SoftResetFunc (void); //declare reset function @ address 0
+void SoftReset();
 
+//void(* SoftResetFunc) (void)=0; //declare reset function @ address 0
 
 
 #define soft_restart()        \
