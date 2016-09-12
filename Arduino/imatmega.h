@@ -47,9 +47,6 @@ do {                                   \
 
 #define  goSleepA()                     \
 do {                                   \
-//  set_sleep_mode (SLEEP_MODE_IDLE);  \
-//  cli()                              \
-//  if (some_condition){               \
     sleep_enable();                    \
     //sleep_bod_disable();             \
     sei();                             \
@@ -74,8 +71,15 @@ do {                                   \
 */
 void delaySleep(unsigned long t);
 void delaySleepT2(unsigned long t);
+void delayT2();
+void setupTimer2();
 void reboot();
+
+#if defined(__AVR_ATmega328P__)
+#define  __sleepT2  1
 void disableADCB();
+#endif
+
 #define  counterTCNT2  131;
 
 void enterSleep(void);

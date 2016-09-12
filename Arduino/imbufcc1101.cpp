@@ -168,6 +168,11 @@ bool IMBuffer::Rupture()
   return false;
 }
 
+void IMBuffer::setFunction(funTransceiver fun)
+{
+//  radio.receivedData=fun;
+}
+
 
 
 void IMBuffer::printReceive()

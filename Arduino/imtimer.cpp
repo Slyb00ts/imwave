@@ -6,7 +6,9 @@ IMTimer* IMTimer::ptrr = 0;
 IMTimer::IMTimer()
 {
 	ptrr = this;	//the ptr points to this object
+  #if defined(__sleepT2)
         setupTimer2();
+        #endif
         DeviationPlus=0;
         DeviationMinus=0;
         watchdog=0;
@@ -151,7 +153,7 @@ void IMTimer::setStage(byte stage)
 
 byte IMTimer::WaitStage()
 {
-/*  DBGINFO("\r\n{{");
+  DBGINFO("\r\n{{");
   DBGINFO(nearTime);
   DBGINFO('%');
   DBGINFO(millis());
@@ -159,16 +161,21 @@ byte IMTimer::WaitStage()
   DBGINFO(getTime());
   DBGINFO('%');
   DBGINFO(cycle);
-  */
-  Serial.flush();
-  set_sleep_mode(SLEEP_MODE_PWR_SAVE);
 
+  Serial.flush();
+
+  #if defined(__sleepT2)
+    set_sleep_mode(SLEEP_MODE_PWR_SAVE);
+  #else
+    set_sleep_mode (SLEEP_MODE_IDLE);
+
+  #endif
   sei();                             \
   while(nearTime >getTime())
   {
-    if (F_CPU==16000000L)
-       incTimer2();
-    goSleep();
+    delayT2();
+//    sleep(1);
+//       DBGINFO(".");
      /*
      long next=nearTime-getTime();
      if (next > 3) {
@@ -256,11 +263,13 @@ short IMTimer::ClassTest()
 
 byte toggle;
 
+#if defined(__AVR_ATmega328P__)
 ISR(TIMER2_COMPA_vect) {
 //  toggle = ~toggle;
   incTimer2();
 //  digitalWrite(4,toggle);
 }
+#endif
 
 //http://www.engblaze.com/microcontroller-tutorial-avr-and-arduino-timer-interrupts/
 
