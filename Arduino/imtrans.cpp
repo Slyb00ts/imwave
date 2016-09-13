@@ -236,7 +236,7 @@ bool Transceiver::Send(IMFrame & frame)
 //  PrepareTransmit();
 //  DBGINFO("Send<");
 //  printTime();
-//  buffer->printSend();
+  buffer->printSend();
   return buffer->Send();
 
 }
@@ -393,6 +393,8 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
 
            _KnockCycle=timer.Cycle();
            _salt=sp->salt; //accept new value
+           hostRssiListen=buffer->rssiH;
+
            if (ResponseHello(frame)){
                  ListenBroadcast();      //return to broadcas channel (wait to WELCOME)
                  return true;
@@ -516,7 +518,6 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    _frame.Header.DestinationId=frame.Header.SourceId;
    _frame.Header.Sequence=frame.Header.Sequence;
    PrepareSetup(*setup);
-    hostRssiListen=buffer->rssiH;
     setup->rssi=hostRssiListen;
 
    Send(_frame);
@@ -819,14 +820,14 @@ void Transceiver::Rupture()
 
 
 
- /*
+#if defined(__AVR_ATmega32U4__)
 
 ISR(PCINT0_vect) // handle pin change interrupt for D8 to D13 here
 {
    Transceiver::ptr->Rupture();
 }
-   */
 
+#endif
 
 //
 // END OF FILE

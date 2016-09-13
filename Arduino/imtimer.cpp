@@ -153,7 +153,7 @@ void IMTimer::setStage(byte stage)
 
 byte IMTimer::WaitStage()
 {
-  DBGINFO("\r\n{{");
+/*  DBGINFO("\r\n{{");
   DBGINFO(nearTime);
   DBGINFO('%');
   DBGINFO(millis());
@@ -161,8 +161,8 @@ byte IMTimer::WaitStage()
   DBGINFO(getTime());
   DBGINFO('%');
   DBGINFO(cycle);
-
   Serial.flush();
+*/
 
   #if defined(__sleepT2)
     set_sleep_mode(SLEEP_MODE_PWR_SAVE);

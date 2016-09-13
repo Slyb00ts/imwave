@@ -7,6 +7,7 @@ void IMBuffer::Init()
 {
   cc1101.Init();
   cc1101.StartReceive();
+  pciSetup(9);
 }
 bool IMBuffer::Send()
 {
