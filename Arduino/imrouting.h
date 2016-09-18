@@ -10,6 +10,7 @@
 
 #include <Arduino.h>
 #include "imframe.h"
+#include "imdebug.h"
 
 
 #define MAXTableRouting 64
@@ -29,7 +30,7 @@ class IMRouting
 //  uint32_t time[MAXTableRouting];
   IMAddress myId;
   IMAddress Repeater(IMAddress addr);
-  void addMAC(IMMAC mac,IMAddress ward);
+  bool addMAC(IMMAC mac,IMAddress ward);
   byte addAddress(IMMAC mac,IMAddress addr, byte channel);
   byte getChannel(IMAddress addr);
   void reset();

@@ -11,7 +11,7 @@ void IMBuffer::Init()
 }
 bool IMBuffer::Send()
 {
-  if (ruptures[TransceiverRead]){
+  while (ruptures[TransceiverRead]){
     DBGERR("?? READ ??");
   }
   state=TransceiverWrite;
@@ -26,7 +26,7 @@ bool IMBuffer::Send()
     DBGERR("! SEND");
     DBGERR(cc1101.errState);
     state=TransceiverIdle;
-    cc1101.Reinit();
+ //   cc1101.Reinit();
     return false;
   }
 
