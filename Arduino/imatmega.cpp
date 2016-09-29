@@ -148,7 +148,7 @@ void delaySleepT2( unsigned long t)
   set_sleep_mode(SLEEP_MODE_PWR_SAVE);
   do
   {
-    if (F_CPU==16000000L)
+//    if (F_CPU==16000000L)
        incTimer2();
     sleep_mode();
   }
@@ -213,6 +213,8 @@ void setupTimer2()
   /* Now configure the prescaler to CPU clock divided by 128 */
   TCCR2B |= (1<<CS22)  | (1<<CS20); // Set bits
   TCCR2B &= ~(1<<CS21);             // Clear bit
+  if (F_CPU==8000000L)
+    TCCR2B &= ~(1<<CS20);             // Clear bit
 
   /* We need to calculate a proper value to load the timer counter.
    * The following loads the value 131 into the Timer 2 counter register

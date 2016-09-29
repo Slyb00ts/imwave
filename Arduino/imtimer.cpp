@@ -166,7 +166,7 @@ byte IMTimer::WaitStage()
   sei();                             \
   while(nearTime >getTime())
   {
-    if (F_CPU==16000000L)
+//    if (F_CPU==16000000L)
        incTimer2();
     goSleep();
      /*
