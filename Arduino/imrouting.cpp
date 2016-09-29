@@ -41,15 +41,26 @@ byte IMRouting::find(IMMAC mac)
   return 0;
 
 }
-void IMRouting::addMAC(IMMAC mac,IMAddress ward)
+bool IMRouting::addMAC(IMMAC mac,IMAddress ward)
 {
    byte x=find(mac);
    if (x==0){
+     if(count>=MAXTableRouting){
+      count= MAXTableRouting /2;
+      return false;
+     }
 
      MACARRAY[count]=mac;
      WARD[count]=ward;
       ++count;
+   DBGINFO("\r\nROUTING");
+   DBGINFO(count);
+   DBGINFO(":");
+   DBGINFO(mac);
+
+
    }
+   return true;
 }
 
 byte IMRouting::addAddress(IMMAC mac,IMAddress addr,byte channel)

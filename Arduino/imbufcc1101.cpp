@@ -7,10 +7,11 @@ void IMBuffer::Init()
 {
   cc1101.Init();
   cc1101.StartReceive();
+  pciSetup(9);
 }
 bool IMBuffer::Send()
 {
-  if (ruptures[TransceiverRead]){
+  while (ruptures[TransceiverRead]){
     DBGERR("?? READ ??");
   }
   state=TransceiverWrite;
@@ -25,7 +26,7 @@ bool IMBuffer::Send()
     DBGERR("! SEND");
     DBGERR(cc1101.errState);
     state=TransceiverIdle;
-    cc1101.Reinit();
+ //   cc1101.Reinit();
     return false;
   }
 
@@ -166,6 +167,11 @@ bool IMBuffer::Rupture()
 
   }
   return false;
+}
+
+void IMBuffer::setFunction(funTransceiver fun)
+{
+//  radio.receivedData=fun;
 }
 
 

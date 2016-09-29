@@ -103,7 +103,12 @@ long internalTemp328() {
 #endif
 
 long millisT2(){
+ #if defined(__sleepT2)
+
   return counterTimer2;
+ #else
+   return millis();
+  #endif
 }
 long incTimer2(){
   return counterTimer2++;
@@ -141,8 +146,17 @@ void delaySleep( unsigned long t)
   while( (current - startMillis) <= t);
 }
 
+void delayT2()
+{
+    if (F_CPU==16000000L)
+       incTimer2();
+    goSleep();
+}
+
 void delaySleepT2( unsigned long t)
 {
+ #if defined(__sleepT2)
+
   unsigned long startMillis = millisT2();
 
   set_sleep_mode(SLEEP_MODE_PWR_SAVE);
@@ -153,6 +167,9 @@ void delaySleepT2( unsigned long t)
     sleep_mode();
   }
   while( (millisT2() - startMillis) <= t);
+ #else
+   delaySleep(t);
+ #endif
 }
 
 
@@ -167,7 +184,7 @@ void enterSleep(void)
   sleep_disable();
  }
 
-
+#if defined(__AVR_ATmega328P__)
 void disableADCB()
 {
  // disable ADC
@@ -183,7 +200,6 @@ void disableADCB()
 //    power_timer1_enable(); // Timer 1
 //    power_timer2_enable(); // Timer 2
     power_twi_disable(); // TWI (I2C)
-
 
 }
 
@@ -241,6 +257,8 @@ void setupTimer2()
 //  TCCR2A = 0x00;        //Timer2 Control Reg A: Wave Gen Mode normal
 //  TCCR2B = 0x05;        //Timer2 Control Reg B: Timer Prescaler set to 128
 }
+
+#endif
 
 
 void pciSetup(uint8_t pin)

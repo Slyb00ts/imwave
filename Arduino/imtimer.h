@@ -65,8 +65,8 @@ class  IMTimer
 
   public:
         IMTimer();
-        funIMTimer onStage;
-        funIMTimer onListen;
+//        funIMTimer onStage;
+//        funIMTimer onListen;
         uint16_t DeviationPlus;                       //sum deviation in calibrate
         uint16_t DeviationMinus;                     //separate for shorter and longer
         static const byte IDDLESTAGE = 100;
