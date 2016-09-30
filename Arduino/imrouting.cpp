@@ -57,6 +57,7 @@ bool IMRouting::addMAC(IMMAC mac,IMAddress ward)
    DBGINFO(count);
    DBGINFO(":");
    DBGINFO(mac);
+   DBGINFO(">");
 
 
    }
