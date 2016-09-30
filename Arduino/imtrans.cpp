@@ -184,7 +184,7 @@ void Transceiver::Deconnect()
   router.addMAC(myMAC,0xFF);
   timer.Watchdog();
   SendKnock(true);
-  delay(2);
+  delay(20);
   ListenBroadcast();
 }
 
@@ -377,14 +377,13 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                         }
                         return false;
               }
-
+              timer.Calibrate(millisT2()-BroadcastDelay-40);
            }
 
            if (sp->salt==0) {    //received invalid knock
                       DBGINFO(" invalid ");
                       return false;
            }
-           timer.Calibrate(millisT2()-BroadcastDelay-40);
 
 //           if (myHost(frame)){
 //             if (sp->salt!=_salt){   //host reboot

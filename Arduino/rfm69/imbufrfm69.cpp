@@ -157,7 +157,7 @@ void IMBuffer::Wakeup()
 {
   radio.idle();
   state=TransceiverIdle;
-//   DBGINFO("}}");
+   DBGINFO("}}");
 //   DBGINFO(millisT2());
 }
 
