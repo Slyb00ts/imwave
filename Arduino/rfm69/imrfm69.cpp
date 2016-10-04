@@ -251,6 +251,8 @@ bool RFM69::canSend()
 
 bool RFM69::send( const void* buffer, uint8_t bufferSize)
 {
+  Serial.print(IRNN);
+  Serial.print("IRNN@@@");
   writeReg(REG_PACKETCONFIG2, (readReg(REG_PACKETCONFIG2) & 0xFB) | RF_PACKET2_RXRESTART); // avoid RX deadlocks
   uint32_t now = millisT2();
   while (!canSend() && millisT2() - now < RF69_CSMA_LIMIT_MS);
@@ -285,10 +287,6 @@ void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize)
   // write to FIFO
   select();
   SPI.transfer(REG_FIFO | 0x80);
-//  SPI.transfer(bufferSize );
-//  SPI.transfer(toAddress);
-//  SPI.transfer(_address);
-//  SPI.transfer(CTLbyte);
 
   for (uint8_t i = 0; i < bufferSize; i++)
     SPI.transfer(((uint8_t*) buffer)[i]);
@@ -314,7 +312,6 @@ void RFM69::interruptHandler() {
   if (_mode != RF69_MODE_RX) return;
 //   digitalWrite(4,HIGH);
   RSSI = readRSSI();
-    Serial.print("WWW");
   uint8_t ii=0;
   uint8_t rr;
    do{
@@ -335,14 +332,6 @@ void RFM69::interruptHandler() {
     select();
     SPI.transfer(REG_FIFO & 0x7F);
     PAYLOADLEN=32;
-//    PAYLOADLEN = SPI.transfer(0);
-//    PAYLOADLEN = PAYLOADLEN > 66 ? 66 : PAYLOADLEN; // precaution
-//    TARGETID = SPI.transfer(0);
-
-
-//    DATALEN = PAYLOADLEN ;
-//    SENDERID = SPI.transfer(0);
-//    uint8_t CTLbyte = SPI.transfer(0);
 
     for (uint8_t i = 0; i < PAYLOADLEN; i++)
     {
@@ -351,15 +340,12 @@ void RFM69::interruptHandler() {
 
 //      SPI.transfer((uint8_t*)&DATA,32);
 
-//    if (DATALEN < RF69_MAX_DATA_LEN) DATA[DATALEN] = 0; // add null at end of string
     unselect();
 //    RSSI = readRSSI();
 
 //     rr=readReg(REG_OPMODE);
 //     rr=readReg(REG_LNA);
    IRQ2=rr;
-
-//     receiveMode();
     receivedData(PAYLOADLEN);
     receiveMode();
   } else{
@@ -369,16 +355,11 @@ void RFM69::interruptHandler() {
   //digitalWrite(4, 0);
 }
 
-//void RFM69::receivedDataNull(byte){}
-
-
 // internal function
 void RFM69::isr0() { selfPointer->interruptHandler(); }
 
 // internal function
 void RFM69::receiveBegin() {
-//  DATALEN = 0;
-//  PAYLOADLEN = 0;
 //    setMode(RF69_MODE_STANDBY);
 //  RSSI = readRSSI(true);
 //  if (readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PAYLOADREADY)
