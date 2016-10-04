@@ -46,7 +46,7 @@ class  IMTimer
 {
   private:
     static IMTimer* ptrr; //static ptr to Sleep class for the ISR
-    static long counterTimer2; //static ptr to Sleep class for the ISR
+    //static long counterTimer2; //static ptr to Sleep class for the ISR
     long waiting;
     long cycle;
     uint16_t watchdog;

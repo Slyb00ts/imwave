@@ -236,7 +236,7 @@ bool Transceiver::Send(IMFrame & frame)
 //  PrepareTransmit();
   DBGINFO("Send<");
 //  printTime();
-  buffer->printSend();
+//  buffer->printSend();
   return buffer->Send();
 
 }
