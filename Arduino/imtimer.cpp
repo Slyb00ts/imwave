@@ -164,7 +164,7 @@ byte IMTimer::WaitStage()
   Serial.flush();
 */
 
-  #if defined(__sleepT2)
+  #if defined(__sleepT21)
     set_sleep_mode(SLEEP_MODE_PWR_SAVE);
   #else
     set_sleep_mode (SLEEP_MODE_IDLE);

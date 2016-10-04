@@ -39,8 +39,8 @@
 
 // INT0 on AVRs should be connected to RFM69's DIO0 (ex on ATmega328 it's D2, on ATmega644/1284 it's D2)
 #if defined(__AVR_ATmega168__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega88) || defined(__AVR_ATmega8__) || defined(__AVR_ATmega88__)
-  #define RF69_IRQ_PIN          3
-  #define RF69_IRQ_NUM          1
+  #define RF69_IRQ_PIN          2  //D2  D3
+  #define RF69_IRQ_NUM          0  // 0   1
 #elif defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)
   #define RF69_IRQ_PIN          2
   #define RF69_IRQ_NUM          2
@@ -87,6 +87,7 @@ class RFM69 {
   public:
     static volatile uint8_t DATA[RF69_MAX_DATA_LEN]; // recv/xmit buf, including header & crc bytes
     static volatile uint8_t IRQ2;
+    static volatile uint8_t IRNN;
 //    static volatile uint8_t SENDERID;
 //    static volatile uint8_t TARGETID; // should match _address
     static volatile uint8_t PAYLOADLEN;
@@ -112,7 +113,7 @@ class RFM69 {
     void setNetwork(uint8_t networkID);
     bool canSend();
     bool canRead();
-    virtual void send(uint8_t toAddress, const void* buffer, uint8_t bufferSize, bool requestACK=false);
+    bool send( const void* buffer, uint8_t bufferSize);
     virtual bool receiveDone();
     virtual void receiveBegin();
     uint32_t getFrequency();

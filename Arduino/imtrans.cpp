@@ -184,7 +184,7 @@ void Transceiver::Deconnect()
   router.addMAC(myMAC,0xFF);
   timer.Watchdog();
   SendKnock(true);
-  delay(20);
+  delay(20); //if too short wait : error on serial yyyyy***yyyy
   ListenBroadcast();
 }
 
@@ -234,9 +234,9 @@ bool Transceiver::Send(IMFrame & frame)
   Prepare(frame);
   buffer->TX_buffer.packet=frame;
 //  PrepareTransmit();
-//  DBGINFO("Send<");
+  DBGINFO("Send<");
 //  printTime();
-//  buffer->printSend();
+  buffer->printSend();
   return buffer->Send();
 
 }

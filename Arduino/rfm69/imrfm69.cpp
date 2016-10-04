@@ -36,6 +36,7 @@ volatile uint8_t RFM69::DATA[RF69_MAX_DATA_LEN];
 volatile uint8_t RFM69::_mode;        // current transceiver state
 //volatile uint8_t RFM69::DATALEN;
 volatile uint8_t RFM69::IRQ2;
+volatile uint8_t RFM69::IRNN;
 //volatile uint8_t RFM69::SENDERID;
 //volatile uint8_t RFM69::TARGETID;     // should match _address
 volatile uint8_t RFM69::PAYLOADLEN;
@@ -123,6 +124,9 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   while (((readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00) && millis()-start < timeout); // wait for ModeReady
   if (millis()-start >= timeout)
     return false;
+
+      Serial.print("RFM initialize");
+
   attachInterrupt(RF69_IRQ_NUM, RFM69::isr0, RISING);
 
   selfPointer = this;
@@ -245,13 +249,14 @@ bool RFM69::canSend()
   return false;
 }
 
-void RFM69::send(uint8_t toAddress, const void* buffer, uint8_t bufferSize, bool requestACK)
+bool RFM69::send( const void* buffer, uint8_t bufferSize)
 {
   writeReg(REG_PACKETCONFIG2, (readReg(REG_PACKETCONFIG2) & 0xFB) | RF_PACKET2_RXRESTART); // avoid RX deadlocks
   uint32_t now = millisT2();
   while (!canSend() && millisT2() - now < RF69_CSMA_LIMIT_MS);
     // receiveDone();
-  sendFrame(toAddress, buffer, bufferSize);
+  sendFrame(0, buffer, bufferSize);
+  return true;
 }
 
 // to increase the chance of getting a packet across, call this function instead of send
@@ -291,6 +296,7 @@ void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize)
 
   // no need to wait for transmit mode to be ready since its handled by the radio
   setMode(RF69_MODE_TX);
+  IRNN=0;
   uint32_t txStart = millisT2();
   while (digitalRead(RF69_IRQ_PIN) == 0 && millisT2() - txStart < RF69_TX_LIMIT_MS); // wait for DIO0 to turn HIGH signalling transmission finish
   //while (readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PACKETSENT == 0x00); // wait for ModeReady
@@ -304,9 +310,11 @@ void RFM69::interruptHandler() {
   //digitalWrite(4, 1);
 //    RSSI = readRSSI(true);
 //    Serial.print(readRSSI(true));
+  ++IRNN;
   if (_mode != RF69_MODE_RX) return;
 //   digitalWrite(4,HIGH);
   RSSI = readRSSI();
+    Serial.print("WWW");
   uint8_t ii=0;
   uint8_t rr;
    do{
