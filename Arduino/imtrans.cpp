@@ -87,12 +87,12 @@ uint8_t Transceiver::GetData()
 
   if (buffer->Received())
   {
-    DBGINFO("Receive*<");
-    printTime();
+//    DBGINFO("Receive*<");
+ //   printTime();
    buffer->printReceive();
     return 1;
   } else{
-    DBGINFO("[");
+ //   DBGINFO("+++++");
 //    DBGINFO(buffer->state);
 
     return 0;
@@ -120,7 +120,7 @@ bool Transceiver::Routing(IMFrame & frame)
 
 bool Transceiver::GetFrame(IMFrame& frame)
 {
-  if (GetData()) {
+ // if (GetData()) {
 
        frame=buffer->RX_buffer.packet;
        bool io =( (frame.Header.ReceiverId==myId) ||  (frame.Header.ReceiverId==0));
@@ -139,9 +139,9 @@ bool Transceiver::GetFrame(IMFrame& frame)
         DBGINFO(" RSSI: ");           DBGINFO(Rssi());            DBGINFO("dBm  ");
     return io;
 
-  } else {
-     return false;
-  }
+//  } else {
+//     return false;
+//  }
 }
 
 
@@ -693,6 +693,22 @@ void Transceiver::SendACK(IMFrame & frame)
   Send(_f);
 }
 
+
+bool Transceiver::Parse()
+{
+  static IMFrame rxFrame;
+
+  if(GetFrame(rxFrame))
+      {
+        if (!ParseFrame(rxFrame))
+        {
+   //       DBGINFO(" rxGET ");
+        } else{
+          return true;
+        }
+   }
+   return false;
+}
 
 bool Transceiver::ParseFrame(IMFrame & rxFrame)
 {

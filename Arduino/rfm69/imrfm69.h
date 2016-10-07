@@ -36,7 +36,8 @@
 
 #define RF69_MAX_DATA_LEN       61 // to take advantage of the built in AES/CRC we want to limit the frame size to the internal FIFO size (66 bytes - 3 bytes overhead - 2 bytes crc)
 #define RF69_SPI_CS             SS // SS is the SPI slave select pin, for instance D10 on ATmega328
-
+#define RF69_BUF_LEN            128
+#define RF69_FRAME_LEN           32
 // INT0 on AVRs should be connected to RFM69's DIO0 (ex on ATmega328 it's D2, on ATmega644/1284 it's D2)
 #if defined(__AVR_ATmega168__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega88) || defined(__AVR_ATmega8__) || defined(__AVR_ATmega88__)
   #define RF69_IRQ_PIN          2  //D2  D3
@@ -85,9 +86,11 @@ class RFM69 {
     void receiveMode();
 
   public:
-    static volatile uint8_t DATA[RF69_MAX_DATA_LEN]; // recv/xmit buf, including header & crc bytes
+    static volatile uint8_t DATA[RF69_BUF_LEN]; // recv/xmit buf, including header & crc bytes
     static volatile uint8_t IRQ2;
     static volatile uint8_t IRNN;
+    static volatile uint8_t _head;
+    static volatile uint8_t _tail;
 //    static volatile uint8_t SENDERID;
 //    static volatile uint8_t TARGETID; // should match _address
     static volatile uint8_t PAYLOADLEN;

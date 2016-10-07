@@ -102,7 +102,6 @@ private:
     bool SendQueue();
     bool RetryData();
     bool Onward(IMFrame & frame);
-    uint8_t GetData();
     void TimerSetupAll();
     void TimerSetup(unsigned long cal);
     void setupMode(uint16_t aMode);
@@ -125,9 +124,11 @@ public:
 //    void Init(IMCC1101 & cc);
     void Init(IMBuffer & buf);
     friend void PCINT0_vect(void);
+    uint8_t GetData();
     bool GetFrame(IMFrame&frame);
     void Rupture();
     void Idle();
+    bool Parse();
     void Wakeup();
 
     bool TestLow();

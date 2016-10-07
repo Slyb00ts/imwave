@@ -65,6 +65,7 @@ bool IMBuffer::Received()
          b= TestFrame();
       }
 //  rSize=0;
+/*
   if (!b){
     DBGINFO("[");
     DBGINFO(state);
@@ -72,7 +73,7 @@ bool IMBuffer::Received()
     DBGINFO(millis());
     DBGINFO("] ");
   }
-
+  */
   return b;
 }
 
@@ -87,31 +88,33 @@ bool IMBuffer::TestFrame()
 {
 //      bool io= ((RX_buffer.len>=sizeof(IMFrameHeader)) && (RX_buffer.len<=sizeof(IMFrame)));
       rssiH=radio.RSSI;
-      rSize=radio.PAYLOADLEN;
-      radio.PAYLOADLEN=0;
+      rSize= sizeof(IMFrame);
+ //     radio.PAYLOADLEN;
+ //     radio.PAYLOADLEN=0;
         DBGINFO("IRQ ");
         DBGINFO(radio.IRQ2);
         DBGINFO("=");
       bool io=1;
       if (io) {
-          io=(rSize==sizeof(IMFrame));
+//          io=(rSize==sizeof(IMFrame));
       } else {
-        DBGERR("!Size");
+//        DBGERR("!Size");
 
       }
       if (io)
       {
 
       } else {
-        DBGERR("!LEN");
-        DBGERR(rSize);
+  //      DBGERR("!LEN");
+  //      DBGERR(rSize);
         return io;
       }
 //      memcpy(&(radio.DATA),&(RX_buffer.packet),sizeof(IMFrame));
-
+     uint8_t xx=(radio._tail  &0x03)* sizeof(IMFrame);
+          radio._tail++;
             for(unsigned short i=0 ; i<(sizeof(IMFrame)) ; i++)
             {
-              ((uint8_t*)&RX_buffer.packet)[i]=radio.DATA[i];
+              ((uint8_t*)&RX_buffer.packet)[i]=radio.DATA[xx++];
             }
 
 
@@ -157,7 +160,7 @@ void IMBuffer::Wakeup()
 {
   radio.idle();
   state=TransceiverIdle;
-   DBGINFO("}}");
+//   DBGINFO("}}");
 //   DBGINFO(millisT2());
 }
 

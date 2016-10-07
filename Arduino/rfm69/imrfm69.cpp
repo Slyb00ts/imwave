@@ -32,11 +32,13 @@
 #include <imrfmregisters.h>
 //#include <SPI.h>
 
-volatile uint8_t RFM69::DATA[RF69_MAX_DATA_LEN];
+volatile uint8_t RFM69::DATA[RF69_BUF_LEN];
 volatile uint8_t RFM69::_mode;        // current transceiver state
 //volatile uint8_t RFM69::DATALEN;
 volatile uint8_t RFM69::IRQ2;
 volatile uint8_t RFM69::IRNN;
+volatile uint8_t RFM69::_head;
+volatile uint8_t RFM69::_tail;
 //volatile uint8_t RFM69::SENDERID;
 //volatile uint8_t RFM69::TARGETID;     // should match _address
 volatile uint8_t RFM69::PAYLOADLEN;
@@ -126,7 +128,6 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
     return false;
 
       Serial.print("RFM initialize");
-
   attachInterrupt(RF69_IRQ_NUM, RFM69::isr0, RISING);
 
   selfPointer = this;
@@ -240,7 +241,7 @@ bool RFM69::canSend()
 {
   if (_mode == RF69_MODE_STANDBY)
      return true;
-  if (_mode == RF69_MODE_RX && PAYLOADLEN == 0 /*&& readRSSI() < CSMA_LIMIT*/) // if signal stronger than -100dBm is detected assume channel activity
+  if (_mode == RF69_MODE_RX /*&& PAYLOADLEN == 0*/ /*&& readRSSI() < CSMA_LIMIT*/) // if signal stronger than -100dBm is detected assume channel activity
   {
 //    setMode(RF69_MODE_STANDBY);
     return true;
@@ -327,18 +328,18 @@ void RFM69::interruptHandler() {
 //    rr=readReg(REG_IRQFLAGS2);
          rr=readReg(REG_IRQFLAGS2);
     setMode(RF69_MODE_STANDBY);
+    PAYLOADLEN=RF69_FRAME_LEN;
 
 //    RSSI = readRSSI();
     select();
     SPI.transfer(REG_FIFO & 0x7F);
-    PAYLOADLEN=32;
 
-    for (uint8_t i = 0; i < PAYLOADLEN; i++)
+    uint8_t xx=(_head & 0x03)*RF69_FRAME_LEN;
+    for (uint8_t i = 0; i < RF69_FRAME_LEN ; i++)
     {
-      DATA[i] = SPI.transfer(0);
+      DATA[xx++] = SPI.transfer(0);
     }
-
-//      SPI.transfer((uint8_t*)&DATA,32);
+    _head++;
 
     unselect();
 //    RSSI = readRSSI();
@@ -346,7 +347,7 @@ void RFM69::interruptHandler() {
 //     rr=readReg(REG_OPMODE);
 //     rr=readReg(REG_LNA);
    IRQ2=rr;
-    receivedData(PAYLOADLEN);
+    receivedData(RF69_FRAME_LEN);
     receiveMode();
   } else{
 
@@ -370,9 +371,10 @@ void RFM69::receiveBegin() {
 
 // checks if a packet was received and/or puts transceiver in receive (ie RX or listen) mode
 bool RFM69::canRead() {
-  if (_mode == RF69_MODE_RX && PAYLOADLEN > 0)
-      return true;
-  return false;
+ // if (_mode == RF69_MODE_RX && PAYLOADLEN > 0)
+ //     return true;
+ // return false;
+ return (_head!=_tail);
 }
 void RFM69::receiveMode(){
   writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_10); // set DIO0 to "PAYLOADREADY" in receive mode
