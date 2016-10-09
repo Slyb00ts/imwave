@@ -23,6 +23,7 @@ long internalVccOld();
 long millisT2();
 void setupTimer2();
 long incTimer2();
+void setSleepModeT2();
 
 //http://provideyourown.com/2012/secret-arduino-voltmeter-measure-battery-voltage/
 uint16_t internalVcc();

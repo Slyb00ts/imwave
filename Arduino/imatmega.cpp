@@ -12,7 +12,7 @@
 #include "imatmega.h"
 
 
-long counterTimer2=0;
+volatile long counterTimer2=0;
 
 // http://code.google.com/p/tinkerit/wiki/SecretVoltmeter
 long internalVccOld() {
@@ -114,6 +114,15 @@ long incTimer2(){
   return counterTimer2++;
 }
 
+void setSleepModeT2()
+{
+ #if defined(__sleepT22)
+    set_sleep_mode(SLEEP_MODE_PWR_SAVE);
+  #else
+    set_sleep_mode (SLEEP_MODE_IDLE);
+
+  #endif
+}
 
 int freeRam ()
 {
@@ -158,8 +167,7 @@ void delaySleepT2( unsigned long t)
  #if defined(__sleepT2)
 
   unsigned long startMillis = millisT2();
-
-  set_sleep_mode(SLEEP_MODE_PWR_SAVE);
+  setSleepModeT2();
   do
   {
 //    if (F_CPU==16000000L)
