@@ -95,21 +95,16 @@ long internalTemp328() {
   result = (result - 125) * 1075;
   return result;
 }
-
-
-
-
-
 #endif
 
 long millisT2(){
  #if defined(__sleepT2)
-
-  return counterTimer2;
+   return counterTimer2;
  #else
    return millis();
-  #endif
+ #endif
 }
+
 long incTimer2(){
   return counterTimer2++;
 }
@@ -118,26 +113,25 @@ void setSleepModeT2()
 {
  #if defined(__sleepT22)
     set_sleep_mode(SLEEP_MODE_PWR_SAVE);
-  #else
+ #else
     set_sleep_mode (SLEEP_MODE_IDLE);
-
-  #endif
+ #endif
 }
 
 int freeRam ()
 {
-      extern int __heap_start, *__brkval;
-      int v;
-      return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
+  extern int __heap_start, *__brkval;
+  int v;
+  return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
 }
 
 
-uint16_t internalrandom() {
+uint16_t internalrandom()
+{
   long x= internalVcc();
   x=x+micros();
   x=x +(x >>7);
   return x;
-
 }
 
 
@@ -166,15 +160,15 @@ void delaySleepT2( unsigned long t)
 {
  #if defined(__sleepT2)
 
-  unsigned long startMillis = millisT2();
-  setSleepModeT2();
-  do
-  {
+   unsigned long startMillis = millisT2();
+   setSleepModeT2();
+   do
+   {
 //    if (F_CPU==16000000L)
        incTimer2();
-    sleep_mode();
-  }
-  while( (millisT2() - startMillis) <= t);
+      sleep_mode();
+   }
+   while( (millisT2() - startMillis) <= t);
  #else
    delaySleep(t);
  #endif
@@ -185,7 +179,6 @@ void enterSleep(void)
  {
   set_sleep_mode(SLEEP_MODE_PWR_SAVE);
   sleep_enable();
-
   sleep_mode();
   /** The program will continue from here. **/
   /* First thing to do is disable sleep. */

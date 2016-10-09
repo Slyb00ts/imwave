@@ -101,9 +101,6 @@ uint16_t IMTimer::CycleHour()
 long IMTimer::Cycle()
 {
   return cycle;
-//  DBGINFO("CYC(");
-//  DBGINFO(cycle);
-
 }
 
 void IMTimer::Watchdog()
@@ -163,30 +160,18 @@ byte IMTimer::WaitStage()
   DBGINFO(cycle);
   Serial.flush();
 */
-
-  #if defined(__sleepT21)
-    set_sleep_mode(SLEEP_MODE_PWR_SAVE);
-  #else
-    set_sleep_mode (SLEEP_MODE_IDLE);
-
-  #endif
-  sei();                             \
+  setSleepModeT2();
+  sei();
   while(nearTime >getTime())
   {
-
-    delayT2();
+    goSleep();
+    waiting++;
+ //   delayT2();
 //       DBGINFO(".");
      /*
      long next=nearTime-getTime();
      if (next > 3) {
-//       waiting++;
-       if (next>202)
-          sleep(120);
-       else
-       if (next>72)
-          sleep(60);
-       else
-         sleep(2);
+
      }
      */
      if (_listen){
@@ -198,9 +183,6 @@ byte IMTimer::WaitStage()
 //       TCCR2B |= (1<<CS20);
        return current;
      }
-
-//    cli();
-
   }
 
 //TCCR2B |= (1<<CS20);
@@ -215,26 +197,23 @@ byte IMTimer::WaitStage()
        r=CRONHOUR;
 
      }
+     DBGINFO(waiting);
+     waiting=0;
   }
   compute();
-
-
   return r;
-
 }
 
  void IMTimer::doneReceived(byte count)
 {
 //       DBGINFO("RECEIVED");
 //  _listen++;
-//  if (count>10)
     ptrr->doneListen();
 }
 void IMTimer::doneListen()
 {
    _listen++;
    waiting=0;
-//   DBGINFO("??");
 //   DBGINFO(millis());
 
 }
