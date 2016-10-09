@@ -111,7 +111,7 @@ long incTimer2(){
 
 void setSleepModeT2()
 {
- #if defined(__sleepT22)
+ #if defined(__sleepT2)
     set_sleep_mode(SLEEP_MODE_PWR_SAVE);
  #else
     set_sleep_mode (SLEEP_MODE_IDLE);
@@ -164,9 +164,7 @@ void delaySleepT2( unsigned long t)
    setSleepModeT2();
    do
    {
-//    if (F_CPU==16000000L)
-       incTimer2();
-      sleep_mode();
+       delayT2();
    }
    while( (millisT2() - startMillis) <= t);
  #else

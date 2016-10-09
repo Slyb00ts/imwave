@@ -164,9 +164,8 @@ byte IMTimer::WaitStage()
   sei();
   while(nearTime >getTime())
   {
-    goSleep();
     waiting++;
- //   delayT2();
+    delayT2();
 //       DBGINFO(".");
      /*
      long next=nearTime-getTime();
