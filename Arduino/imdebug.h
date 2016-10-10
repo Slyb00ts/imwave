@@ -14,14 +14,15 @@
   #define DBGLED 1
 #endif
 
+#define ERRLEDNO 13
 
 #include "Arduino.h"
 
 
 //Used for error signaling (ON when restransmitting, OFF on receive success)
-#define ERRLEDON() digitalWrite(13,HIGH)
-#define ERRLEDOFF() digitalWrite(13,LOW)
-#define ERRLEDINIT() pinMode(13, OUTPUT)
+#define ERRLEDON() digitalWrite(ERRLEDNO,HIGH)
+#define ERRLEDOFF() digitalWrite(ERRLEDNO,LOW)
+#define ERRLEDINIT() pinMode(ERRLEDNO, OUTPUT)
 #if DBGLED>=1
   #define ERRFLASH() ERRLEDON(); delay(50);  ERRLEDOFF();
 #else

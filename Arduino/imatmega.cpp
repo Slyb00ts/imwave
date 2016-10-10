@@ -14,6 +14,10 @@
 
 volatile long counterTimer2=0;
 
+
+//http://stackoverflow.com/questions/13538080/why-should-i-calibrate-the-oscillator-in-avr-programming
+//calibration rc clock
+
 // http://code.google.com/p/tinkerit/wiki/SecretVoltmeter
 long internalVccOld() {
   long result;
@@ -151,7 +155,9 @@ void delaySleep( unsigned long t)
 
 void delayT2()
 {
-    if (F_CPU==16000000L)
+   // if (F_CPU==16000000L)
+       incTimer2();
+   if (F_CPU==8000000L)
        incTimer2();
     goSleep();
 }
