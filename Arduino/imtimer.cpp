@@ -243,9 +243,11 @@ byte toggle;
 
 #if defined(__AVR_ATmega328P__)
 ISR(TIMER2_COMPA_vect) {
-//  toggle = ~toggle;
   incTimer2();
-//  digitalWrite(4,toggle);
+  #ifdef DBGPIN
+    toggle = ~toggle;
+    digitalWrite(DBGPIN,toggle);
+  #endif
 }
 #endif
 
