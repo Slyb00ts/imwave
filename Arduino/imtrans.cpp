@@ -26,7 +26,7 @@
 #endif
 
 #if DBGLVL>=1
-  #define TimerHelloCycle 4
+  #define TimerHelloCycle 44
 #endif
 
 
@@ -184,7 +184,7 @@ void Transceiver::Deconnect()
   router.addMAC(myMAC,0xFF);
   timer.Watchdog();
   SendKnock(true);
-  delay(20); //if too short wait : error on serial yyyyy***yyyy
+  delaySleepT2(20); //if too short wait : error on serial yyyyy***yyyy
   ListenBroadcast();
 }
 
@@ -231,6 +231,7 @@ bool Transceiver::TestLow()
 
 bool Transceiver::Send(IMFrame & frame)
 {
+  if(NoRadio) return false;
   Prepare(frame);
   buffer->TX_buffer.packet=frame;
 //  PrepareTransmit();
@@ -292,14 +293,14 @@ bool Transceiver::SendData(IMFrame & frame)
 }
 
 
-void Transceiver::Transmit()
+void Transceiver::TransmitA()
 {
       if (RetryData())
       {
          DBGINFO("Retry");
       }
       DBGINFO("\r\n");
-      delay(1);
+      delaySleepT2(1);
       ListenData();
 }
 
@@ -450,11 +451,11 @@ void Transceiver::Knock()
           if (_cycleshift){  //hello sended
             _cycleshift=0;
           }else{
-            ERRFLASH();
+       //     ERRFLASH();
             DBGINFO("InvalidKnock ");
             SendKnock(true);
             DBGINFO("\r\n");
-            ERRFLASH();
+       //     ERRFLASH();
           }
 //          timer.Watchdog();
        }

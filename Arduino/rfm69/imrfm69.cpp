@@ -68,15 +68,15 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
     // +17dBm formula: Pout = -14 + OutputPower (with PA1 and PA2)**
     // +20dBm formula: Pout = -11 + OutputPower (with PA1 and PA2)** and high power PA settings (section 3.3.7 in datasheet)
     ///* 0x11 */ { REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | RF_PALEVEL_OUTPUTPOWER_11111},
-    /* 0x11 */ { REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | RF_PALEVEL_OUTPUTPOWER_11011},
+    /* 0x11 */ { REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_OFF | RF_PALEVEL_OUTPUTPOWER_11011},
 
 //    {REG_PALEVEL, RF_PALEVEL_PA0_OFF | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_ON  | RF_PALEVEL_OUTPUTPOWER_11111}, // enable P1 & P2 amplifier stages
 
-    /* 0x13 */ { REG_OCP, RF_OCP_OFF  }, // over current protection (default is 95mA)
-    /* 0x18 */ { REG_LNA, RF_LNA_ZIN_50| RF_LNA_GAINSELECT_MAX  },
+    ///* 0x13 */ { REG_OCP, RF_OCP_ON | RF_OCP_TRIM_95  }, // over current protection (default is 95mA)
+    ///* 0x18 */ { REG_LNA, RF_LNA_ZIN_50| RF_LNA_GAINSELECT_MAX  },
 
     // RXBW defaults are { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_24 | RF_RXBW_EXP_5} (RxBw: 10.4KHz)
-    /* 0x19 */ { REG_RXBW, RF_RXBW_DCCFREQ_000 | RF_RXBW_MANT_16 | RF_RXBW_EXP_2 }, // (BitRate < 2 * RxBw)
+    /* 0x19 */ { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_16 | RF_RXBW_EXP_2 }, // (BitRate < 2 * RxBw)
 //     /* 0x1E */ { REG_AFCFEI, RF_AFCFEI_AFCAUTO_ON | RF_AFCFEI_AFCAUTOCLEAR_ON },                         // Automatic AFC on, clear after each packet
     //for BR-19200: /* 0x19 */ { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_24 | RF_RXBW_EXP_3 },
     /* 0x25 */ { REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_11 }, // DIO0 is the only IRQ we're using
@@ -91,8 +91,8 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
     /* 0x37 */ { REG_PACKETCONFIG1, RF_PACKET1_FORMAT_FIXED | RF_PACKET1_DCFREE_OFF | RF_PACKET1_CRC_ON | RF_PACKET1_CRCAUTOCLEAR_OFF | RF_PACKET1_ADRSFILTERING_OFF },
     /* 0x38 */ { REG_PAYLOADLENGTH, 32 }, // in variable length mode: the max frame size, not used in TX
     ///* 0x39 */ { REG_NODEADRS, nodeID }, // turned off because we're not using address filtering
-    /* 0x3C */ { REG_FIFOTHRESH, RF_FIFOTHRESH_TXSTART_FIFOTHRESH  | RF_FIFOTHRESH_VALUE }, // TX on FIFO not empty
-    /* 0x3D */ { REG_PACKETCONFIG2, RF_PACKET2_RXRESTARTDELAY_2BITS | RF_PACKET2_AUTORXRESTART_OFF | RF_PACKET2_AES_OFF }, // RXRESTARTDELAY must match transmitter PA ramp-down time (bitrate dependent)
+    /* 0x3C */ { REG_FIFOTHRESH, RF_FIFOTHRESH_TXSTART_FIFONOTEMPTY  | RF_FIFOTHRESH_VALUE }, // TX on FIFO not empty
+    /* 0x3D */ { REG_PACKETCONFIG2, RF_PACKET2_RXRESTARTDELAY_2BITS | RF_PACKET2_AUTORXRESTART_ON | RF_PACKET2_AES_OFF }, // RXRESTARTDELAY must match transmitter PA ramp-down time (bitrate dependent)
     //for BR-19200: /* 0x3D */ { REG_PACKETCONFIG2, RF_PACKET2_RXRESTARTDELAY_NONE | RF_PACKET2_AUTORXRESTART_ON | RF_PACKET2_AES_OFF }, // RXRESTARTDELAY must match transmitter PA ramp-down time (bitrate dependent)
 //    /* 0x6F */ { REG_TESTLNA, RF_TESTLNA_NORMAL}, // run DAGC continuously in RX mode for Fading Margin Improvement, recommended default for AfcLowBetaOn=0
     /* 0x6F */ { REG_TESTDAGC, RF_DAGC_IMPROVED_LOWBETA0 }, // run DAGC continuously in RX mode for Fading Margin Improvement, recommended default for AfcLowBetaOn=0
@@ -118,7 +118,7 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   // Encryption is persistent between resets and can trip you up during debugging.
   // Disable it during initialization so we always start from a known state.
   encrypt(0);
-  setHighPower(true); // called regardless if it's a RFM69W or RFM69HW
+ // setHighPower(true); // called regardless if it's a RFM69W or RFM69HW
 
 //  setHighPower(_isRFM69HW); // called regardless if it's a RFM69W or RFM69HW
   setMode(RF69_MODE_STANDBY);
@@ -295,11 +295,11 @@ void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize)
 
   // no need to wait for transmit mode to be ready since its handled by the radio
   setMode(RF69_MODE_TX);
-  IRNN=0;
+//  IRNN=0;
   uint32_t txStart = millisT2();
   while (digitalRead(RF69_IRQ_PIN) == 0 && millisT2() - txStart < RF69_TX_LIMIT_MS); // wait for DIO0 to turn HIGH signalling transmission finish
   //while (readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PACKETSENT == 0x00); // wait for ModeReady
-//  setMode(RF69_MODE_STANDBY);
+  setMode(RF69_MODE_STANDBY);
    receiveBegin();
 }
 
@@ -313,6 +313,8 @@ void RFM69::interruptHandler() {
   if (_mode != RF69_MODE_RX) return;
 //   digitalWrite(4,HIGH);
   RSSI = readRSSI();
+
+
   uint8_t ii=0;
   uint8_t rr;
    do{
@@ -377,7 +379,7 @@ bool RFM69::canRead() {
  return (_head!=_tail);
 }
 void RFM69::receiveMode(){
-  writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_10); // set DIO0 to "PAYLOADREADY" in receive mode
+  writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01); // set DIO0 to "PAYLOADREADY" in receive mode
   setMode(RF69_MODE_RX);
 }
 

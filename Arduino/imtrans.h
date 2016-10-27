@@ -119,6 +119,7 @@ public:
     byte myDevice;
     byte HostChannel;
     byte BroadcastChannel;
+    bool NoRadio;
     bool BroadcastEnable;
 //    funTransceiver onEvent;
 //    void Init(IMCC1101 & cc);
@@ -139,7 +140,7 @@ public:
     void StopListen();
     void StopListenBroadcast();
     bool ParseFrame(IMFrame & rxFrame);
-    void Transmit();
+    void TransmitA();
 
 
 //    bool Local(IMFrame & frame);

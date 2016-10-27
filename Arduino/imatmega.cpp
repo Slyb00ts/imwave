@@ -226,7 +226,7 @@ void setupTimer2()
   TCCR2B &= ~(1<<WGM22);
 
   /* Select clock source: internal I/O clock */
-  ASSR &= ~(1<<AS2);
+  ASSR &= ~((1<<AS2));
 
   /* Disable Compare Match A interrupt enable (only want overflow) */
   TIMSK2 &= ~(1<<OCIE2A);

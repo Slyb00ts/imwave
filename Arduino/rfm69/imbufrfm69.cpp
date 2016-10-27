@@ -25,7 +25,7 @@ void IMBuffer::Init()
   bool promiscuousMode = true; //set to 'true' to sniff all packets on the same network
     radio.initialize(FREQUENCY,NODEID,NETWORKID);
     radio.promiscuous(promiscuousMode);
-  radio.readAllRegs();
+//  radio.readAllRegs();
 
 }
 bool IMBuffer::Send()
