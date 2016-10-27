@@ -34,6 +34,7 @@ Transceiver* Transceiver::ptr = 0;
 
 Transceiver::Transceiver()
 {
+  noInterrupts();
   ptr = this;	//the ptr points to this object
 //  state = 0;
   HostChannel=0;
