@@ -145,7 +145,6 @@ void IMBuffer::StartReceive()
 {
   state=TransceiverRead;
   radio.receiveBegin();
-//  radio.listenMode();
 }
 
 void IMBuffer::Sleep()

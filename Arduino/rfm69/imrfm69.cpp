@@ -350,7 +350,7 @@ void RFM69::interruptHandler() {
 //     rr=readReg(REG_LNA);
    IRQ2=rr;
     receivedData(RF69_FRAME_LEN);
-    receiveMode();
+//    receiveMode();
   } else{
 
     Serial.print("****");
