@@ -8,7 +8,8 @@ IMTimer::IMTimer()
 	ptrr = this;	//the ptr points to this object
   #if defined(__sleepT2)
         setupTimer2();
-        #endif
+        void disableADCB();
+  #endif
         DeviationPlus=0;
         DeviationMinus=0;
         watchdog=0;
