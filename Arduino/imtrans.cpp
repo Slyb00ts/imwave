@@ -36,7 +36,6 @@ Transceiver::Transceiver()
 {
   noInterrupts();
   ptr = this;	//the ptr points to this object
-//  state = 0;
   HostChannel=0;
   myChannel=0;
   BroadcastChannel=0;
@@ -50,8 +49,6 @@ void Transceiver::Init(IMBuffer & buf)
 {
   buffer=&buf;
   buffer->Init();
-
-
   buffer->setFunction(&timer.doneReceived);
   TimerSetup(0);
   Deconnect();
@@ -72,17 +69,6 @@ void Transceiver::TimerSetup(unsigned long cal)
 }
 
 
-
-/*
-void Transceiver::StartReceive()
-{
-  cc1101->StartReceive();
-  state=TransceiverRead;
-}
-
-
-
-*/
 uint8_t Transceiver::GetData()
 {
 
@@ -139,10 +125,6 @@ bool Transceiver::GetFrame(IMFrame& frame)
 
         DBGINFO(" RSSI: ");           DBGINFO(Rssi());            DBGINFO("dBm  ");
     return io;
-
-//  } else {
-//     return false;
-//  }
 }
 
 
@@ -165,9 +147,6 @@ float Transceiver::RssiSend()
 {
    return Rssi(hostRssiSend);
 }
-
-
-
 
 
 
@@ -229,19 +208,11 @@ bool Transceiver::TestLow()
   return false;
 }
 
-
-bool Transceiver::Send(IMFrame & frame)
+void Transceiver::Push(IMFrame & frame)
 {
-  if(NoRadio) return false;
-  Prepare(frame);
-  buffer->TX_buffer.packet=frame;
-//  PrepareTransmit();
-  DBGINFO("Send<");
-//  printTime();
-//  buffer->printSend();
-  return buffer->Send();
-
+//   queue.push(frame);
 }
+
 
 bool Transceiver::SendQueue()
 {
@@ -256,15 +227,8 @@ bool Transceiver::SendQueue()
    }
    */
    return io;
-
 }
 
-
-
-void Transceiver::Push(IMFrame & frame)
-{
-//   queue.push(frame);
-}
 
 bool Transceiver::RetryData()
 {
@@ -280,6 +244,17 @@ void Transceiver::PrepareSetup(IMFrameSetup &se)
    se.hostchannel=myChannel;
 }
 
+bool Transceiver::Send(IMFrame & frame)
+{
+  if(NoRadio) return false;
+  Prepare(frame);
+  buffer->TX_buffer.packet=frame;
+//  PrepareTransmit();
+  DBGINFO("Send<");
+//  printTime();
+//  buffer->printSend();
+  return buffer->Send();
+}
 
 bool Transceiver::SendData(IMFrame & frame)
 {
@@ -290,17 +265,15 @@ bool Transceiver::SendData(IMFrame & frame)
    frame.Header.Sequence = seqnr++;
    frame.Header.DestinationId=serverId;
    return Send(frame);
-
 }
 
 
-void Transceiver::TransmitA()
+void Transceiver::Transmit()
 {
       if (RetryData())
       {
          DBGINFO("Retry");
       }
-      DBGINFO("\r\n");
       delaySleepT2(1);
       ListenData();
 }
@@ -403,8 +376,6 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
            StopListenBroadcast(); // no listen until data stage
 
            return false;
-
-
 }
 
 bool Transceiver::SendKnock(bool invalid)

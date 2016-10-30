@@ -78,20 +78,16 @@ private:
     byte ksequence;
 
 //    volatile byte ruptures[3];
-//    volatile  byte state;
     byte hostRssiSend;     //from hello
     byte hostRssiListen;  //from welcome
 //    float rssi;
 //    void setRssi();
     void Prepare(IMFrame & frame );
-//    unsigned short crcCheck();
-//    uint8_t CRC(IMFrame & p);
 //    void PrepareTransmit();
     bool Forward(IMFrame & frame);
     bool Backward(IMFrame & frame);
     bool Send(IMFrame & frame);
 //    bool Send();
-//    bool CheckReadState();
     void Push(IMFrame & frame);
     bool BackwardWelcome(IMFrame & frame);
     void PrepareSetup(IMFrameSetup &se);
@@ -140,10 +136,9 @@ public:
     void StopListen();
     void StopListenBroadcast();
     bool ParseFrame(IMFrame & rxFrame);
-    void TransmitA();
+    void Transmit();
 
 
-//    bool Local(IMFrame & frame);
     bool ReceiveKnock(IMFrame & frame);
     void ReceiveACK(IMFrame & frame);
     bool ReceiveWelcome(IMFrame & frame);
