@@ -35,6 +35,7 @@ Transceiver* Transceiver::ptr = 0;
 Transceiver::Transceiver()
 {
   noInterrupts();
+  randomSeed(internalrandom());
   ptr = this;	//the ptr points to this object
   HostChannel=0;
   myChannel=0;

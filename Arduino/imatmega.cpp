@@ -135,6 +135,7 @@ uint16_t internalrandom()
   long x= internalVcc();
   x=x+micros();
   x=x +(x >>7);
+  x=x+ analogRead(0);
   return x;
 }
 
