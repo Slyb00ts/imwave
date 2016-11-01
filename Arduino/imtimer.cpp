@@ -6,6 +6,7 @@ IMTimer* IMTimer::ptrr = 0;
 IMTimer::IMTimer()
 {
 	ptrr = this;	//the ptr points to this object
+        noInterrupts();
   #if defined(__sleepT2)
         setupTimer2();
         void disableADCB();

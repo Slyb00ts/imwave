@@ -34,6 +34,7 @@ long internalVccOld() {
 
 //http://provideyourown.com/2012/secret-arduino-voltmeter-measure-battery-voltage/
 uint16_t internalVcc() {
+  power_adc_enable();
   // Read 1.1V reference against AVcc
   // set the reference to Vcc and the measurement to the internal 1.1V reference
   #if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
@@ -45,14 +46,15 @@ uint16_t internalVcc() {
   #else
     ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
   #endif
-
-  delay(2); // Wait for Vref to settle
+  ADCSRA |= _BV(ADEN);
+  ADCSRA |= _BV(ADIF); //ADIF is cleared by writing a logical one to the flag. Beware that if doing a Read-Modify-Write on ADCSRA,
+//  delay(2); // Wait for Vref to settle
   ADCSRA |= _BV(ADSC); // Start conversion
   while (bit_is_set(ADCSRA,ADSC)); // measuring
 
   uint8_t low  = ADCL; // must read ADCL first - it then locks ADCH
   uint8_t high = ADCH; // unlocks both
-
+  ADCSRA |= (1 << ADIF);     // Clear ADIF
   long result = (high<<8) | low;
 
   result = 1125300L / result; // Calculate Vcc (in mV); 1125300 = 1.1*1023*1000
@@ -68,6 +70,7 @@ uint16_t internalTemp() {
 
   // routine provided by TCWORLD in Sparkfun forums - thank you very much TCWORLD!
   // see here for details: http://forum.sparkfun.com/viewtopic.php?f=32&t=32433
+  power_adc_enable();
   ADMUX = 0b11000111;                  // set the adc to compare the internal temp sensor against
   ADCSRB |= (1 << MUX5);               // the 2.56v internal reference (datasheet section 24.6)
   delay(5);                            // wait a moment for the adc to settle
@@ -90,13 +93,17 @@ long internalTemp328() {
   //  https://code.google.com/p/tinkerit/wiki/SecretThermometer
   long result;
   // Read temperature sensor against 1.1V reference
+  power_adc_enable();
+  ADCSRA |= _BV(ADEN);
   ADMUX = _BV(REFS1) | _BV(REFS0) | _BV(MUX3);
-  delay(2); // Wait for Vref to settle
+  ADCSRA |= _BV(ADIF);
+ //  delay(2); // Wait for Vref to settle
   ADCSRA |= _BV(ADSC); // Convert
   while (bit_is_set(ADCSRA,ADSC));
   result = ADCL;
   result |= ADCH<<8;
   result = (result - 125) * 1075;
+  ADCSRA |= (1 << ADIF);       // Clear ADIF
   return result;
 }
 #endif
@@ -251,6 +258,7 @@ void setupTimer2()
   if (F_CPU==8000000L)
     TCCR2B &= ~(1<<CS20);             // Clear bit
 
+      TCCR2B |= (1<<CS21)  ; // Set bits
   /* We need to calculate a proper value to load the timer counter.
    * The following loads the value 131 into the Timer 2 counter register
    * The math behind this is:
