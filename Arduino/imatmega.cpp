@@ -190,9 +190,18 @@ void enterSleep(void)
  }
 
 #if defined(__AVR_ATmega328P__)
+void  ShutOffADC(void)
+{
+    ACSR = (1<<ACD);                        // disable A/D comparator
+    ADCSRA = (0<<ADEN);                     // disable A/D converter
+    DIDR0 = 0x3f;                           // disable all A/D inputs (ADC0-ADC5)
+    DIDR1 = 0x03;                           // disable AIN0 and AIN1
+}
+
 void disableADCB()
 {
  // disable ADC
+   ShutOffADC();
   ADCSRA = 0;
    // turn off brown-out enable in software
   MCUCR = bit (BODS) | bit (BODSE);  // turn on brown-out enable select
@@ -200,12 +209,16 @@ void disableADCB()
 //ower Reduction Register (PRR)
     power_adc_disable(); // ADC converter
 //    power_spi_enable(); // SPI
+#if DBGLVL>=1
+      power_usart0_disable(); // Serial (USART)
+#endif
+    power_timer1_disable();
 //    power_usart0_enable(); // Serial (USART)
 //    power_timer0_enable(); // Timer 0
 //    power_timer1_enable(); // Timer 1
 //    power_timer2_enable(); // Timer 2
     power_twi_disable(); // TWI (I2C)
-
+      power_timer2_enable();
 }
 
 
