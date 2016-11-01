@@ -47,7 +47,9 @@ uint16_t internalVcc() {
     ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
   #endif
   ADCSRA |= _BV(ADEN);
-  ADCSRA |= _BV(ADIF); //ADIF is cleared by writing a logical one to the flag. Beware that if doing a Read-Modify-Write on ADCSRA,
+  _delay_us(200);
+  if  (bit_is_set(ADCSRA, ADIF))
+    ADCSRA |= _BV(ADIF); //ADIF is cleared by writing a logical one to the flag. Beware that if doing a Read-Modify-Write on ADCSRA,
 //  delay(2); // Wait for Vref to settle
   ADCSRA |= _BV(ADSC); // Start conversion
   while (bit_is_set(ADCSRA,ADSC)); // measuring
@@ -200,6 +202,7 @@ void enterSleep(void)
 #if defined(__AVR_ATmega328P__)
 void  ShutOffADC(void)
 {
+    //https://www.seanet.com/~karllunt/atmegapowerdown.html
     ACSR = (1<<ACD);                        // disable A/D comparator
     ADCSRA = (0<<ADEN);                     // disable A/D converter
     DIDR0 = 0x3f;                           // disable all A/D inputs (ADC0-ADC5)
@@ -258,7 +261,7 @@ void setupTimer2()
   if (F_CPU==8000000L)
     TCCR2B &= ~(1<<CS20);             // Clear bit
 
-      TCCR2B |= (1<<CS21)  ; // Set bits
+//      TCCR2B |= (1<<CS21)  ; // Set bits
   /* We need to calculate a proper value to load the timer counter.
    * The following loads the value 131 into the Timer 2 counter register
    * The math behind this is:
