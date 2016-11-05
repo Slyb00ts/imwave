@@ -302,18 +302,17 @@ void Transceiver::ListenBroadcast()
      if ((timer.Cycle()-_KnockCycle)==2 ){
            return;
      }
-
    }
    Wakeup();
    timer.setStage(LISTENBROADCAST);
    buffer->setChannel(BroadcastChannel);
    buffer->StartReceive();
 }
-      Wakeup();
+
 void Transceiver::ListenData()
 {
    if (BroadcastEnable){
-
+      Wakeup();
       buffer->setChannel(myChannel);
       timer.setStage(LISTENDATA);
       buffer->StartReceive();
