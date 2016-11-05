@@ -283,11 +283,13 @@ void Transceiver::Transmit()
 void Transceiver::Idle()
 {
    buffer->Sleep();
+   power_spi_disable();
 }
 
 void Transceiver::Wakeup()
 {
-   buffer->Wakeup();
+  power_spi_enable();
+  buffer->Wakeup();
 }
 
 
@@ -302,11 +304,12 @@ void Transceiver::ListenBroadcast()
      }
 
    }
+   Wakeup();
    timer.setStage(LISTENBROADCAST);
    buffer->setChannel(BroadcastChannel);
    buffer->StartReceive();
 }
-
+      Wakeup();
 void Transceiver::ListenData()
 {
    if (BroadcastEnable){
@@ -320,7 +323,7 @@ void Transceiver::ListenData()
 void Transceiver::StopListen()
 {
    if (Connected() &&       (timer.Cycle()<(_KnockCycle+7)) ){
-      buffer->Sleep();
+      Idle();
       timer.setStage(IMTimer::IDDLESTAGE);
    }
 }
@@ -329,7 +332,7 @@ void Transceiver::StopListenBroadcast()
 {
    if (Connected()&& (timer.Cycle()<(_KnockCycle+7)) )
     {
-     buffer->Sleep();
+     Idle();
      timer.setStage(IMTimer::IDDLESTAGE);
    }
 }
