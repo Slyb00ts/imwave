@@ -15,6 +15,7 @@ IMTimer::IMTimer()
         DeviationMinus=0;
         watchdog=0;
         cycle=0;
+        Setup(IMTimer::PERIOD,CycleDuration);
 }
 
 void IMTimer::Calibrate(unsigned long time)
@@ -47,16 +48,19 @@ void IMTimer::ResetDeviation()
 }
 
 
-unsigned long IMTimer::getTime()
+t_Time IMTimer::getTime()
 {
-  return getTime(millisT2());
+ // return getTime(millisT2());
+   return ((millisT2()-start) %CycleDuration);
 }
-
-unsigned long IMTimer::getTime(unsigned long time)
+ /*
+t_Time IMTimer::getTime(t_Time time)
 {
 
-  return ((time-start) %stages[PERIOD]);
+//  return ((time-start) %stages[PERIOD]);
+ return ((time-start) %CycleDuration);
 }
+*/
 
 void IMTimer::printTime()
 {
@@ -164,7 +168,10 @@ byte IMTimer::WaitStage()
 */
   setSleepModeT2();
   sei();
-  while(nearTime >getTime())
+  t_Time nextTT=millisT2()-start;
+  nextTT=nextTT-getTime()+nearTime;
+ // while(getTime()<nearTime)
+  while ((millisT2()-start)<nextTT)
   {
     waiting++;
     delayT2();

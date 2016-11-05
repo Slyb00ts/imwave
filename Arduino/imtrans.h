@@ -37,7 +37,7 @@
 
 
 
-#define CycleDuration 3000
+
 #define BroadcastDelay 200
 #define BroadcastDuration 200
 

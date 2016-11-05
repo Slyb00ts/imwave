@@ -12,7 +12,7 @@
 #include "imatmega.h"
 
 
-volatile long counterTimer2=0;
+volatile t_Time counterTimer2=0;
 
 
 //http://stackoverflow.com/questions/13538080/why-should-i-calibrate-the-oscillator-in-avr-programming
@@ -110,7 +110,7 @@ long internalTemp328() {
 }
 #endif
 
-long millisT2(){
+t_Time millisT2(){
  #if defined(__sleepT2)
    return counterTimer2;
  #else
@@ -118,7 +118,7 @@ long millisT2(){
  #endif
 }
 
-long incTimer2(){
+t_Time incTimer2(){
   return counterTimer2++;
 }
 

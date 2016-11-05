@@ -58,7 +58,7 @@ void Transceiver::Init(IMBuffer & buf)
 void Transceiver::TimerSetupAll()
 {
     timer.Setup(STARTBROADCAST,BroadcastDelay);
-    timer.Setup(IMTimer::PERIOD,CycleDuration);
+   // timer.Setup(IMTimer::PERIOD,CycleDuration);
 }
 
 void Transceiver::TimerSetup(unsigned long cal)

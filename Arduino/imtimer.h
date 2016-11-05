@@ -36,7 +36,7 @@ typedef void( * funIMTimer )( byte );
 #define CRONHOUR 201
 #define CRONDAY 202
 #define REBOOTLAP 250
-
+#define CycleDuration 3000
 
 
 
@@ -47,19 +47,19 @@ class  IMTimer
   private:
     static IMTimer* ptrr; //static ptr to Sleep class for the ISR
     //static long counterTimer2; //static ptr to Sleep class for the ISR
-    long waiting;
+    t_Time waiting;
     long cycle;
     uint16_t watchdog;
-    unsigned long start;
+    t_Time start;
     byte current;
     volatile byte _listen;
     unsigned short nearStage;
-    unsigned long nearTime;
+    t_Time nearTime;
     static const int maxStages = 8;
-    unsigned long stages[maxStages];
+    t_Time stages[maxStages];
     void compute();
-    unsigned long getTime();
-    unsigned long getTime(unsigned long time);
+    t_Time getTime();
+//    t_Time getTime(t_Time time);
     void sleep(unsigned long time);
 
 

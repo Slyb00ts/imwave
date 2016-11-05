@@ -19,11 +19,13 @@
 #include <util/delay.h>
 
 
+typedef unsigned long t_Time;
+//typedef uint16_t t_Time;
 // http://code.google.com/p/tinkerit/wiki/SecretVoltmeter
 long internalVccOld();
-long millisT2();
+t_Time millisT2();
 void setupTimer2();
-long incTimer2();
+t_Time incTimer2();
 void setSleepModeT2();
 
 //http://provideyourown.com/2012/secret-arduino-voltmeter-measure-battery-voltage/
