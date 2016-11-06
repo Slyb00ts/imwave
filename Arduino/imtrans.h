@@ -101,7 +101,7 @@ private:
     void TimerSetupAll();
     void TimerSetup(unsigned long cal);
     void setupMode(uint16_t aMode);
-
+    void ContinueListen();
 public:
     Transceiver();
     IMTimer  timer;

@@ -206,6 +206,7 @@ void RFM69::sleep() {
   setMode(RF69_MODE_SLEEP);
 }
 void RFM69::idle() {
+//  while ((readReg(REG_OPMODE) & RF_OPMODE_SEQUENCER_ON) != RF_OPMODE_SEQUENCER_ON);
   setMode(RF69_MODE_STANDBY);
 }
 
@@ -346,11 +347,10 @@ void RFM69::interruptHandler() {
     unselect();
 //    RSSI = readRSSI();
 
-//     rr=readReg(REG_OPMODE);
-//     rr=readReg(REG_LNA);
    IRQ2=rr;
-    receivedData(RF69_FRAME_LEN);
-//    receiveMode();
+   receiveMode();
+   receivedData(RF69_FRAME_LEN);
+
   } else{
 
     Serial.print("****");

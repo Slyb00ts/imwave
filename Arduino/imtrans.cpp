@@ -283,16 +283,27 @@ void Transceiver::Transmit()
 void Transceiver::Idle()
 {
    buffer->Sleep();
+   timer.setStage(IMTimer::IDDLESTAGE);
    power_spi_disable();
+   digitalWrite(5 ,LOW);
 }
 
 void Transceiver::Wakeup()
 {
   power_spi_enable();
   buffer->Wakeup();
+  digitalWrite(5 ,HIGH);
 }
 
 
+void Transceiver::ContinueListen()
+{
+     if (Connected())
+        ListenData();
+     else
+        ListenBroadcast();
+
+}
 void Transceiver::ListenBroadcast()
 {
    if (Connected()){
@@ -302,6 +313,9 @@ void Transceiver::ListenBroadcast()
      if ((timer.Cycle()-_KnockCycle)==2 ){
            return;
      }
+   } else {
+     if ((timer.Cycle() & 0x4) ==0)
+       return;
    }
    Wakeup();
    timer.setStage(LISTENBROADCAST);
@@ -316,14 +330,16 @@ void Transceiver::ListenData()
       buffer->setChannel(myChannel);
       timer.setStage(LISTENDATA);
       buffer->StartReceive();
+   } else {
+      Idle();
    }
 }
 
 void Transceiver::StopListen()
 {
-   if (Connected() &&       (timer.Cycle()<(_KnockCycle+7)) ){
+   if (Connected() &&       (timer.Cycle()<(_KnockCycle+9)) ){
       Idle();
-      timer.setStage(IMTimer::IDDLESTAGE);
+
    }
 }
 
@@ -332,7 +348,7 @@ void Transceiver::StopListenBroadcast()
    if (Connected()&& (timer.Cycle()<(_KnockCycle+7)) )
     {
      Idle();
-     timer.setStage(IMTimer::IDDLESTAGE);
+//     timer.setStage(IMTimer::IDDLESTAGE);
    }
 }
 
@@ -469,7 +485,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    DBGINFO("[[");
    DBGINFO(xr);
    DBGINFO("]] ");
-   delaySleep(xr);
+   delaySleepT2(xr);
 
 
    IMFrameSetup *sp=frame.Setup();
@@ -727,11 +743,7 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
 
               return false;
         }
-
-     if (Connected())
-        ListenData();
-     else
-        ListenBroadcast();
+     ContinueListen();
 
      return true;
 
