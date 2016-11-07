@@ -62,6 +62,7 @@ private:
 
 //    TableACK  ack;
     byte _connected;
+    bool _inSleep;
 
     int _knocked;
     int _helloed;

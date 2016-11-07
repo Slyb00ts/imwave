@@ -282,17 +282,26 @@ void Transceiver::Transmit()
 
 void Transceiver::Idle()
 {
-   buffer->Sleep();
-   timer.setStage(IMTimer::IDDLESTAGE);
-   power_spi_disable();
-   digitalWrite(5 ,LOW);
+   if (!_inSleep){
+     _inSleep=true;
+     buffer->Sleep();
+     timer.setStage(IMTimer::IDDLESTAGE);
+     power_spi_disable();
+     digitalWrite(5 ,LOW);
+     DBGINFO("idle");
+   }
+
 }
 
 void Transceiver::Wakeup()
 {
-  power_spi_enable();
-  buffer->Wakeup();
-  digitalWrite(5 ,HIGH);
+  if (_inSleep){
+    _inSleep=false;
+    power_spi_enable();
+    buffer->Wakeup();
+    digitalWrite(5 ,HIGH);
+    DBGINFO("wakeup");
+  }
 }
 
 
@@ -306,13 +315,12 @@ void Transceiver::ContinueListen()
 }
 void Transceiver::ListenBroadcast()
 {
+  DBGINFO("listenBroad ");
+  DBGINFO(_KnockCycle);
    if (Connected()){
-     if ((timer.Cycle()-_KnockCycle)==1 ){ //Knock send every third cycle
-           return;
-     }
-     if ((timer.Cycle()-_KnockCycle)==2 ){
-           return;
-     }
+     long xKC=(timer.Cycle()-_KnockCycle);
+     if (xKC< 7)
+         return;
    } else {
      if ((timer.Cycle() & 0x4) ==0)
        return;
@@ -331,21 +339,25 @@ void Transceiver::ListenData()
       timer.setStage(LISTENDATA);
       buffer->StartReceive();
    } else {
-      Idle();
+      StopListen();
+//      Idle();
    }
 }
 
 void Transceiver::StopListen()
 {
-   if (Connected() &&       (timer.Cycle()<(_KnockCycle+9)) ){
+   if (Connected() &&       (timer.Cycle()<(_KnockCycle+13)) ){
       Idle();
 
+   } else {
+     if ((timer.Cycle() & 0x2) ==0)
+        Idle();
    }
 }
 
 void Transceiver::StopListenBroadcast()
 {
-   if (Connected()&& (timer.Cycle()<(_KnockCycle+7)) )
+   if (Connected()&& (timer.Cycle()<(_KnockCycle+10)) )
     {
      Idle();
 //     timer.setStage(IMTimer::IDDLESTAGE);
