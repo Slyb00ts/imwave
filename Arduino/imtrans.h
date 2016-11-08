@@ -39,10 +39,16 @@
 
 
 #define BroadcastDelay 200
-#define BroadcastDuration 200
+#define BroadcastDuration 100
 
 #define DataDelay 900
 #define DataDuration 300
+#if DBGLVL>=1
+  #define BroadcastDuration 200
+#else
+  #define BroadcastDuration 100
+#endif
+
 
 
 
@@ -103,6 +109,7 @@ private:
     void TimerSetup(unsigned long cal);
     void setupMode(uint16_t aMode);
     void ContinueListen();
+    void DoListenBroadcast();
 public:
     Transceiver();
     IMTimer  timer;

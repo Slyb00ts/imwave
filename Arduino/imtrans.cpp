@@ -30,6 +30,13 @@
 #endif
 
 
+#if DBGLVL>=1
+  #define knockShift 40
+#else
+  #define knockShift 20
+#endif
+
+
 Transceiver* Transceiver::ptr = 0;
 
 Transceiver::Transceiver()
@@ -66,7 +73,7 @@ void Transceiver::TimerSetup(unsigned long cal)
     _calibrate=cal;
     timer.Setup(STARTDATA,DataDelay+_calibrate-_calibrateshift);
     timer.Setup(STOPDATA,DataDelay+DataDuration+_calibrate-_calibrateshift);
-    timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration+_calibrate);
+    timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration/*+_calibrate*/); //when shift knock
 }
 
 
@@ -158,15 +165,17 @@ void Transceiver::Deconnect()
   myId=0;
   hostId=0;
   _cycledata=3;
+  _cycleshift=0;
   _knocked=0;
   _helloed=0;   //on Deconnect reset skipping
   myChannel=0;
+  _inSleep=true;
   router.reset();
   router.addMAC(myMAC,0xFF);
   timer.Watchdog();
   SendKnock(true);
   delaySleepT2(20); //if too short wait : error on serial yyyyy***yyyy
-  ListenBroadcast();
+  DoListenBroadcast();
 }
 
 bool Transceiver::Connected()
@@ -310,7 +319,7 @@ void Transceiver::ContinueListen()
      if (Connected())
         ListenData();
      else
-        ListenBroadcast();
+        DoListenBroadcast();
 
 }
 void Transceiver::ListenBroadcast()
@@ -326,6 +335,11 @@ void Transceiver::ListenBroadcast()
        return;
    }
    Wakeup();
+   DoListenBroadcast();
+}
+
+void Transceiver::DoListenBroadcast()
+{
    timer.setStage(LISTENBROADCAST);
    buffer->setChannel(BroadcastChannel);
    buffer->StartReceive();
@@ -383,7 +397,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                         }
                         return false;
               }
-              timer.Calibrate(millisT2()-BroadcastDelay-40);
+              timer.Calibrate(millisT2()-BroadcastDelay-knockShift);
            }
 
            if (sp->salt==0) {    //received invalid knock
@@ -401,8 +415,8 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
            hostRssiListen=buffer->rssiH;
 
            if (ResponseHello(frame)){
-                 ListenBroadcast();      //return to broadcas channel (wait to WELCOME)
-                 return true;
+                 DoListenBroadcast();      //return to broadcas channel (wait to WELCOME)
+                   return true;
            }
            StopListenBroadcast(); // no listen until data stage
 
@@ -411,6 +425,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
 
 bool Transceiver::SendKnock(bool invalid)
 {
+   Wakeup();
    buffer->setChannel(BroadcastChannel);
    IMFrame _frame;
    IMFrameSetup *setup=_frame.Setup();
@@ -665,8 +680,9 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    router.myId=myId;
    HostChannel=0;
    myChannel=0;
+   _calibrateshift=0;
    _connected=1;
-   TimerSetup((myId % 9)*40);
+   TimerSetup((myId &16)*10);
 //   BroadcastEnable=(setup->mode && IMS_TRANSCEIVER);
    setupMode(setup->mode);
 
@@ -677,6 +693,8 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    _cycleshift=(timer.Cycle()+myId) % _cycledata;
    DBGINFO(myId);
    DBGINFO("CONNECT%");
+   StopListenBroadcast(); // no listen until data stage
+
    return true;
 }
 
@@ -735,7 +753,10 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
         else if (rxFrame.Welcome())
         {
            if (ReceiveWelcome(rxFrame))
+           {
               DBGINFO(" Welcome ");
+               return true;
+           }
 
         }
         else if (Onward(rxFrame))
@@ -755,7 +776,8 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
 
               return false;
         }
-     ContinueListen();
+  //   ContinueListen();
+     buffer->StartReceive();
 
      return true;
 
