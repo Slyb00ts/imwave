@@ -9,7 +9,7 @@
 
 
 #include <imframe.h>
-#include <Arduino.h>
+//#.i.nclude <Arduino.h>
 
 
 
@@ -24,8 +24,6 @@ typedef struct
 class  IMBuffer
 {
   private:
-//  public:
-//     IMCC1101  cc1101;  //The CC1101 device
       uint8_t tail;
       uint8_t head;
       uint8_t temp;
