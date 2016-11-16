@@ -668,7 +668,8 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    if  (setup->MAC!=myMAC) {
      DBGINFO("*****NOT FORME ");
      DBGINFO(myMAC);
-     return BackwardWelcome(frame);
+     BackwardWelcome(frame);
+     return false;
    }
    _helloed=_knocked +200; //we can wait on next connection
 

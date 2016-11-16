@@ -220,7 +220,7 @@ void disableADCB()
 //ower Reduction Register (PRR)
     power_adc_disable(); // ADC converter
 //    power_spi_enable(); // SPI
-#if DBGLVL>=1
+#if DBGLVL<1
       power_usart0_disable(); // Serial (USART)
 #endif
     power_timer1_disable();
