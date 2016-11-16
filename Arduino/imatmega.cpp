@@ -47,7 +47,11 @@ uint16_t internalVcc() {
     ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
   #endif
   ADCSRA |= _BV(ADEN);
-  _delay_us(200);
+  uint16_t io;
+  io=counterTimer2 %11;
+  io=io+io%33;
+  if (io==73)
+    power_adc_enable();
   if  (bit_is_set(ADCSRA, ADIF))
     ADCSRA |= _BV(ADIF); //ADIF is cleared by writing a logical one to the flag. Beware that if doing a Read-Modify-Write on ADCSRA,
 //  delay(2); // Wait for Vref to settle

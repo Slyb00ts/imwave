@@ -30,7 +30,7 @@
 // **********************************************************************************
 #ifndef RFM69_h
 #define RFM69_h
-#include <Arduino.h>            // assumes Arduino IDE v1.0 or greater
+//#include <Arduino.h>            // assumes Arduino IDE v1.0 or greater
 #include "SPI.h"
 #include "imatmega.h"
 
