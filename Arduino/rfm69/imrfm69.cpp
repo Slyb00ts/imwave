@@ -306,14 +306,14 @@ void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize)
 
 // internal function - interrupt gets called when a packet is received
 void RFM69::interruptHandler() {
-  //pinMode(4, OUTPUT);
-  //digitalWrite(4, 1);
 //    RSSI = readRSSI(true);
 //    Serial.print(readRSSI(true));
   ++IRNN;
   if (_mode != RF69_MODE_RX) return;
 //   digitalWrite(4,HIGH);
+             digitalWrite(5,HIGH);
   RSSI = readRSSI();
+              digitalWrite(5,LOW);
 
 
   uint8_t ii=0;
@@ -355,7 +355,6 @@ void RFM69::interruptHandler() {
 
     Serial.print("****");
   }
-  //digitalWrite(4, 0);
 }
 
 // internal function
@@ -517,15 +516,13 @@ void RFM69::setHighPowerRegs(bool onOff) {
   writeReg(REG_TESTPA2, onOff ? 0x7C : 0x70);
 }
 
-// set the slave select (CS) pin 
-void RFM69::setCS(uint8_t newSPISlaveSelect) {
-  _slaveSelectPin = newSPISlaveSelect;
-  digitalWrite(_slaveSelectPin, HIGH);
-  pinMode(_slaveSelectPin, OUTPUT);
-}
-
 //for debugging
+#if DBGLVL>1
+
 #define REGISTER_DETAIL 1
+#endif
+
+
 #if REGISTER_DETAIL
 // SERIAL PRINT
 // replace Serial.print("string") with SerialPrint("string")
@@ -541,6 +538,7 @@ void SerialPrint_P(PGM_P str, void (*f)(uint8_t) = SerialWrite ) {
 
 void RFM69::readAllRegs()
 {
+#if DBGLVL>1
   uint8_t regVal;
 
 #if REGISTER_DETAIL 
@@ -804,6 +802,7 @@ void RFM69::readAllRegs()
 #endif
   }
   unselect();
+  #endif
 }
 
 uint8_t RFM69::readTemperature(uint8_t calFactor) // returns centigrade

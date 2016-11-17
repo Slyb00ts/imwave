@@ -122,7 +122,6 @@ class RFM69 {
     uint32_t getFrequency();
     void setFrequency(uint32_t freqHz);
     void encrypt(const char* key);
-    void setCS(uint8_t newSPISlaveSelect);
     int16_t readRSSI(bool forceTrigger=false);
     void promiscuous(bool onOff=true);
     virtual void setHighPower(bool onOFF=true); // has to be called after initialize() for RFM69HW
@@ -147,7 +146,6 @@ class RFM69 {
     static RFM69* selfPointer;
     uint8_t _slaveSelectPin;
     uint8_t _interruptPin;
-//    uint8_t _interruptNum;
     uint8_t _address;
     bool _promiscuousMode;
     uint8_t _powerLevel;
