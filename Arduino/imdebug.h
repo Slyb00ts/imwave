@@ -9,7 +9,9 @@
 
 #define DBGLVL 0
 #define DBGLED 0
-#define DBGPIN 6
+#define DBGPIN 5
+#define DBGCLOCK 6
+
 
 #ifndef DBGLED
   #define DBGLED 1
@@ -30,6 +32,14 @@
   #define ERRFLASH(x) do{}while(0)
 #endif
 
+#if DBGPIN>0
+   #define DBGPINHIGH() digitalWrite(DBGPIN,HIGH)
+   #define DBGPINLOW()  digitalWrite(DBGPIN,LOW)
+#else
+  #define DBGPINHIGH(x) do{}while(0)
+  #define DBGPINLOW(x) do{}while(0)
+
+#endif
 
 
 //Write out errors on dbgSerial

@@ -1,5 +1,9 @@
 #include <imtimer.h>
 
+#ifdef DBGCLOCK
+byte toggle;
+#endif
+
 IMTimer* IMTimer::ptrr = 0;
 //volatile byte IMTimer::State = 0;
 
@@ -152,8 +156,6 @@ void IMTimer::setStage(byte stage)
   current=stage;
 }
 
-
-
 byte IMTimer::WaitStage()
 {
 /*  DBGINFO("\r\n{{");
@@ -168,32 +170,21 @@ byte IMTimer::WaitStage()
 */
   setSleepModeT2();
   sei();
-  t_Time nextTT=millisT2()-start;
-  nextTT=nextTT-getTime()+nearTime;
- // while(getTime()<nearTime)
+  t_Time nextTT1=millisT2()-start;
+  t_Time nextTT=nextTT1-getTime()+nearTime;
+  if (nextTT<nextTT1)
+     nextTT+= CycleDuration;
   while ((millisT2()-start)<nextTT)
   {
-    waiting++;
-    delayT2();
-//       DBGINFO(".");
-     /*
-     long next=nearTime-getTime();
-     if (next > 3) {
+     waiting++;
+     delayT2();
 
-     }
-     */
      if (_listen){
        _listen=0;
-//       DBGINFO("<()>");
-//       printTime();
-//       DBGINFO(millis());
-//       OCR2A= 124;
-//       TCCR2B |= (1<<CS20);
        return current;
      }
   }
 
-//TCCR2B |= (1<<CS20);
   sei();
 
   byte r= nearStage;
@@ -203,7 +194,6 @@ byte IMTimer::WaitStage()
      delaySleepT2(30);
      if ((cycle % CycleHour()) ==0){
        r=CRONHOUR;
-
      }
      DBGINFO(waiting);
      waiting=0;
@@ -222,14 +212,11 @@ void IMTimer::doneListen()
 {
    _listen++;
    waiting=0;
-//   DBGINFO(millis());
-
 }
+
 void IMTimer::doneWrite()
 {
 }
-
-
 
 short IMTimer::ClassTest()
 {
@@ -248,14 +235,13 @@ short IMTimer::ClassTest()
 }
 
 
-byte toggle;
 
 #if defined(__AVR_ATmega328P__)
 ISR(TIMER2_COMPA_vect) {
   incTimer2();
-  #ifdef DBGPIN
+  #ifdef DBGCLOCK
     toggle = ~toggle;
-    digitalWrite(DBGPIN,toggle);
+    digitalWrite(DBGCLOCK,toggle);
   #endif
 }
 #endif
