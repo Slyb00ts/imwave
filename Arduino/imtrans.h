@@ -1,4 +1,4 @@
-// 
+//
 //    FILE: dht.h
 // VERSION: 0.1.00
 // PURPOSE: Transiver for Arduino
@@ -71,7 +71,7 @@ private:
     bool _inSleep;
 
     int _knocked;
-    int _helloed;
+    long _helloCycle;
     long _KnockCycle;
     byte myHop;
     byte myChannel;
