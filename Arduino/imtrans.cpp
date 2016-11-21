@@ -3,7 +3,7 @@
 // VERSION: 0.6.00
 // PURPOSE: DTransceiver library for Arduino
 //
-// DATASHEET: 
+// DATASHEET:
 //
 // HISTORY:
 // 0.6 by Dariusz Mazur (01/03/2016)
@@ -167,7 +167,7 @@ void Transceiver::Deconnect()
   _cycledata=3;
   _cycleshift=0;
   _knocked=0;
-  _helloed=0;   //on Deconnect reset skipping
+  _helloCycle=0;   //on Deconnect reset skipping
   myChannel=0;
   _inSleep=true;
   router.reset();
@@ -327,9 +327,11 @@ void Transceiver::ListenBroadcast()
   DBGINFO("listenBroad ");
   DBGINFO(_KnockCycle);
    if (Connected()){
-     long xKC=(timer.Cycle()-_KnockCycle);
-     if (xKC< 7)
-         return;
+     if (timer.Cycle()<_helloCycle)
+       return;
+//     long xKC=(timer.Cycle()-_KnockCycle);
+     //if (xKC< 7)
+         //return;
    } else {
      if ((timer.Cycle() & 0x4) ==0)
        return;
@@ -360,18 +362,17 @@ void Transceiver::ListenData()
 
 void Transceiver::StopListen()
 {
-   if (Connected() &&       (timer.Cycle()<(_KnockCycle+13)) ){
-      Idle();
-
+   if (Connected() &&       (timer.Cycle()<(_helloCycle+120)) ){ //check 6min
+     Idle();
    } else {
-     if ((timer.Cycle() & 0x2) ==0)
+     if (timer.Cycle() <(_helloCycle+60))   // check 3 min
         Idle();
    }
 }
 
 void Transceiver::StopListenBroadcast()
 {
-   if (Connected()&& (timer.Cycle()<(_KnockCycle+10)) )
+   if (Connected()&& (timer.Cycle()<(_helloCycle+60)) ) //check 3min
     {
      Idle();
 //     timer.setStage(IMTimer::IDDLESTAGE);
@@ -444,26 +445,24 @@ bool Transceiver::SendKnock(bool invalid)
 
 void Transceiver::Knock()
 {
-   if (timer.Watchdog(60+TimerHelloCycle*_cycledata*4))
+   if (timer.Watchdog(1200))  //1hour
    {
       DBGINFO("WATCHDOG");
       Deconnect();
       buffer->Reboot();
-//      reboot();
-
    }
    if (Connected())
    {
       if (BroadcastEnable){
-         if ((timer.Cycle() % TimerKnockCycle)==0){
+          if ((timer.Cycle() % TimerKnockCycle)==0){
             DBGINFO("Knock ");
             SendKnock(false);
             DBGINFO("\r\n");
-         }
-         ListenData();
-     } else{
-       StopListenBroadcast();
-     }
+            return;
+          }
+          ListenData();
+      }
+      StopListenBroadcast();
    } else {
        if ((timer.Cycle() % (TimerKnockCycle))==0){
           if (_cycleshift){  //hello sended
@@ -472,12 +471,12 @@ void Transceiver::Knock()
        //     ERRFLASH();
             DBGINFO("InvalidKnock ");
             SendKnock(true);
+            DoListenBroadcast();
             DBGINFO("\r\n");
        //     ERRFLASH();
           }
 //          timer.Watchdog();
        }
-       ListenBroadcast();
    }
 
 }
@@ -488,25 +487,25 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    DBGINFO("((");
    DBGINFO(_knocked);
    DBGINFO(":");
-   DBGINFO(_helloed);
+   DBGINFO(_helloCycle);
    DBGINFO(")) ");
    _knocked++;
    byte xr;
    if (Connected()){
-     if (_knocked % (TimerHelloCycle*_cycledata))  {
-         if (_knocked<_helloed) {    //last call hasn't success
+     //if (_knocked % (TimerHelloCycle*_cycledata))  {
+         if (timer.Cycle()<_helloCycle) {    //last call hasn't success
 
            DBGINFO("notsendHello ");
            return false;
          }
-     }
-     _helloed=_knocked +3;  //if not success bypass cycle
+     //}
+     _helloCycle=timer.Cycle() +3;  //if not success bypass cycle
      xr=random(100)+60;
    } else {
-     if (_knocked<_helloed)
+     if (timer.Cycle()<_helloCycle)
        return false;
      xr=random(60);
-     _helloed=_knocked +(xr % 4);
+     _helloCycle=timer.Cycle() +(xr % 4);
 
    }
    DBGINFO("[[");
@@ -671,7 +670,7 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
      BackwardWelcome(frame);
      return false;
    }
-   _helloed=_knocked +200; //we can wait on next connection
+   //_helloed=_knocked +200; //we can wait on next connection
 
    timer.Watchdog();
    serverId=frame.Header.SourceId;
@@ -692,6 +691,7 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
      DBGINFO("C200SHIFT");
    }
    _cycleshift=(timer.Cycle()+myId) % _cycledata;
+   _helloCycle=timer.Cycle()+TimerHelloCycle*_cycledata;//setup next Hello
    DBGINFO(myId);
    DBGINFO("CONNECT%");
    StopListenBroadcast(); // no listen until data stage
