@@ -42,8 +42,6 @@ volatile uint8_t RFM69::_tail;
 //volatile uint8_t RFM69::SENDERID;
 //volatile uint8_t RFM69::TARGETID;     // should match _address
 volatile uint8_t RFM69::PAYLOADLEN;
-//volatile uint8_t RFM69::ACK_REQUESTED;
-//volatile uint8_t RFM69::ACK_RECEIVED; // should be polled immediately after sending a packet with ACK request
 volatile int16_t RFM69::RSSI;          // most accurate RSSI during reception (closest to the reception)
 RFM69* RFM69::selfPointer;
 
@@ -126,9 +124,8 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   while (((readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00) && millis()-start < timeout); // wait for ModeReady
   if (millis()-start >= timeout)
     return false;
-
-      Serial.print("RFM initialize");
-      readAllRegs();
+  DBGINFO("RFM initialize");
+  readAllRegs();
   attachInterrupt(RF69_IRQ_NUM, RFM69::isr0, RISING);
 
   selfPointer = this;
@@ -170,8 +167,6 @@ void RFM69::setMode(uint8_t newMode)
 {
   if (newMode == _mode)
     return;
-//    Serial.print("mode:");
-//    Serial.print(newMode);
 
   switch (newMode) {
     case RF69_MODE_TX:
@@ -254,8 +249,8 @@ bool RFM69::canSend()
 
 bool RFM69::send( const void* buffer, uint8_t bufferSize)
 {
-  Serial.print(IRNN);
-  Serial.print("IRNN@@@");
+  DBGINFO(IRNN);
+  DBGINFO("IRNN@@@");
   writeReg(REG_PACKETCONFIG2, (readReg(REG_PACKETCONFIG2) & 0xFB) | RF_PACKET2_RXRESTART); // avoid RX deadlocks
   uint32_t now = millisT2();
   while (!canSend() && millisT2() - now < RF69_CSMA_LIMIT_MS);
@@ -280,13 +275,6 @@ void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize)
   writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_00); // DIO0 is "Packet Sent"
   if (bufferSize > RF69_MAX_DATA_LEN) bufferSize = RF69_MAX_DATA_LEN;
 
-  // control byte
-/*  uint8_t CTLbyte = 0x00;
-  if (sendACK)
-    CTLbyte = RFM69_CTL_SENDACK;
-  else if (requestACK)
-    CTLbyte = RFM69_CTL_REQACK;
-*/
   // write to FIFO
   select();
   SPI.transfer(REG_FIFO | 0x80);
@@ -308,10 +296,8 @@ void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize)
 // internal function - interrupt gets called when a packet is received
 void RFM69::interruptHandler() {
 //    RSSI = readRSSI(true);
-//    Serial.print(readRSSI(true));
   ++IRNN;
   if (_mode != RF69_MODE_RX) return;
-//   digitalWrite(4,HIGH);
              digitalWrite(5,HIGH);
   RSSI = readRSSI();
               digitalWrite(5,LOW);
@@ -346,7 +332,6 @@ void RFM69::interruptHandler() {
     _head++;
 
     unselect();
-//    RSSI = readRSSI();
 
    IRQ2=rr;
    receiveMode();
@@ -354,7 +339,7 @@ void RFM69::interruptHandler() {
 
   } else{
 
-    Serial.print("****");
+    DBGINFO("****");
   }
 }
 
@@ -390,9 +375,7 @@ void RFM69::listenMode(){
   writeReg(REG_LISTEN2, 72);
   writeReg(REG_LISTEN3, 10);
   _mode=RF69_MODE_RX;
-    writeReg(REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_ON | RF_OPMODE_STANDBY );
-//  interrupts(); // explicitly re-enable interrupts
-
+   writeReg(REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_ON | RF_OPMODE_STANDBY );
 }
 
 bool RFM69::receiveDone() {
@@ -439,7 +422,7 @@ int16_t RFM69::readRSSI(bool forceTrigger) {
   int16_t rssi = 0;
   if (forceTrigger)
   {
-    Serial.print("*");
+    DBGINFO("*");
     // RSSI trigger not needed if DAGC is in continuous mode
     writeReg(REG_RSSICONFIG, RF_RSSI_START);
     while ((readReg(REG_RSSICONFIG) & RF_RSSI_DONE) == 0x00); // wait for RSSI_Ready
@@ -447,11 +430,8 @@ int16_t RFM69::readRSSI(bool forceTrigger) {
   rssi = readReg(REG_RSSIVALUE);
   if (rssi=255){
 //    while ((readReg(REG_RSSICONFIG) & RF_RSSI_DONE) == 0x00); // wait for RSSI_Ready
-//    Serial.print("~~~");
-//    Serial.print(readReg(REG_RSSICONFIG));
     rssi = readReg(REG_RSSIVALUE);
   }
-//  rssi >>= 1;
   return rssi;
 }
 
@@ -815,7 +795,7 @@ uint8_t RFM69::readTemperature(uint8_t calFactor) // returns centigrade
   while ((readReg(REG_TEMP1) & RF_TEMP1_MEAS_RUNNING));
   return ~readReg(REG_TEMP2) + COURSE_TEMP_COEF + calFactor; // 'complement' corrects the slope, rising temp = rising val
 //  setMode(oldMode);
-//  Serial.print("||");
+
 
 } // COURSE_TEMP_COEF puts reading in the ballpark, user can add additional correction
 
