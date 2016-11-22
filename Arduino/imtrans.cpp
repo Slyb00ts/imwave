@@ -172,6 +172,9 @@ void Transceiver::Deconnect()
   _inSleep=true;
   router.reset();
   router.addMAC(myMAC,0xFF);
+  _KnockCycle=0;
+  BroadcastEnable=false;
+  //_knockCycle=timer.clock()-100;
   timer.Watchdog();
   SendKnock(true);
   delaySleepT2(20); //if too short wait : error on serial yyyyy***yyyy
@@ -324,8 +327,6 @@ void Transceiver::ContinueListen()
 }
 void Transceiver::ListenBroadcast()
 {
-  DBGINFO("listenBroad ");
-  DBGINFO(_KnockCycle);
    if (Connected()){
      if (timer.Cycle()<_helloCycle)
        return;
@@ -336,6 +337,8 @@ void Transceiver::ListenBroadcast()
      if ((timer.Cycle() & 0x4) ==0)
        return;
    }
+   DBGINFO("listenBroad ");
+   DBGINFO(_KnockCycle);
    Wakeup();
    DoListenBroadcast();
 }
@@ -356,23 +359,27 @@ void Transceiver::ListenData()
       buffer->StartReceive();
    } else {
       StopListen();
-//      Idle();
    }
 }
 
 void Transceiver::StopListen()
 {
-   if (Connected() &&       (timer.Cycle()<(_helloCycle+120)) ){ //check 6min
-     Idle();
+   if (Connected()){
+      if   (timer.Cycle()<(_helloCycle+20))  //check 1min
+          Idle();
+      if  (timer.Cycle()>_helloCycle+100)  //after 5min without knock
+         Deconnect();
    } else {
-     if (timer.Cycle() <(_helloCycle+60))   // check 3 min
+     if (timer.Cycle() >(_KnockCycle+60)){   // check 3 min
+        DBGINFO("StopListen");
         Idle();
+     }
    }
 }
 
 void Transceiver::StopListenBroadcast()
 {
-   if (Connected()&& (timer.Cycle()<(_helloCycle+60)) ) //check 3min
+   if (Connected()&& (timer.Cycle()<(_helloCycle+20)) ) //check 3min
     {
      Idle();
 //     timer.setStage(IMTimer::IDDLESTAGE);
@@ -411,7 +418,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
 //                 Deconnect();
 //                 DBGINFO("HOST REBBOT");
 
-           _KnockCycle=timer.Cycle();
+           _KnockCycle=timer.Cycle()+60;
            _salt=sp->salt; //accept new value
            hostRssiListen=buffer->rssiH;
 
@@ -647,8 +654,7 @@ void Transceiver::setupMode(uint16_t aMode)
     _cycledata=100;
   } else if (xCycle==3)   {
     _cycledata=1200;
-
-  } else{
+  } else {
     _cycledata=3;
   }
 
@@ -777,10 +783,9 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
 
               return false;
         }
-  //   ContinueListen();
-     buffer->StartReceive();
+        buffer->StartReceive();
 
-     return true;
+        return true;
 
 }
 
