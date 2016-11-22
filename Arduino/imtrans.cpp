@@ -130,12 +130,7 @@ bool Transceiver::GetFrame(IMFrame& frame)
           DBGERR("!!CRC ");
           DBGERR(frame.CRC());
        };
-      if (!io){
-               digitalWrite(5,HIGH);
-             digitalWrite(5,LOW);
-             digitalWrite(5,HIGH);
-              digitalWrite(5,LOW);
-   }
+
         DBGINFO(" RSSI: ");           DBGINFO(Rssi());            DBGINFO("dBm  ");
     return io;
 }
@@ -181,7 +176,6 @@ void Transceiver::Deconnect()
   BroadcastEnable=false;
   //_knockCycle=timer.clock()-100;
   timer.Watchdog();
-
   SendKnock(true);
   delaySleepT2(20); //if too short wait : error on serial yyyyy***yyyy
   DoListenBroadcast();
@@ -300,26 +294,24 @@ void Transceiver::Transmit()
 
 void Transceiver::Idle()
 {
-   digitalWrite(5 ,HIGH);
    if (!_inSleep){
      _inSleep=true;
      buffer->Sleep();
      timer.setStage(IMTimer::IDDLESTAGE);
      power_spi_disable();
+     digitalWrite(5 ,LOW);
      DBGINFO("idle");
    }
- //   buffer->StartReceive(); //**
 
 }
 
 void Transceiver::Wakeup()
 {
   if (_inSleep){
- //   digitalWrite(5 ,HIGH);
-      _inSleep=false;
+    _inSleep=false;
     power_spi_enable();
     buffer->Wakeup();
-    digitalWrite(5 ,LOW);
+    digitalWrite(5 ,HIGH);
     DBGINFO("wakeup");
   }
 }
@@ -388,8 +380,9 @@ void Transceiver::StopListen()
 void Transceiver::StopListenBroadcast()
 {
    if (Connected()&& (timer.Cycle()<(_helloCycle+20)) ) //check 3min
-   {
+    {
      Idle();
+//     timer.setStage(IMTimer::IDDLESTAGE);
    }
 }
 
@@ -397,16 +390,6 @@ void Transceiver::StopListenBroadcast()
 bool Transceiver::ReceiveKnock(IMFrame & frame)
 {
            IMFrameSetup *sp=frame.Setup();
-           if (!_inSleep)
-               digitalWrite(5,HIGH);
-             digitalWrite(5,LOW);
-             digitalWrite(5,HIGH);
-              digitalWrite(5,LOW);
-          digitalWrite(5,HIGH);
-              digitalWrite(5,LOW);
-      //      if (_inSleep)
-      //         digitalWrite(5,HIGH);
-
            if (Connected()) {
               if (myHost(frame)){
                 if (sp->salt!=_salt){   //host reboot
@@ -438,17 +421,9 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
            _KnockCycle=timer.Cycle()+60;
            _salt=sp->salt; //accept new value
            hostRssiListen=buffer->rssiH;
-          digitalWrite(5,HIGH);
-           digitalWrite(5,LOW);
 
            if (ResponseHello(frame)){
                  DoListenBroadcast();      //return to broadcas channel (wait to WELCOME)
-           digitalWrite(5,HIGH);
-             digitalWrite(5,LOW);
-             digitalWrite(5,HIGH);
-              digitalWrite(5,LOW);
-             digitalWrite(5,HIGH);
-              digitalWrite(5,LOW);
                    return true;
            }
            StopListenBroadcast(); // no listen until data stage
@@ -477,11 +452,6 @@ bool Transceiver::SendKnock(bool invalid)
 
 void Transceiver::Knock()
 {
-  if (!_inSleep)
-  {
-              digitalWrite(5,LOW);
-//   return;
-  }
    if (timer.Watchdog(1200))  //1hour
    {
       DBGINFO("WATCHDOG");
@@ -731,7 +701,6 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    DBGINFO(myId);
    DBGINFO("CONNECT%");
    StopListenBroadcast(); // no listen until data stage
-
 
    return true;
 }

@@ -52,8 +52,6 @@ uint16_t internalVcc() {
   io=io+io%33;
   if (io==73)
     power_adc_enable();
-
- // _delay_us(200);
   if  (bit_is_set(ADCSRA, ADIF))
     ADCSRA |= _BV(ADIF); //ADIF is cleared by writing a logical one to the flag. Beware that if doing a Read-Modify-Write on ADCSRA,
 //  delay(2); // Wait for Vref to settle
@@ -173,8 +171,8 @@ void delayT2()
 {
    // if (F_CPU==16000000L)
        incTimer2();
- //  if (F_CPU==8000000L)
- //      incTimer2();
+   if (F_CPU==8000000L)
+       incTimer2();
     goSleep();
 }
 
@@ -256,13 +254,8 @@ void setupTimer2()
   TCCR2B &= ~(1<<WGM22);
 
   /* Select clock source: internal I/O clock */
-//  ASSR &= ~((1<<EXCLK));
-  #ifdef CRYSTAL32K
-//  ASSR |= ((1<<AS2));
-  ASSR = 0x20;
-  #else
   ASSR &= ~((1<<AS2));
-  #endif
+
   /* Disable Compare Match A interrupt enable (only want overflow) */
   TIMSK2 &= ~(1<<OCIE2A);
 
@@ -285,7 +278,6 @@ void setupTimer2()
   //Setup Timer2 to fire every 1ms
   /* Finally load end enable the timer */
   OCR2A= 124;
-
   // (clock /prescaler*desired_time )-1
   // 16000000 /126*0.001 = 125
 
