@@ -34,7 +34,6 @@ long internalVccOld() {
 
 //http://provideyourown.com/2012/secret-arduino-voltmeter-measure-battery-voltage/
 uint16_t internalVcc() {
-  power_adc_enable();
   // Read 1.1V reference against AVcc
   // set the reference to Vcc and the measurement to the internal 1.1V reference
   #if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
@@ -49,12 +48,24 @@ uint16_t internalVcc() {
   ADCSRA |= _BV(ADEN);
   uint16_t io;
   io=counterTimer2 %11;
+  io=io+io%33;          // Wait for Vref to settle
+  io=io+counterTimer2 %13;
+  if (io==73)
+    power_adc_enable();
   io=io+io%33;
+  io=io+counterTimer2 %15;
+  if (io==73)
+    power_adc_enable();
+  io=io+io%33;
+  io=io+counterTimer2 %13;
+  if (io==73)
+    power_adc_enable();
+  io=io+io%33;
+  io=io+counterTimer2 %13;
   if (io==73)
     power_adc_enable();
   if  (bit_is_set(ADCSRA, ADIF))
     ADCSRA |= _BV(ADIF); //ADIF is cleared by writing a logical one to the flag. Beware that if doing a Read-Modify-Write on ADCSRA,
-//  delay(2); // Wait for Vref to settle
   ADCSRA |= _BV(ADSC); // Start conversion
   while (bit_is_set(ADCSRA,ADSC)); // measuring
 
@@ -76,7 +87,6 @@ uint16_t internalTemp() {
 
   // routine provided by TCWORLD in Sparkfun forums - thank you very much TCWORLD!
   // see here for details: http://forum.sparkfun.com/viewtopic.php?f=32&t=32433
-  power_adc_enable();
   ADMUX = 0b11000111;                  // set the adc to compare the internal temp sensor against
   ADCSRB |= (1 << MUX5);               // the 2.56v internal reference (datasheet section 24.6)
   delay(5);                            // wait a moment for the adc to settle
@@ -94,21 +104,23 @@ uint16_t internalTemp() {
 }
 
 #else
-
-long internalTemp328() {
+//#atmega328
+uint16_t internalTemp() {
   //  https://code.google.com/p/tinkerit/wiki/SecretThermometer
-  long result;
+
   // Read temperature sensor against 1.1V reference
-  power_adc_enable();
   ADCSRA |= _BV(ADEN);
   ADMUX = _BV(REFS1) | _BV(REFS0) | _BV(MUX3);
-  ADCSRA |= _BV(ADIF);
- //  delay(2); // Wait for Vref to settle
+
+  if  (bit_is_set(ADCSRA, ADIF))
+     ADCSRA |= _BV(ADIF);
+   delay(2); // Wait for Vref to settle
   ADCSRA |= _BV(ADSC); // Convert
   while (bit_is_set(ADCSRA,ADSC));
-  result = ADCL;
-  result |= ADCH<<8;
-  result = (result - 125) * 1075;
+  byte low  = ADCL;                    // read the low byte
+  byte high = ADCH;                    // read the high byte
+  int result = (high << 8) | low;     // result is the absolute temperature in Kelvin * i think *
+//  result = (result - 125) * 1075;
   ADCSRA |= (1 << ADIF);       // Clear ADIF
   return result;
 }
@@ -145,7 +157,8 @@ int freeRam ()
 
 uint16_t internalrandom()
 {
-  long x= internalVcc();
+  long x=0;
+// x=x+ internalVcc();
   x=x+micros();
   x=x +(x >>7);
   x=x+ analogRead(0);
@@ -212,6 +225,17 @@ void  ShutOffADC(void)
     DIDR0 = 0x3f;                           // disable all A/D inputs (ADC0-ADC5)
     DIDR1 = 0x03;                           // disable AIN0 and AIN1
 }
+
+void  SetupADC(void)
+{
+    //https://www.seanet.com/~karllunt/atmegapowerdown.html
+    power_adc_enable(); // ADC converter
+    ACSR = 48;                        // disable A/D comparator
+    ADCSRA = (1<<ADEN)+7;                     // ADPS2, ADPS1 and ADPS0 prescaler
+    DIDR0 = 0x00;                           // disable all A/D inputs (ADC0-ADC5)
+    DIDR1 = 0x00;                           // disable AIN0 and AIN1
+}
+
 
 void disableADCB()
 {

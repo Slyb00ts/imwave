@@ -83,6 +83,7 @@ void reboot();
 #define  __sleepT2  1
 void disableADCB();
 void  ShutOffADC(void);
+void  SetupADC(void);
 #endif
 
 #define  counterTCNT2  131;
