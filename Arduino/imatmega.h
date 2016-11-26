@@ -81,6 +81,7 @@ void reboot();
 
 #if defined(__AVR_ATmega328P__)
 #define  __sleepT2  1
+#define  CRYSTAL32K
 void disableADCB();
 void  ShutOffADC(void);
 void  SetupADC(void);

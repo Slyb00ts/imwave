@@ -33,13 +33,17 @@
 #endif
 
 #if DBGPIN>0
-   #define DBGPINHIGH() digitalWrite(DBGPIN,HIGH)
-   #define DBGPINLOW()  digitalWrite(DBGPIN,LOW)
+   #define DBGPINHIGH() PORTD|=(B00100000)
+   #define DBGPINLOW()  PORTD&=~(B00100000)
 #else
   #define DBGPINHIGH(x) do{}while(0)
   #define DBGPINLOW(x) do{}while(0)
 
 #endif
+
+
+ //  #define DBGPINHIGH() PORTD|=(B00100000);//digitalWrite(DBGPIN,HIGH)
+//   #define DBGPINLOW()  PORTD&=(B00100000);~//digitalWrite(DBGPIN,LOW)
 
 
 //Write out errors on dbgSerial

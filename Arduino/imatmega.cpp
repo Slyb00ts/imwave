@@ -269,6 +269,7 @@ void setupTimer2()
 
    /* First disable the timer overflow interrupt while we're configuring */
   TIMSK2 &= ~(1<<TOIE2);
+  TIMSK2 &= ~(1<<OCIE2A);
 
   /* Configure timer2 in normal mode (pure counting, no PWM etc.) */
   TCCR2A &= ~((1<<WGM21) | (1<<WGM20));
@@ -277,16 +278,19 @@ void setupTimer2()
 
   TCCR2B &= ~(1<<WGM22);
 
-  /* Select clock source: internal I/O clock */
-  ASSR &= ~((1<<AS2));
 
   /* Disable Compare Match A interrupt enable (only want overflow) */
-  TIMSK2 &= ~(1<<OCIE2A);
+  #ifdef CRYSTAL32K
+  ASSR |= ((1<<AS2));    /* Select clock source: crystal32k */
+  TCCR2B=0x2;
+  OCR2A= 1;
+  #else
+   ASSR &= ~((1<<AS2));         /* Select clock source: internal I/O clock */
 
   /* Now configure the prescaler to CPU clock divided by 128 */
   TCCR2B |= (1<<CS22)  | (1<<CS20); // Set bits
   TCCR2B &= ~(1<<CS21);             // Clear bit
-  if (F_CPU==8000000L)
+   //  if (F_CPU==8000000L)
     TCCR2B &= ~(1<<CS20);             // Clear bit
 
 //      TCCR2B |= (1<<CS21)  ; // Set bits
@@ -302,6 +306,7 @@ void setupTimer2()
   //Setup Timer2 to fire every 1ms
   /* Finally load end enable the timer */
   OCR2A= 124;
+  #endif
   // (clock /prescaler*desired_time )-1
   // 16000000 /126*0.001 = 125
 
