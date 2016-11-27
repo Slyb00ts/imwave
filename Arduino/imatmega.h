@@ -25,7 +25,6 @@ typedef unsigned long t_Time;
 long internalVccOld();
 t_Time millisT2();
 void setupTimer2();
-t_Time incTimer2();
 void setSleepModeT2();
 
 //http://provideyourown.com/2012/secret-arduino-voltmeter-measure-battery-voltage/
@@ -85,6 +84,15 @@ void reboot();
 void disableADCB();
 void  ShutOffADC(void);
 void  SetupADC(void);
+void waitASSR(void);
+#endif
+#ifdef CRYSTAL32K
+byte nextTimer2(void);
+byte addTimer2(byte aTime);
+void  stopTimer2(t_Time aNext);
+#else
+ t_Time incTimer2(void);
+
 #endif
 
 #define  counterTCNT2  131;

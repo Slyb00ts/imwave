@@ -55,7 +55,7 @@ void IMTimer::ResetDeviation()
 t_Time IMTimer::getTime()
 {
  // return getTime(millisT2());
-   return ((millisT2()-start) %CycleDuration);
+   return ((millisT2()-start) %stages[PERIOD]);
 }
  /*
 t_Time IMTimer::getTime(t_Time time)
@@ -173,22 +173,29 @@ byte IMTimer::WaitStage()
   t_Time nextTT1=millisT2()-start;
   t_Time nextTT=nextTT1-getTime()+nearTime;
   if (nextTT<nextTT1)
-     nextTT+= CycleDuration;
+     nextTT+= stages[PERIOD];
+  stopTimer2(nextTT+start);
   while ((millisT2()-start)<nextTT)
   {
      waiting++;
-     delayT2();
 
+ //    if (waiting %4==0)
+ //     DBGPINHIGH();
+     delayT2();
+ //     DBGPINLOW();
      if (_listen){
        _listen=0;
+       DBGPINHIGH();
        return current;
      }
   }
 
   sei();
 
+
   byte r= nearStage;
   if (r==PERIOD) {
+  DBGPINHIGH();
      cycle++;
 //     watchdog++;
      delaySleepT2(30);
@@ -197,6 +204,7 @@ byte IMTimer::WaitStage()
      }
      DBGINFO(waiting);
      waiting=0;
+     DBGPINLOW();
   }
   compute();
   return r;
@@ -238,9 +246,16 @@ short IMTimer::ClassTest()
 
 #if defined(__AVR_ATmega328P__)
 ISR(TIMER2_COMPA_vect) {
+  #ifdef CRYSTAL32K
+  OCR2A=addTimer2(OCR2A);
+//  OCR2A=nextTimer2();
+  #else
   incTimer2();
+  #endif
   #ifdef DBGCLOCK
     toggle = ~toggle;
+ //   digitalWrite(DBGCLOCK,HIGH);
+//    digitalWrite(DBGCLOCK,LOW);
     digitalWrite(DBGCLOCK,toggle);
   #endif
 }

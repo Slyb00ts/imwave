@@ -13,6 +13,7 @@
 
 
 volatile t_Time counterTimer2=0;
+volatile t_Time counterTimer2Stop=0;
 
 
 //http://stackoverflow.com/questions/13538080/why-should-i-calibrate-the-oscillator-in-avr-programming
@@ -134,9 +135,11 @@ t_Time millisT2(){
  #endif
 }
 
+#ifndef CLOCK32K
 t_Time incTimer2(){
   return counterTimer2++;
 }
+#endif
 
 void setSleepModeT2()
 {
@@ -182,11 +185,16 @@ void delaySleep( unsigned long t)
 
 void delayT2()
 {
+ #if defined(CRYSTAL32K)
+   waitASSR();
+   goSleep();
+ #else
    // if (F_CPU==16000000L)
        incTimer2();
    if (F_CPU==8000000L)
        incTimer2();
     goSleep();
+#endif
 }
 
 void delaySleepT2( unsigned long t)
@@ -194,6 +202,9 @@ void delaySleepT2( unsigned long t)
  #if defined(__sleepT2)
 
    unsigned long startMillis = millisT2();
+   #ifdef CRYSTAL32K
+     stopTimer2(startMillis+t);
+   #endif
    setSleepModeT2();
    do
    {
@@ -261,6 +272,7 @@ void disableADCB()
 }
 
 
+
 void setupTimer2()
 {
 //http://electronics.stackexchange.com/questions/26363/how-do-i-create-a-timer-interrupt-with-arduino
@@ -277,13 +289,18 @@ void setupTimer2()
   TCCR2A |= ((1<<WGM21) );
 
   TCCR2B &= ~(1<<WGM22);
+   DDRD|= (1<<DDD3);
+ // TCCR2A |= ((1<<COM2A0) );
+ // TCCR2A &= ~(1<<COM2A1);
+  TCCR2A |= ((1<<COM2B0) );
+  TCCR2A &= ~(1<<COM2B1);
 
 
   /* Disable Compare Match A interrupt enable (only want overflow) */
   #ifdef CRYSTAL32K
   ASSR |= ((1<<AS2));    /* Select clock source: crystal32k */
-  TCCR2B=0x2;
-  OCR2A= 1;
+  TCCR2B=0x3;
+  OCR2A= 15;
   #else
    ASSR &= ~((1<<AS2));         /* Select clock source: internal I/O clock */
 
@@ -321,9 +338,38 @@ void setupTimer2()
 //  TCCR2B = 0x05;        //Timer2 Control Reg B: Timer Prescaler set to 128
 }
 
+
+void waitASSR(){
+  while ((ASSR & (1<<OCR2AUB)) != 0x00) {
+//       DBGPINLOW();
+//       DBGPINHIGH();
+     };
+}
 #endif
+#ifdef CRYSTAL32K
+byte addTimer2(byte aTime){
+  counterTimer2+=(aTime+1);
+  if ((counterTimer2) >= counterTimer2Stop)
+   return 1;
+  if ((counterTimer2+220)<counterTimer2Stop)
+     return 210;
+  return counterTimer2Stop-counterTimer2+2;
+}
+
+byte nextTimer2()
+{
+ if ((counterTimer2+32)<counterTimer2Stop)
+    return 32;
+ return 1;
+}
 
 
+void stopTimer2(t_Time aTime){
+  counterTimer2Stop=aTime;
+}
+
+
+#endif
 void pciSetup(uint8_t pin)
 {
 //http://arduinomega.blogspot.com/2011/05/setting-interrupts-manually-real-int0.html
