@@ -56,7 +56,8 @@ Transceiver::Transceiver()
 void Transceiver::Init(IMBuffer & buf)
 {
   buffer=&buf;
-  buffer->Init();
+  if(!NoRadio)
+    buffer->Init();
   buffer->setFunction(&timer.doneReceived);
   TimerSetup(0);
   Deconnect();
@@ -299,10 +300,9 @@ void Transceiver::Idle()
      buffer->Sleep();
      timer.setStage(IMTimer::IDDLESTAGE);
      power_spi_disable();
-     digitalWrite(5 ,LOW);
+     DBGPINLOW();
      DBGINFO("idle");
    }
-
 }
 
 void Transceiver::Wakeup()
@@ -311,7 +311,7 @@ void Transceiver::Wakeup()
     _inSleep=false;
     power_spi_enable();
     buffer->Wakeup();
-    digitalWrite(5 ,HIGH);
+    DBGPINHIGH();
     DBGINFO("wakeup");
   }
 }
@@ -413,10 +413,6 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                       return false;
            }
 
-//           if (myHost(frame)){
-//             if (sp->salt!=_salt){   //host reboot
-//                 Deconnect();
-//                 DBGINFO("HOST REBBOT");
 
            _KnockCycle=timer.Cycle()+60;
            _salt=sp->salt; //accept new value
@@ -424,10 +420,9 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
 
            if (ResponseHello(frame)){
                  DoListenBroadcast();      //return to broadcas channel (wait to WELCOME)
-                   return true;
+                 return true;
            }
            StopListenBroadcast(); // no listen until data stage
-
            return false;
 }
 
@@ -512,7 +507,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
      if (timer.Cycle()<_helloCycle)
        return false;
      xr=random(60);
-     _helloCycle=timer.Cycle() +(xr % 4);
+     _helloCycle=timer.Cycle() +(xr & 1);
 
    }
    DBGINFO("[[");
@@ -653,6 +648,8 @@ void Transceiver::setupMode(uint16_t aMode)
   } else if (xCycle==2)   {
     _cycledata=100;
   } else if (xCycle==3)   {
+    _cycledata=300;
+  } else if (xCycle==4)   {
     _cycledata=1200;
   } else {
     _cycledata=3;
