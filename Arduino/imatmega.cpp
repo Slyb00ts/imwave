@@ -139,6 +139,9 @@ t_Time millisT2(){
 t_Time incTimer2(){
   return counterTimer2++;
 }
+void stopTimer2(t_Time aTime){
+}
+
 #endif
 
 void setSleepModeT2()
