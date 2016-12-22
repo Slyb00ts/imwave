@@ -185,6 +185,7 @@ byte IMTimer::WaitStage()
  //     DBGPINLOW();
      if (_listen){
        _listen=0;
+       stopTimer2(start);
        DBGPINHIGH();
        return current;
      }

@@ -56,6 +56,8 @@ Transceiver::Transceiver()
 void Transceiver::Init(IMBuffer & buf)
 {
   buffer=&buf;
+//  _inSleep=true;
+  power_spi_enable();
   if(!NoRadio)
     buffer->Init();
   buffer->setFunction(&timer.doneReceived);

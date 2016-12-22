@@ -269,6 +269,7 @@ void disableADCB()
 //    power_timer2_enable(); // Timer 2
     power_twi_disable(); // TWI (I2C)
       power_timer2_enable();
+      power_spi_enable();
 }
 
 
