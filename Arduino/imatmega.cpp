@@ -296,7 +296,6 @@ void setupTimer2()
    DDRD|= (1<<DDD3);
  // TCCR2A |= ((1<<COM2A0) );
  // TCCR2A &= ~(1<<COM2A1);
-  TCCR2A |= ((1<<COM2B0) );
   TCCR2A &= ~(1<<COM2B1);
 
 
@@ -354,10 +353,10 @@ void waitASSR(){
 byte addTimer2(byte aTime){
   counterTimer2+=(aTime+1);
   if ((counterTimer2) >= counterTimer2Stop)
-   return 1;
+   return 0;
   if ((counterTimer2+220)<counterTimer2Stop)
      return 210;
-  return counterTimer2Stop-counterTimer2+2;
+  return counterTimer2Stop-counterTimer2;
 }
 
 byte nextTimer2()

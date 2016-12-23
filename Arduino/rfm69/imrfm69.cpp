@@ -105,7 +105,7 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   SPI.setClockDivider(SPI_CLOCK_DIV4); // decided to slow down from DIV2 after SPI stalling in some instances, especially visible on mega1284p when RFM69 and FLASH chip both present
 
   unsigned long start = millis();
-  uint8_t timeout = 50;
+  uint8_t timeout = 150;
   do writeReg(REG_SYNCVALUE1, 0xAA); while (readReg(REG_SYNCVALUE1) != 0xaa && millis()-start < timeout);
   start = millis();
   do writeReg(REG_SYNCVALUE1, 0x55); while (readReg(REG_SYNCVALUE1) != 0x55 && millis()-start < timeout);
@@ -192,7 +192,9 @@ void RFM69::setMode(uint8_t newMode)
 
   // we are using packet mode, so this check is not really needed
   // but waiting for mode ready is necessary when going from sleep because the FIFO may not be immediately available from previous mode
-  while (_mode == RF69_MODE_SLEEP && (readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00); // wait for ModeReady
+  uint32_t ttt=0;
+
+  while((_mode == RF69_MODE_SLEEP) && ((readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00) &&(ttt<100)) {++ttt;}; // wait for ModeReady
 
   _mode = newMode;
 }
@@ -271,7 +273,8 @@ bool RFM69::send( const void* buffer, uint8_t bufferSize)
 void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize)
 {
   setMode(RF69_MODE_STANDBY); // turn off receiver to prevent reception while filling fifo
-  while ((readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00); // wait for ModeReady
+  uint32_t ttt=0;
+  while (((readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00) &&(ttt<1000)) {++ttt;}; // wait for ModeReady
   writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_00); // DIO0 is "Packet Sent"
   if (bufferSize > RF69_MAX_DATA_LEN) bufferSize = RF69_MAX_DATA_LEN;
 
