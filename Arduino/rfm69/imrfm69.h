@@ -43,6 +43,7 @@
 #if defined(__AVR_ATmega168__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega88) || defined(__AVR_ATmega8__) || defined(__AVR_ATmega88__)
   #define RF69_IRQ_PIN          3  //D2  D3
   #define RF69_IRQ_NUM          1  // 0   1
+  #define RF69_RESET_PIN        4
 #elif defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)
   #define RF69_IRQ_PIN          2
   #define RF69_IRQ_NUM          2
@@ -85,6 +86,7 @@ class RFM69 {
      static void receivedDataNull(byte){};
     void listenMode();
     void receiveMode();
+    static volatile uint8_t _lock;
 
   public:
     static volatile uint8_t DATA[RF69_BUF_LEN]; // recv/xmit buf, including header & crc bytes
@@ -94,7 +96,7 @@ class RFM69 {
     static volatile uint8_t _tail;
 //    static volatile uint8_t SENDERID;
 //    static volatile uint8_t TARGETID; // should match _address
-    static volatile uint8_t PAYLOADLEN;
+//    static volatile uint8_t PAYLOADLEN;
 //    static volatile uint8_t ACK_REQUESTED;
 //    static volatile uint8_t ACK_RECEIVED; // should be polled immediately after sending a packet with ACK request
     static volatile int16_t RSSI; // most accurate RSSI during reception (closest to the reception)

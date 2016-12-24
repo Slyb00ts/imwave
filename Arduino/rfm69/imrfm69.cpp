@@ -41,7 +41,8 @@ volatile uint8_t RFM69::_head;
 volatile uint8_t RFM69::_tail;
 //volatile uint8_t RFM69::SENDERID;
 //volatile uint8_t RFM69::TARGETID;     // should match _address
-volatile uint8_t RFM69::PAYLOADLEN;
+volatile uint8_t RFM69::_lock;
+//volatile uint8_t RFM69::PAYLOADLEN;
 volatile int16_t RFM69::RSSI;          // most accurate RSSI during reception (closest to the reception)
 RFM69* RFM69::selfPointer;
 
@@ -97,6 +98,8 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
     {255, 0}
   };
 
+  digitalWrite(RF69_RESET_PIN, LOW);
+  pinMode(RF69_RESET_PIN, OUTPUT);
   digitalWrite(_slaveSelectPin, HIGH);
   pinMode(_slaveSelectPin, OUTPUT);
   SPI.begin();
@@ -321,7 +324,7 @@ void RFM69::interruptHandler() {
 //    rr=readReg(REG_IRQFLAGS2);
          rr=readReg(REG_IRQFLAGS2);
     setMode(RF69_MODE_STANDBY);
-    PAYLOADLEN=RF69_FRAME_LEN;
+   // PAYLOADLEN=RF69_FRAME_LEN;
 
 //    RSSI = readRSSI();
     select();

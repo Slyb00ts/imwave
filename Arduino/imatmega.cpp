@@ -135,7 +135,7 @@ t_Time millisT2(){
  #endif
 }
 
-#ifndef CLOCK32K
+#ifndef CRYSTAL32K
 t_Time incTimer2(){
   return counterTimer2++;
 }
