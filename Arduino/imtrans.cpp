@@ -646,15 +646,17 @@ void Transceiver::setupMode(uint16_t aMode)
   BroadcastEnable=(aMode & IMS_TRANSCEIVER);
   uint8_t xCycle= aMode & 0xFF;
   if (xCycle==1) {
-    _cycledata=20;
+    _cycledata=3;
   } else if (xCycle==2)   {
-    _cycledata=100;
+    _cycledata=20;
   } else if (xCycle==3)   {
-    _cycledata=300;
+    _cycledata=100;
   } else if (xCycle==4)   {
+    _cycledata=300;
+  } else if (xCycle==5)   {
     _cycledata=1200;
   } else {
-    _cycledata=3;
+    _cycledata=1;
   }
 
 
