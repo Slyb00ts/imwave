@@ -302,7 +302,7 @@ void Transceiver::Idle()
      buffer->Sleep();
      timer.setStage(IMTimer::IDDLESTAGE);
      power_spi_disable();
-     DBGPINLOW();
+  //   DBGPINLOW();
      DBGINFO("idle");
    }
 }
@@ -313,7 +313,7 @@ void Transceiver::Wakeup()
     _inSleep=false;
     power_spi_enable();
     buffer->Wakeup();
-    DBGPINHIGH();
+//    DBGPINHIGH();
     DBGINFO("wakeup");
   }
 }

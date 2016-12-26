@@ -99,7 +99,6 @@ void IMTimer::sleep(unsigned long time)
 */
 //  LowPower.powerSave(xtime, ADC_OFF, BOD_ON,TIMER2_ON);
 
-//  LowPower.powerStandby(xtime, ADC_OFF, BOD_ON);
 
 }
 
@@ -156,6 +155,16 @@ void IMTimer::setStage(byte stage)
   current=stage;
 }
 
+t_Time IMTimer::setNextTime()
+{
+  t_Time nextTT1=millisT2()-start;
+  t_Time nextTT=nextTT1-getTime()+nearTime;
+  if (nextTT<nextTT1)
+     nextTT+= stages[PERIOD];
+  stopTimer2(nextTT+start);
+  return nextTT;
+
+}
 byte IMTimer::WaitStage()
 {
 /*  DBGINFO("\r\n{{");
@@ -170,11 +179,7 @@ byte IMTimer::WaitStage()
 */
   setSleepModeT2();
   sei();
-  t_Time nextTT1=millisT2()-start;
-  t_Time nextTT=nextTT1-getTime()+nearTime;
-  if (nextTT<nextTT1)
-     nextTT+= stages[PERIOD];
-  stopTimer2(nextTT+start);
+  t_Time nextTT=setNextTime();
   while ((millisT2()-start)<nextTT)
   {
      waiting++;
@@ -186,17 +191,16 @@ byte IMTimer::WaitStage()
      if (_listen){
        _listen=0;
        stopTimer2(start);
-       DBGPINHIGH();
+  //     DBGPINHIGH();
        return current;
      }
   }
 
   sei();
 
-
   byte r= nearStage;
   if (r==PERIOD) {
-  DBGPINHIGH();
+//  DBGPINHIGH();
      cycle++;
 //     watchdog++;
      delaySleepT2(30);
@@ -205,9 +209,10 @@ byte IMTimer::WaitStage()
      }
      DBGINFO(waiting);
      waiting=0;
-     DBGPINLOW();
+//     DBGPINLOW();
   }
   compute();
+  setNextTime();
   return r;
 }
 

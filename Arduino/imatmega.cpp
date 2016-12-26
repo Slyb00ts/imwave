@@ -2,12 +2,6 @@
  Copyright (C) 2015 Dariusz Mazur <darekm@emadar.com>
 
  */
- 
-/**
- * @file me_frame.h
- *
- * Setup necessary to direct stdout to imwave library
- */
 
 #include "imatmega.h"
 
@@ -94,9 +88,6 @@ uint16_t internalTemp() {
 //  sbi(ADCSRA, ADSC);                   // initiate the first conversion - this one is junk as per datasheet
   ADCSRA |= _BV(ADSC); // Convert
   while (bit_is_set(ADCSRA, ADSC));    // wait for the conversion to finish
-//  delay(5);                            // another little extra pause just in case
-//  sbi(ADCSRA, ADSC);                   // initiate the second conversion - this is the good one
-//  while (bit_is_set(ADCSRA, ADSC));    // wait for the conversion to finish
   byte low  = ADCL;                    // read the low byte
   byte high = ADCH;                    // read the high byte
   int temperature = (high << 8) | low;     // result is the absolute temperature in Kelvin * i think *
@@ -121,7 +112,6 @@ uint16_t internalTemp() {
   byte low  = ADCL;                    // read the low byte
   byte high = ADCH;                    // read the high byte
   int result = (high << 8) | low;     // result is the absolute temperature in Kelvin * i think *
-//  result = (result - 125) * 1075;
   ADCSRA |= (1 << ADIF);       // Clear ADIF
   return result;
 }
@@ -176,7 +166,6 @@ void delaySleep( unsigned long t)
 {
   unsigned long startMillis = millis();
   unsigned long current;
-
   set_sleep_mode (SLEEP_MODE_IDLE);
   do
   {
@@ -203,7 +192,6 @@ void delayT2()
 void delaySleepT2( unsigned long t)
 {
  #if defined(__sleepT2)
-
    unsigned long startMillis = millisT2();
    #ifdef CRYSTAL32K
      stopTimer2(startMillis+t);
@@ -253,8 +241,7 @@ void  SetupADC(void)
 
 void disableADCB()
 {
- // disable ADC
-   ShutOffADC();
+  ShutOffADC();
   ADCSRA = 0;
    // turn off brown-out enable in software
   MCUCR = bit (BODS) | bit (BODSE);  // turn on brown-out enable select
@@ -266,13 +253,10 @@ void disableADCB()
       power_usart0_disable(); // Serial (USART)
 #endif
     power_timer1_disable();
-//    power_usart0_enable(); // Serial (USART)
 //    power_timer0_enable(); // Timer 0
-//    power_timer1_enable(); // Timer 1
-//    power_timer2_enable(); // Timer 2
     power_twi_disable(); // TWI (I2C)
-      power_timer2_enable();
-      power_spi_enable();
+    power_timer2_enable();
+    power_spi_enable();
 }
 
 
@@ -289,29 +273,28 @@ void setupTimer2()
 
   /* Configure timer2 in normal mode (pure counting, no PWM etc.) */
   TCCR2A &= ~((1<<WGM21) | (1<<WGM20));
-
   TCCR2A |= ((1<<WGM21) );
-
   TCCR2B &= ~(1<<WGM22);
-   DDRD|= (1<<DDD3);
+//   DDRD|= (1<<DDD3);
  // TCCR2A |= ((1<<COM2A0) );
  // TCCR2A &= ~(1<<COM2A1);
-  TCCR2A &= ~(1<<COM2B1);
+//  TCCR2A |= ((1<<COM2B0) );
+//  TCCR2A &= ~(1<<COM2B1);
 
 
   /* Disable Compare Match A interrupt enable (only want overflow) */
   #ifdef CRYSTAL32K
   ASSR |= ((1<<AS2));    /* Select clock source: crystal32k */
   TCCR2B=0x3;
-  OCR2A= 15;
+  OCR2A= 1;
   #else
    ASSR &= ~((1<<AS2));         /* Select clock source: internal I/O clock */
 
   /* Now configure the prescaler to CPU clock divided by 128 */
-  TCCR2B |= (1<<CS22)  | (1<<CS20); // Set bits
-  TCCR2B &= ~(1<<CS21);             // Clear bit
+   TCCR2B |= (1<<CS22)  | (1<<CS20); // Set bits
+   TCCR2B &= ~(1<<CS21);             // Clear bit
    //  if (F_CPU==8000000L)
-    TCCR2B &= ~(1<<CS20);             // Clear bit
+   TCCR2B &= ~(1<<CS20);             // Clear bit
 
 //      TCCR2B |= (1<<CS21)  ; // Set bits
   /* We need to calculate a proper value to load the timer counter.
@@ -327,26 +310,17 @@ void setupTimer2()
   /* Finally load end enable the timer */
   OCR2A= 124;
   #endif
-  // (clock /prescaler*desired_time )-1
-  // 16000000 /126*0.001 = 125
-
-//  TCNT2 = counterTCNT2;
-//  TIMSK2 |= (1<<TOIE2);
+ //  TIMSK2 |= (1<<TOIE2);
   TIMSK2 |= (1<<OCIE2A);
 
 
 //  TIFR2  = 0x00;        //Timer2 INT Flag Reg: Clear Timer Overflow Flag
 //  TIMSK2 = 0x01;        //Timer2 INT Reg: Timer2 Overflow Interrupt Enable
-//  TCCR2A = 0x00;        //Timer2 Control Reg A: Wave Gen Mode normal
-//  TCCR2B = 0x05;        //Timer2 Control Reg B: Timer Prescaler set to 128
 }
 
 
 void waitASSR(){
-  while ((ASSR & (1<<OCR2AUB)) != 0x00) {
-//       DBGPINLOW();
-//       DBGPINHIGH();
-     };
+  while ((ASSR & (1<<OCR2AUB)) != 0x00) {  };
 }
 #endif
 #ifdef CRYSTAL32K
@@ -373,6 +347,7 @@ void stopTimer2(t_Time aTime){
 
 
 #endif
+
 void pciSetup(uint8_t pin)
 {
 //http://arduinomega.blogspot.com/2011/05/setting-interrupts-manually-real-int0.html
