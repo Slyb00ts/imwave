@@ -212,7 +212,7 @@ byte IMTimer::WaitStage()
 //     DBGPINLOW();
   }
   compute();
-  setNextTime();
+//  setNextTime();        hand after 1min
   return r;
 }
 

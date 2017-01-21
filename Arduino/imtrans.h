@@ -25,6 +25,7 @@
 #include "imtimer.h"
 #include "imatmega.h"
 #include "imbuffer.h"
+#include "imeprom.h"
 
 
 
@@ -65,21 +66,24 @@ private:
 //    IMQueue queue;
     IMRouting router;
     IMBuffer * buffer;
+    IMEprom eprom;
 
 //    TableACK  ack;
     byte _connected;
     bool _inSleep;
 
-    int _knocked;
+ //   int _knocked;
     long _helloCycle;
     long _KnockCycle;
     byte myHop;
     byte myChannel;
     IMAddress myId;
+    byte myMode;
     uint16_t _salt;
     uint16_t _calibrateshift;
     uint16_t _calibrate;
-    uint16_t _cycledata;
+    uint16_t _rateData;
+    uint16_t _rateHello;
     uint16_t _cycleshift;
     byte seqnr;
     byte ksequence;
@@ -88,7 +92,6 @@ private:
     byte hostRssiSend;     //from hello
     byte hostRssiListen;  //from welcome
 //    float rssi;
-//    void setRssi();
     void Prepare(IMFrame & frame );
 //    void PrepareTransmit();
     bool Forward(IMFrame & frame);
@@ -110,6 +113,9 @@ private:
     void setupMode(uint16_t aMode);
     void ContinueListen();
     void DoListenBroadcast();
+    void LoadSetup();
+    void StoreSetup();
+    void PrepareTransmission();
 public:
     Transceiver();
     IMTimer  timer;

@@ -48,7 +48,8 @@ Transceiver::Transceiver()
   myChannel=0;
   BroadcastChannel=0;
   _calibrate=0;
-  _cycledata=3;
+  _rateData=3;
+  _rateHello=20;
   _calibrateshift=0;
   TimerSetupAll();
 }
@@ -63,6 +64,8 @@ void Transceiver::Init(IMBuffer & buf)
   buffer->setFunction(&timer.doneReceived);
   TimerSetup(0);
   Deconnect();
+  LoadSetup();
+  PrepareTransmission();
 }
 
 void Transceiver::TimerSetupAll()
@@ -160,23 +163,45 @@ float Transceiver::RssiSend()
 }
 
 
+void Transceiver::LoadSetup()
+{
+  eprom.ReadConfig();
+  myId=imEConfig.myId;
+  hostId=imEConfig.hostId;
+  serverId=imEConfig.serverId;
+  myMode=imEConfig.myMode;
+  myChannel=imEConfig.myChannel;
+}
+
+void Transceiver::StoreSetup(){
+  imEConfig.myMode=myMode;
+  imEConfig.myId=myId;
+  imEConfig.myChannel=myChannel;
+  imEConfig.serverId=serverId;
+  imEConfig.hostId=hostId;
+  eprom.WriteConfig();
+}
 
 void Transceiver::Deconnect()
 {
   _connected=false;
   _salt=1;
-  myId=0;
-  hostId=0;
-  _cycledata=3;
+//  myId=0;
+//  hostId=0;
+  _rateData=3;
+  _rateHello=20;
   _cycleshift=0;
-  _knocked=0;
+
+//  _knocked=0;
   _helloCycle=0;   //on Deconnect reset skipping
+  _KnockCycle=timer.Cycle();
   myChannel=0;
   _inSleep=true;
   router.reset();
   router.addMAC(myMAC,0xFF);
-  _KnockCycle=0;
+//  _KnockCycle=0;
   BroadcastEnable=false;
+
   //_knockCycle=timer.clock()-100;
   timer.Watchdog();
   SendKnock(true);
@@ -336,6 +361,8 @@ void Transceiver::ListenBroadcast()
      //if (xKC< 7)
          //return;
    } else {
+     if (timer.Cycle()>(_KnockCycle+60))
+         return;
      if ((timer.Cycle() & 0x4) ==0)
        return;
    }
@@ -369,12 +396,14 @@ void Transceiver::StopListen()
    if (Connected()){
       if   (timer.Cycle()<(_helloCycle+20))  //check 1min
           Idle();
-      if  (timer.Cycle()>_helloCycle+100)  //after 5min without knock
-         Deconnect();
+      if  (timer.Cycle()>_helloCycle+40)  //after 5min without knock
+         _helloCycle=timer.Cycle()+300;  // next 15min waiting
+
    } else {
-     if (timer.Cycle() >(_KnockCycle+60)){   // check 3 min
+     if (timer.Cycle() >(_KnockCycle+300)){   // check 3 min
         DBGINFO("StopListen");
-        Idle();
+        _KnockCycle=timer.Cycle();
+//        Idle();
      }
    }
 }
@@ -395,7 +424,8 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
            if (Connected()) {
               if (myHost(frame)){
                 if (sp->salt!=_salt){   //host reboot
-                   Deconnect();
+                  // Deconnect();
+                    _helloCycle=timer.Cycle();
                    DBGINFO("HOST REBOOT");
                 } else {
  //                  timer.Calibrate(millis()-BroadcastDelay-100);
@@ -489,11 +519,9 @@ void Transceiver::Knock()
 bool Transceiver::ResponseHello(IMFrame & frame)
 {
    DBGINFO("((");
-   DBGINFO(_knocked);
-   DBGINFO(":");
    DBGINFO(_helloCycle);
    DBGINFO(")) ");
-   _knocked++;
+//   _knocked++;
    byte xr;
    if (Connected()){
      //if (_knocked % (TimerHelloCycle*_cycledata))  {
@@ -646,19 +674,44 @@ void Transceiver::setupMode(uint16_t aMode)
   BroadcastEnable=(aMode & IMS_TRANSCEIVER);
   uint8_t xCycle= aMode & 0xFF;
   if (xCycle==1) {
-    _cycledata=3;
+    _rateData=3;
   } else if (xCycle==2)   {
-    _cycledata=20;
+    _rateData=20;
   } else if (xCycle==3)   {
-    _cycledata=100;
+    _rateData=100;
   } else if (xCycle==4)   {
-    _cycledata=300;
+    _rateData=300;
   } else if (xCycle==5)   {
-    _cycledata=1200;
+    _rateData=1200;
   } else {
-    _cycledata=1;
+    _rateData=1;
+  }
+  if (xCycle==1) {
+    _rateHello=120;
+  } else if (xCycle==2)   {
+    _rateHello=300;
+  } else if (xCycle==3)   {
+    _rateHello=600;
+  } else if (xCycle==4)   {
+    _rateHello=1200;
+  } else if (xCycle==5)   {
+    _rateHello=1200;
+  } else {
+    _rateHello=60;
   }
 
+
+}
+
+void Transceiver::PrepareTransmission()
+{
+  router.myId=myId;
+   HostChannel=0;
+   myChannel=0;
+   _calibrateshift=0;
+   TimerSetup((myId &16)*10);
+//   BroadcastEnable=(setup->mode && IMS_TRANSCEIVER);
+   setupMode(myMode);
 
 }
 
@@ -683,22 +736,17 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    serverId=frame.Header.SourceId;
    myId=setup->address;
    myChannel=setup->slavechannel;
+   myMode=setup->mode;
    hostRssiSend=setup->rssi;
-   router.myId=myId;
-   HostChannel=0;
-   myChannel=0;
-   _calibrateshift=0;
+   PrepareTransmission();
    _connected=1;
-   TimerSetup((myId &16)*10);
-//   BroadcastEnable=(setup->mode && IMS_TRANSCEIVER);
-   setupMode(setup->mode);
-
+   _helloCycle=timer.Cycle()+_rateHello;//setup next Hello
+   _cycleshift=(timer.Cycle()+myId) % _rateData;
+  StoreSetup();
    if (myHop==2) {
      _calibrateshift=200;
      DBGINFO("C200SHIFT");
    }
-   _cycleshift=(timer.Cycle()+myId) % _cycledata;
-   _helloCycle=timer.Cycle()+TimerHelloCycle*_cycledata;//setup next Hello
    DBGINFO(myId);
    DBGINFO("CONNECT%");
    StopListenBroadcast(); // no listen until data stage
@@ -811,7 +859,7 @@ void Transceiver::printStatus()
           DBGINFO("  ");
           DBGINFO(_cycleshift);
           DBGINFO(" > ");
-          DBGINFO(_cycledata);
+          DBGINFO(_rateData);
 
 }
 
@@ -837,13 +885,13 @@ short Transceiver::ClassTest()
 
 bool Transceiver::CycleData()
 {
-  return       (timer.Cycle() % _cycledata) ==_cycleshift;
+  return       (timer.Cycle() % _rateData) ==_cycleshift;
 
 }
 
 void Transceiver::printCycle(){
         DBGINFO("[[cycle:");
-        DBGINFO(timer.Cycle() % _cycledata);
+        DBGINFO(timer.Cycle() % _rateData);
         DBGINFO("%");
         DBGINFO(_cycleshift);
         DBGINFO("]]");
@@ -852,13 +900,13 @@ void Transceiver::printCycle(){
 
 bool Transceiver::CycleDataPrev()
 {
-  return       ((timer.Cycle()+1) % _cycledata) ==_cycleshift;
+  return       ((timer.Cycle()+1) % _rateData) ==_cycleshift;
 
 }
 
 void Transceiver::DisableWatchdog()
 {
-    _cycledata=30000;
+    _rateData=30000;
 }
 
 
