@@ -354,6 +354,13 @@ void Transceiver::ContinueListen()
 }
 void Transceiver::ListenBroadcast()
 {
+   if (timer.Watchdog(1200))  //1hour
+   {
+      DBGINFO("WATCHDOG");
+      Deconnect();
+      buffer->Reboot();
+   }
+
    if (Connected()){
      if (timer.Cycle()<_helloCycle)
        return;
@@ -361,6 +368,18 @@ void Transceiver::ListenBroadcast()
      //if (xKC< 7)
          //return;
    } else {
+       if ((timer.Cycle() % (TimerKnockCycle))==0){
+          if (_cycleshift){  //hello sended
+            _cycleshift=0;
+          }else{
+            DBGINFO("InvalidKnock ");
+            SendKnock(true);
+            DoListenBroadcast();
+            DBGINFO("\r\n");
+            return;
+          }
+       }
+
      if (timer.Cycle()>(_KnockCycle+60))
          return;
      if ((timer.Cycle() & 0x4) ==0)
@@ -479,39 +498,32 @@ bool Transceiver::SendKnock(bool invalid)
 
 void Transceiver::Knock()
 {
-   if (timer.Watchdog(1200))  //1hour
-   {
-      DBGINFO("WATCHDOG");
-      Deconnect();
-      buffer->Reboot();
-   }
-   if (Connected())
-   {
+//  if (Connected())
+ //  {
       if (BroadcastEnable){
           if ((timer.Cycle() % TimerKnockCycle)==0){
             DBGINFO("Knock ");
             SendKnock(false);
             DBGINFO("\r\n");
-            return;
+            DoListenBroadcast();
+//            return;
           }
-          ListenData();
+  //        ListenData();
       }
-      StopListenBroadcast();
-   } else {
-       if ((timer.Cycle() % (TimerKnockCycle))==0){
+//      StopListenBroadcast();
+//   } else {
+/*       if ((timer.Cycle() % (TimerKnockCycle))==0){
           if (_cycleshift){  //hello sended
             _cycleshift=0;
           }else{
-       //     ERRFLASH();
             DBGINFO("InvalidKnock ");
             SendKnock(true);
             DoListenBroadcast();
             DBGINFO("\r\n");
-       //     ERRFLASH();
           }
-//          timer.Watchdog();
        }
-   }
+       */
+ //  }
 
 }
 
