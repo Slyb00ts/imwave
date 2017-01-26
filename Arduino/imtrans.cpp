@@ -368,9 +368,6 @@ void Transceiver::ListenBroadcast()
    if (Connected()){
      if (timer.Cycle()<_helloCycle)
        return;
-//     long xKC=(timer.Cycle()-_KnockCycle);
-     //if (xKC< 7)
-         //return;
    } else {
        if ((timer.Cycle() % (TimerKnockCycle))==0){
           if (_cycleshift){  //hello sended
@@ -482,7 +479,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
            }
 
 
-           _KnockCycle=timer.Cycle()+60;
+           _KnockCycle=timer.Cycle();
            _salt=sp->salt; //accept new value
            hostRssiListen=buffer->rssiH;
 
@@ -644,7 +641,7 @@ bool Transceiver::Onward(IMFrame & frame)
               return true;
            }
 
-           if (frame.Header.ReceiverId==myId)
+        if (frame.Header.ReceiverId==myId)
            {
              if (frame.Forward())
                 Forward(frame);
@@ -732,21 +729,18 @@ void Transceiver::setupMode(uint16_t aMode)
   } else {
     _rateHello=60;
   }
-
-
 }
 
 void Transceiver::PrepareTransmission()
 {
-  router.myId=myId;
    router.myId=myId;
    HostChannel=0;
    myChannel=0;
    _calibrateshift=0;
-   TimerSetup((myId &16)*10);
+   TimerSetup(0);
+ //  TimerSetup((myId &16)*10);
 //   BroadcastEnable=(setup->mode && IMS_TRANSCEIVER);
    setupMode(myMode);
-
 }
 
 bool Transceiver::ReceiveWelcome(IMFrame & frame)
@@ -764,8 +758,6 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
      BackwardWelcome(frame);
      return false;
    }
-   //_helloed=_knocked +200; //we can wait on next connection
-
    timer.Watchdog();
    serverId=frame.Header.SourceId;
    myId=setup->address;
