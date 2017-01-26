@@ -24,6 +24,7 @@ typedef unsigned long t_Time;
 // http://code.google.com/p/tinkerit/wiki/SecretVoltmeter
 long internalVccOld();
 t_Time millisT2();
+t_Time millisTNow();
 void setupTimer2();
 void setSleepModeT2();
 
@@ -77,6 +78,7 @@ void delaySleepT2(unsigned long t);
 void delayT2();
 void setupTimer2();
 void reboot();
+void resetPin();
 
 #if defined(__AVR_ATmega328P__)
 #define  __sleepT2  1

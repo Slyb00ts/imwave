@@ -125,6 +125,15 @@ t_Time millisT2(){
  #endif
 }
 
+t_Time millisTNow(){
+ #if defined(__sleepT2)
+   return counterTimer2+TCNT2;
+ #else
+   return millis();
+ #endif
+}
+
+
 #ifndef CRYSTAL32K
 t_Time incTimer2(){
   return counterTimer2++;
@@ -224,7 +233,7 @@ void  ShutOffADC(void)
     //https://www.seanet.com/~karllunt/atmegapowerdown.html
     ACSR = (1<<ACD);                        // disable A/D comparator
     ADCSRA = (0<<ADEN);                     // disable A/D converter
-    DIDR0 = 0x3f;                           // disable all A/D inputs (ADC0-ADC5)
+//    DIDR0 = 0x3f;                           // disable all A/D inputs (ADC0-ADC5)
     DIDR1 = 0x03;                           // disable AIN0 and AIN1
 }
 
@@ -234,7 +243,7 @@ void  SetupADC(void)
     power_adc_enable(); // ADC converter
     ACSR = 48;                        // disable A/D comparator
     ADCSRA = (1<<ADEN)+7;                     // ADPS2, ADPS1 and ADPS0 prescaler
-    DIDR0 = 0x00;                           // disable all A/D inputs (ADC0-ADC5)
+//    DIDR0 = 0x00;                           // disable all A/D inputs (ADC0-ADC5)
     DIDR1 = 0x00;                           // disable AIN0 and AIN1
 }
 
@@ -243,6 +252,7 @@ void disableADCB()
 {
   ShutOffADC();
   ADCSRA = 0;
+   DIDR0 = 0xff;                           // disable all A/D inputs (ADC0-ADC5)
    // turn off brown-out enable in software
   MCUCR = bit (BODS) | bit (BODSE);  // turn on brown-out enable select
   MCUCR = bit (BODS);        // this must be done within 4 clock cycles of above
@@ -347,6 +357,16 @@ void stopTimer2(t_Time aTime){
 
 
 #endif
+
+void resetPin()
+{
+ for (byte i=0; i<20; i++) {    //make all pins inputs with pullups enabled
+        pinMode(i, INPUT);
+        pinMode(i, OUTPUT);
+        digitalWrite(i,LOW);
+   }
+
+}
 
 void pciSetup(uint8_t pin)
 {

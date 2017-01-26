@@ -33,7 +33,7 @@
 #if DBGLVL>=1
   #define knockShift 40
 #else
-  #define knockShift 20
+  #define knockShift 10
 #endif
 
 
@@ -47,7 +47,8 @@ Transceiver::Transceiver()
   HostChannel=0;
   myChannel=0;
   BroadcastChannel=0;
-  _calibrate=0;
+//  _calibrate=0;
+  _calibrated=false;
   _rateData=3;
   _rateHello=20;
   _calibrateshift=0;
@@ -74,11 +75,11 @@ void Transceiver::TimerSetupAll()
    // timer.Setup(IMTimer::PERIOD,CycleDuration);
 }
 
-void Transceiver::TimerSetup(unsigned long cal)
+void Transceiver::TimerSetup(t_Time cal)
 {
-    _calibrate=cal;
-    timer.Setup(STARTDATA,DataDelay+_calibrate-_calibrateshift);
-    timer.Setup(STOPDATA,DataDelay+DataDuration+_calibrate-_calibrateshift);
+   // _calibrate=cal;
+    timer.Setup(STARTDATA,DataDelay+cal-_calibrateshift);
+    timer.Setup(STOPDATA,DataDelay+DataDuration+cal-_calibrateshift);
     timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration/*+_calibrate*/); //when shift knock
 }
 
@@ -88,6 +89,8 @@ uint8_t Transceiver::GetData()
 
   if (buffer->Received())
   {
+
+    ReceiveTime=buffer->RXTime();
 //    DBGINFO("Receive*<");
  //   printTime();
    buffer->printReceive();
@@ -191,6 +194,7 @@ void Transceiver::Deconnect()
   _rateData=3;
   _rateHello=20;
   _cycleshift=0;
+  _calibrated=false;
 
 //  _knocked=0;
   _helloCycle=0;   //on Deconnect reset skipping
@@ -380,8 +384,11 @@ void Transceiver::ListenBroadcast()
           }
        }
 
-     if (timer.Cycle()>(_KnockCycle+60))
+     if (timer.Cycle()>(_KnockCycle+60))   {
+         _calibrated=true;
+        Idle();
          return;
+     }
      if ((timer.Cycle() & 0x4) ==0)
        return;
    }
@@ -413,15 +420,20 @@ void Transceiver::ListenData()
 void Transceiver::StopListen()
 {
    if (Connected()){
-      if   (timer.Cycle()<(_helloCycle+20))  //check 1min
+      if       (timer.Cycle()>(_helloCycle+10))  //check 30s
+        _calibrated=false;
+      if  (_calibrated )
           Idle();
-      if  (timer.Cycle()>_helloCycle+40)  //after 5min without knock
+      if  (timer.Cycle()>_helloCycle+20) { //after 1min without knock
          _helloCycle=timer.Cycle()+300;  // next 15min waiting
+         _calibrated=true;
+      }
 
    } else {
-     if (timer.Cycle() >(_KnockCycle+300)){   // check 3 min
+     if (timer.Cycle() >(_KnockCycle+300)){   // check 15 min
         DBGINFO("StopListen");
         _KnockCycle=timer.Cycle();
+        _calibrated=false;
 //        Idle();
      }
    }
@@ -429,7 +441,7 @@ void Transceiver::StopListen()
 
 void Transceiver::StopListenBroadcast()
 {
-   if (Connected()&& (timer.Cycle()<(_helloCycle+20)) ) //check 3min
+   if ( _calibrated) //check 3min
     {
      Idle();
 //     timer.setStage(IMTimer::IDDLESTAGE);
@@ -456,7 +468,12 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                         }
                         return false;
               }
-              timer.Calibrate(millisT2()-BroadcastDelay-knockShift);
+              DBGPINHIGH();
+          //     if ((timer.Cycle() %6)==0)
+                timer.Calibrate(millisTNow()-BroadcastDelay-knockShift);
+                _calibrated=true;
+              DBGPINLOW();
+             //  return false;
            }
 
            if (sp->salt==0) {    //received invalid knock
@@ -498,8 +515,6 @@ bool Transceiver::SendKnock(bool invalid)
 
 void Transceiver::Knock()
 {
-//  if (Connected())
- //  {
       if (BroadcastEnable){
           if ((timer.Cycle() % TimerKnockCycle)==0){
             DBGINFO("Knock ");
@@ -617,9 +632,15 @@ bool Transceiver::Onward(IMFrame & frame)
         }
         else
         {
-           if (!Connected())
-           {
-              DBGERR("&NOTCNT");
+     //      if (!Connected())
+     //      {
+     //         DBGERR("&NOTCNT");
+     //         return true;
+     //      }
+
+        if (!BroadcastEnable){
+
+              DBGERR("&NOTBCE");
               return true;
            }
 
@@ -718,6 +739,7 @@ void Transceiver::setupMode(uint16_t aMode)
 void Transceiver::PrepareTransmission()
 {
   router.myId=myId;
+   router.myId=myId;
    HostChannel=0;
    myChannel=0;
    _calibrateshift=0;
@@ -864,8 +886,8 @@ void Transceiver::printStatus()
           DBGINFO(timer.DeviationPlus);
           DBGINFO("  ");
           DBGINFO(timer.DeviationMinus);
-          DBGINFO("  ");
-          DBGINFO(_calibrate);
+   //       DBGINFO("  ");
+    //      DBGINFO(_calibrate);
           DBGINFO(" cykl: ");
           DBGINFO(timer.Cycle());
           DBGINFO("  ");

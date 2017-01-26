@@ -42,8 +42,8 @@
 #define BroadcastDelay 200
 #define BroadcastDuration 100
 
-#define DataDelay 900
-#define DataDuration 300
+#define DataDelay 600
+#define DataDuration 200
 #if DBGLVL>=1
   #define BroadcastDuration 200
 #else
@@ -70,9 +70,10 @@ private:
 
 //    TableACK  ack;
     byte _connected;
+    bool _calibrated;
     bool _inSleep;
 
- //   int _knocked;
+    t_Time ReceiveTime;
     long _helloCycle;
     long _KnockCycle;
     byte myHop;
@@ -81,7 +82,7 @@ private:
     byte myMode;
     uint16_t _salt;
     uint16_t _calibrateshift;
-    uint16_t _calibrate;
+  //  uint16_t _calibrate;
     uint16_t _rateData;
     uint16_t _rateHello;
     uint16_t _cycleshift;
@@ -109,7 +110,7 @@ private:
     bool RetryData();
     bool Onward(IMFrame & frame);
     void TimerSetupAll();
-    void TimerSetup(unsigned long cal);
+    void TimerSetup(t_Time cal);
     void setupMode(uint16_t aMode);
     void ContinueListen();
     void DoListenBroadcast();
