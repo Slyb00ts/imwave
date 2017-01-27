@@ -36,6 +36,8 @@
   #define knockShift 10
 #endif
 
+#define IMVERSION 9
+
 
 Transceiver* Transceiver::ptr = 0;
 
@@ -368,6 +370,11 @@ void Transceiver::ListenBroadcast()
    if (Connected()){
      if (timer.Cycle()<_helloCycle)
        return;
+     if (timer.Cycle()==(_helloCycle+10)){
+        SendKnock(true);
+        DoListenBroadcast();
+        return;
+     }
    } else {
        if ((timer.Cycle() % (TimerKnockCycle))==0){
           if (_cycleshift){  //hello sended
@@ -505,6 +512,7 @@ bool Transceiver::SendKnock(bool invalid)
    setup->address=myHop;
    if (invalid){
      setup->salt=0;
+     setup->mode=IMVERSION;
    }
    return Send(_frame);
 }
