@@ -67,7 +67,7 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
     // +17dBm formula: Pout = -14 + OutputPower (with PA1 and PA2)**
     // +20dBm formula: Pout = -11 + OutputPower (with PA1 and PA2)** and high power PA settings (section 3.3.7 in datasheet)
     ///* 0x11 */ { REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | RF_PALEVEL_OUTPUTPOWER_11111},
-    /* 0x11 */ { REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | RF_PALEVEL_OUTPUTPOWER_11011},
+    /* 0x11 */ { REG_PALEVEL, RF_PALEVEL_PA0_OFF | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_OFF | RF_PALEVEL_OUTPUTPOWER_10001},
 
 //    {REG_PALEVEL, RF_PALEVEL_PA0_OFF | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_ON  | RF_PALEVEL_OUTPUTPOWER_11111}, // enable P1 & P2 amplifier stages
 
@@ -106,7 +106,7 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   SPI.setDataMode(SPI_MODE0);
   SPI.setBitOrder(MSBFIRST);
   SPI.setClockDivider(SPI_CLOCK_DIV4); // decided to slow down from DIV2 after SPI stalling in some instances, especially visible on mega1284p when RFM69 and FLASH chip both present
-
+  _lock=0;
   unsigned long start = millis();
   uint8_t timeout = 150;
   do writeReg(REG_SYNCVALUE1, 0xAA); while (readReg(REG_SYNCVALUE1) != 0xaa && millis()-start < timeout);
@@ -204,11 +204,15 @@ void RFM69::setMode(uint8_t newMode)
 
 //put transceiver in sleep mode to save battery - to wake or resume receiving just call receiveDone()
 void RFM69::sleep() {
+  ++_lock;
   setMode(RF69_MODE_SLEEP);
+  --_lock;
 }
 void RFM69::idle() {
 //  while ((readReg(REG_OPMODE) & RF_OPMODE_SEQUENCER_ON) != RF_OPMODE_SEQUENCER_ON);
+ ++_lock;
   setMode(RF69_MODE_STANDBY);
+  --_lock;
 }
 
 
@@ -243,6 +247,7 @@ bool RFM69::canSend()
 {
   if (_mode == RF69_MODE_STANDBY)
      return true;
+  if (_lock) return false;
   if (_mode == RF69_MODE_RX /*&& PAYLOADLEN == 0*/ /*&& readRSSI() < CSMA_LIMIT*/) // if signal stronger than -100dBm is detected assume channel activity
   {
 //    setMode(RF69_MODE_STANDBY);
@@ -259,8 +264,10 @@ bool RFM69::send( const void* buffer, uint8_t bufferSize)
   writeReg(REG_PACKETCONFIG2, (readReg(REG_PACKETCONFIG2) & 0xFB) | RF_PACKET2_RXRESTART); // avoid RX deadlocks
   uint32_t now = millisT2();
   while (!canSend() && millisT2() - now < RF69_CSMA_LIMIT_MS);
+  ++_lock;
     // receiveDone();
   sendFrame(0, buffer, bufferSize);
+  --_lock;
   return true;
 }
 
@@ -304,9 +311,9 @@ void RFM69::interruptHandler() {
 //    RSSI = readRSSI(true);
   ++IRNN;
   if (_mode != RF69_MODE_RX) return;
-             digitalWrite(5,HIGH);
+  if (_lock) return;
+  ++_lock;
   RSSI = readRSSI();
-              digitalWrite(5,LOW);
 
 
   uint8_t ii=0;
@@ -342,7 +349,7 @@ void RFM69::interruptHandler() {
    IRQ2=rr;
    receiveMode();
    receivedData(RF69_FRAME_LEN);
-
+     --_lock;
   } else{
 
     DBGINFO("****");
@@ -391,7 +398,7 @@ bool RFM69::receiveDone() {
 //    Serial.print(PAYLOADLEN);
 //    Serial.print(_mode);
 //  noInterrupts(); // re-enabled in unselect() via setMode() or via receiveBegin()
-  if (_mode == RF69_MODE_RX && PAYLOADLEN > 0)
+  if (_mode == RF69_MODE_RX )
   {
 //    Serial.print("<>");
     setMode(RF69_MODE_STANDBY); // enables interrupts
