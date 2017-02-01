@@ -22,10 +22,13 @@ IMTimer::IMTimer()
         Setup(IMTimer::PERIOD,CycleDuration);
 }
 
-void IMTimer::Calibrate(unsigned long time)
+void IMTimer::Calibrate(t_Time time)
 {
-  unsigned long del=start;
-   start=time;
+  t_Time del=start;
+  start=time;
+  if (time> 10000)
+   start=time-stages[PERIOD];
+
    del=(time-del)%1000;
    if (del){
      DBGINFO("calib:");
@@ -77,34 +80,12 @@ void IMTimer::printTime()
    DBGINFO(getTime());
           DBGINFO(">");
 }
-void IMTimer::sleep(unsigned long time)
+
+
+long IMTimer::CycleHour()
 {
-/*  period_t xtime;
-  if (time==15)  xtime=SLEEP_15Ms;
-  else if (time==30) xtime=SLEEP_30MS;
-  else if (time==60) xtime=SLEEP_60MS;
-  else if (time>=120) xtime=SLEEP_120MS;
-  else {
-    delay(5);
-    return;
-  }
-  */
-   delay(3);
-// unsigned long xstart=millis();
-// LowPower.idle(xtime, ADC_OFF, TIMER4_OFF,TIMER3_OFF,TIMER1_ON,TIMER0_ON, SPI_ON,USART1_OFF,TWI_ON, USB_ON);
-/*      DBGINFO("\r\n<<");
-       DBGINFO(millis()-xstart);
-       DBGINFO(" ");
-       DBGINFO(time);
-*/
-//  LowPower.powerSave(xtime, ADC_OFF, BOD_ON,TIMER2_ON);
-
-
-}
-
-uint16_t IMTimer::CycleHour()
-{
-  return uint16_t(3600000 / stages[PERIOD]);
+ // return long(3600000L / stages[PERIOD]);
+ return 1200;
 }
 
 long IMTimer::Cycle()
@@ -132,7 +113,7 @@ void IMTimer::Setup(byte stage, unsigned long waittime)
 
 void IMTimer::compute()
 {
-  unsigned long last=nearTime;
+  t_Time last=nearTime;
   if (last>=(stages[PERIOD]-10))
       last=1;
   nearTime=stages[PERIOD]-10;
@@ -158,7 +139,15 @@ void IMTimer::setStage(byte stage)
 t_Time IMTimer::setNextTime()
 {
   t_Time nextTT1=millisT2()-start;
+  if (nextTT1>0xFFFFFFF)
+     nextTT1+= stages[PERIOD];
+  if (nextTT1>0xFFFFFFF)
+     nextTT1+= stages[PERIOD];
+
   t_Time nextTT=nextTT1-getTime()+nearTime;
+  if (nextTT>0xFFFFFFF)
+     nextTT+= stages[PERIOD];
+
   if (nextTT<nextTT1)
      nextTT+= stages[PERIOD];
   stopTimer2(nextTT+start);
@@ -185,9 +174,7 @@ byte IMTimer::WaitStage()
      waiting++;
 
  //    if (waiting %4==0)
- //     DBGPINHIGH();
      delayT2();
- //     DBGPINLOW();
      if (_listen){
        _listen=0;
        stopTimer2(start);

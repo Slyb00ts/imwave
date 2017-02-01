@@ -36,7 +36,7 @@
   #define knockShift 10
 #endif
 
-#define IMVERSION 9
+#define IMVERSION 10
 
 
 Transceiver* Transceiver::ptr = 0;
@@ -82,7 +82,7 @@ void Transceiver::TimerSetup(t_Time cal)
    // _calibrate=cal;
     timer.Setup(STARTDATA,DataDelay+cal-_calibrateshift);
     timer.Setup(STOPDATA,DataDelay+DataDuration+cal-_calibrateshift);
-    timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration/*+_calibrate*/); //when shift knock
+    timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration+cal-_calibrateshift); //when shift knock
 }
 
 
@@ -600,6 +600,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    _frame.Header.Sequence=frame.Header.Sequence;
    PrepareSetup(*setup);
     setup->rssi=hostRssiListen;
+    setup->mode=IMVERSION;
 
    Send(_frame);
    return true;   //changed channel
@@ -745,8 +746,10 @@ void Transceiver::PrepareTransmission()
    HostChannel=0;
    myChannel=0;
    _calibrateshift=0;
-   TimerSetup(0);
- //  TimerSetup((myId &16)*10);
+  t_Time t=myId;
+  t*=8;
+  t =t %1000;
+   TimerSetup(t);
 //   BroadcastEnable=(setup->mode && IMS_TRANSCEIVER);
    setupMode(myMode);
 }

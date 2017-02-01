@@ -62,7 +62,6 @@ class  IMTimer
     void compute();
     t_Time getTime();
 //    t_Time getTime(t_Time time);
-    void sleep(unsigned long time);
     t_Time setNextTime();
 
 
@@ -90,9 +89,9 @@ class  IMTimer
         void Watchdog();
         bool Watchdog(uint16_t dog);
         long Cycle();
-        void Calibrate(unsigned long time);
+        void Calibrate(t_Time time);
         void printTime();
-        uint16_t CycleHour();
+        long CycleHour();
 
 
   private:
