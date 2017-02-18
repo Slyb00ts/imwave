@@ -242,7 +242,8 @@ void  SetupADC(void)
     //https://www.seanet.com/~karllunt/atmegapowerdown.html
     power_adc_enable(); // ADC converter
     ACSR = 48;                        // disable A/D comparator
-    ADCSRA = (1<<ADEN)+7;                     // ADPS2, ADPS1 and ADPS0 prescaler
+//    ADCSRA = (1<<ADEN)+7;                     // ADPS2, ADPS1 and ADPS0 prescaler
+    ADCSRA = (1<<ADEN)| (1 << ADPS2) |  (1 << ADPS1);                     // ADPS2, ADPS1 and ADPS0 prescaler 64
 //    DIDR0 = 0x00;                           // disable all A/D inputs (ADC0-ADC5)
     DIDR1 = 0x00;                           // disable AIN0 and AIN1
 }
