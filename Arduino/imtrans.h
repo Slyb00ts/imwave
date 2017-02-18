@@ -88,6 +88,7 @@ private:
     uint16_t _cycleshift;
     byte seqnr;
     byte ksequence;
+    byte hsequence;
 
 //    volatile byte ruptures[3];
     byte hostRssiSend;     //from hello

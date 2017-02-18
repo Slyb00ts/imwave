@@ -36,7 +36,7 @@
   #define knockShift 10
 #endif
 
-#define IMVERSION 10
+#define IMVERSION 11
 
 
 Transceiver* Transceiver::ptr = 0;
@@ -92,7 +92,7 @@ uint8_t Transceiver::GetData()
   if (buffer->Received())
   {
 
-    ReceiveTime=buffer->RXTime();
+  //  ReceiveTime=buffer->RXTime();
 //    DBGINFO("Receive*<");
  //   printTime();
    buffer->printReceive();
@@ -584,7 +584,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    serverMAC=sp->MAC2;
    myHop=sp->address;
    myHop++;
-   _cycleshift=1;
+  // _cycleshift=1;
    hostId=frame.Header.SourceId;
    HostChannel=sp->hostchannel;
 
@@ -601,6 +601,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    PrepareSetup(*setup);
     setup->rssi=hostRssiListen;
     setup->mode=IMVERSION;
+    setup->slavechannel=hsequence++;
 
    Send(_frame);
    return true;   //changed channel
@@ -776,9 +777,11 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    myMode=setup->mode;
    hostRssiSend=setup->rssi;
    PrepareTransmission();
+   if (!_connected)
+      _cycleshift=(timer.Cycle()+myId) % _rateData; //only on first connection
+
    _connected=1;
    _helloCycle=timer.Cycle()+_rateHello;//setup next Hello
-   _cycleshift=(timer.Cycle()+myId) % _rateData;
   StoreSetup();
    if (myHop==2) {
      _calibrateshift=200;

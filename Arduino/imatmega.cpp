@@ -198,10 +198,10 @@ void delayT2()
 #endif
 }
 
-void delaySleepT2( unsigned long t)
+void delaySleepT2( t_Time t)
 {
  #if defined(__sleepT2)
-   unsigned long startMillis = millisT2();
+   t_Time startMillis = millisT2();
    #ifdef CRYSTAL32K
      stopTimer2(startMillis+t);
    #endif
