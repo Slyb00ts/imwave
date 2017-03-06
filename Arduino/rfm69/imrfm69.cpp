@@ -262,8 +262,8 @@ bool RFM69::send( const void* buffer, uint8_t bufferSize)
   DBGINFO(IRNN);
   DBGINFO("IRNN@@@");
   writeReg(REG_PACKETCONFIG2, (readReg(REG_PACKETCONFIG2) & 0xFB) | RF_PACKET2_RXRESTART); // avoid RX deadlocks
-  uint32_t now = millisT2();
-  while (!canSend() && millisT2() - now < RF69_CSMA_LIMIT_MS);
+   t_Time _Start = millisT2();
+  while (!canSend() && ((millisT2() - _Start) < RF69_CSMA_LIMIT_MS));
   ++_lock;
     // receiveDone();
   sendFrame(0, buffer, bufferSize);
@@ -299,8 +299,8 @@ void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize)
   // no need to wait for transmit mode to be ready since its handled by the radio
   setMode(RF69_MODE_TX);
 //  IRNN=0;
-  uint32_t txStart = millisT2();
-  while (digitalRead(RF69_IRQ_PIN) == 0 && millisT2() - txStart < RF69_TX_LIMIT_MS); // wait for DIO0 to turn HIGH signalling transmission finish
+   t_Time txStart = millisT2();
+  while (digitalRead(RF69_IRQ_PIN) == 0 && ((millisT2() - txStart) < RF69_TX_LIMIT_MS)); // wait for DIO0 to turn HIGH signalling transmission finish
   //while (readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PACKETSENT == 0x00); // wait for ModeReady
   setMode(RF69_MODE_STANDBY);
    receiveBegin();
@@ -347,6 +347,7 @@ void RFM69::interruptHandler() {
     unselect();
 
    IRQ2=rr;
+ //  RX_time=millisTNow();
    receiveMode();
    receivedData(RF69_FRAME_LEN);
      --_lock;

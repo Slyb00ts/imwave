@@ -91,7 +91,6 @@ uint8_t Transceiver::GetData()
 
   if (buffer->Received())
   {
-
   //  ReceiveTime=buffer->RXTime();
 //    DBGINFO("Receive*<");
  //   printTime();
@@ -100,7 +99,6 @@ uint8_t Transceiver::GetData()
   } else{
  //   DBGINFO("+++++");
 //    DBGINFO(buffer->state);
-
     return 0;
   }
 }
@@ -118,7 +116,6 @@ bool Transceiver::Routing(IMFrame & frame)
       DBGERR("ERR Routing");
       return false;
     }
-
 }
 */
 
@@ -126,17 +123,15 @@ bool Transceiver::Routing(IMFrame & frame)
 
 bool Transceiver::GetFrame(IMFrame& frame)
 {
- // if (GetData()) {
-
        frame=buffer->RX_buffer.packet;
-       bool io =( (frame.Header.ReceiverId==myId) ||  (frame.Header.ReceiverId==0));
+       bool io =( (frame.Header.ReceiverId==myId) ||  (frame.Header.ReceiverId==0)||  (frame.Header.DestinationId==0));
        if (!io) {
           DBGERR("Address");
           DBGERR(frame.Header.ReceiverId);
       };
-//       if (io){
+       if (io){
                io= frame.checkCRC();
-//       }
+       }
        if (!io) {
           DBGERR("!!CRC ");
           DBGERR(frame.CRC());
@@ -287,7 +282,6 @@ void Transceiver::PrepareSetup(IMFrameSetup &se)
    se.MAC= myMAC;
    se.MAC2=serverMAC;
    se.salt=_salt;
-//   se.device1= myDevice;
    se.hostchannel=myChannel;
 }
 
@@ -296,7 +290,6 @@ bool Transceiver::Send(IMFrame & frame)
   if(NoRadio) return false;
   Prepare(frame);
   buffer->TX_buffer.packet=frame;
-//  PrepareTransmit();
   DBGINFO("Send<");
 //  printTime();
 //  buffer->printSend();
@@ -376,6 +369,7 @@ void Transceiver::ListenBroadcast()
         return;
      }
    } else {
+       /*
        if ((timer.Cycle() % (TimerKnockCycle))==0){
           if (_cycleshift){  //hello sended
             _cycleshift=0;
@@ -387,6 +381,7 @@ void Transceiver::ListenBroadcast()
             return;
           }
        }
+       */
 
      if (timer.Cycle()>(_KnockCycle+60))   {
          _calibrated=true;
@@ -727,17 +722,17 @@ void Transceiver::setupMode(uint16_t aMode)
     _rateData=1;
   }
   if (xCycle==1) {
-    _rateHello=120;
+    _rateHello=119;
   } else if (xCycle==2)   {
-    _rateHello=300;
+    _rateHello=299;
   } else if (xCycle==3)   {
-    _rateHello=600;
+    _rateHello=599;
   } else if (xCycle==4)   {
-    _rateHello=1200;
+    _rateHello=1199;
   } else if (xCycle==5)   {
-    _rateHello=1200;
+    _rateHello=1199;
   } else {
-    _rateHello=60;
+    _rateHello=59;
   }
 }
 

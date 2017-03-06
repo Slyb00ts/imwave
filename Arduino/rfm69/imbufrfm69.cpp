@@ -86,12 +86,9 @@ void IMBuffer::Read()
 
 bool IMBuffer::TestFrame()
 {
-//      bool io= ((RX_buffer.len>=sizeof(IMFrameHeader)) && (RX_buffer.len<=sizeof(IMFrame)));
       rssiH=radio.RSSI;
       rSize= sizeof(IMFrame);
- //     radio.PAYLOADLEN;
- //     radio.PAYLOADLEN=0;
-        DBGINFO("IRQ ");
+         DBGINFO("IRQ ");
         DBGINFO(radio.IRQ2);
         DBGINFO("=");
       bool io=1;
@@ -101,14 +98,6 @@ bool IMBuffer::TestFrame()
 //        DBGERR("!Size");
 
       }
-      if (io)
-      {
-
-      } else {
-  //      DBGERR("!LEN");
-  //      DBGERR(rSize);
-        return io;
-      }
 //      memcpy(&(radio.DATA),&(RX_buffer.packet),sizeof(IMFrame));
      uint8_t xx=(radio._tail  &0x03)* sizeof(IMFrame);
           radio._tail++;
@@ -116,11 +105,7 @@ bool IMBuffer::TestFrame()
             {
               ((uint8_t*)&RX_buffer.packet)[i]=radio.DATA[xx++];
             }
-
-
-
       return io;
-
 }
 /*
 
