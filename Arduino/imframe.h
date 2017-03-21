@@ -11,6 +11,7 @@
 #define IMF_DATA      0x09
 #define IMF_ORDER     0x0A
 #define IMF_STATUS    0x0B        //internal status
+#define IMF_CONFIG    0x0C        // MAC setup
 #define IMF_REPEAT    0x80
 #define IMF_FORWARD   0x20
 
@@ -175,6 +176,11 @@ typedef struct
         {
           return Header.Function==IMF_ACK;
         }
+        bool CONFIG()
+        {
+          return Header.Function==IMF_CONFIG;
+        }
+
         bool NeedACK()
         {
           return (Header.Function & 0xC0) !=0;

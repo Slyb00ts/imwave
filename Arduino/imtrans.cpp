@@ -36,7 +36,7 @@
   #define knockShift 10
 #endif
 
-#define IMVERSION 11
+#define IMVERSION 12
 
 
 Transceiver* Transceiver::ptr = 0;
@@ -171,6 +171,7 @@ void Transceiver::LoadSetup()
   serverId=imEConfig.serverId;
   myMode=imEConfig.myMode;
   myChannel=imEConfig.myChannel;
+//  myMAC=imEConfig.myMAC;
 }
 
 void Transceiver::StoreSetup(){
@@ -179,6 +180,7 @@ void Transceiver::StoreSetup(){
   imEConfig.myChannel=myChannel;
   imEConfig.serverId=serverId;
   imEConfig.hostId=hostId;
+  imEConfig.MacAddress=myMAC;
   eprom.WriteConfig();
 }
 
@@ -203,7 +205,6 @@ void Transceiver::Deconnect()
 //  _KnockCycle=0;
   BroadcastEnable=false;
 
-  //_knockCycle=timer.clock()-100;
   timer.Watchdog();
   SendKnock(true);
   delaySleepT2(20); //if too short wait : error on serial yyyyy***yyyy
@@ -353,7 +354,7 @@ void Transceiver::ContinueListen()
 }
 void Transceiver::ListenBroadcast()
 {
-   if (timer.Watchdog(1200))  //1hour
+   if (timer.Watchdog(1500))  //1hour
    {
       DBGINFO("WATCHDOG");
       Deconnect();
@@ -383,7 +384,7 @@ void Transceiver::ListenBroadcast()
        }
        */
 
-     if (timer.Cycle()>(_KnockCycle+60))   {
+     if (timer.Cycle()>(_KnockCycle+20))   {
          _calibrated=true;
         Idle();
          return;
@@ -423,7 +424,7 @@ void Transceiver::StopListen()
         _calibrated=false;
       if  (_calibrated )
           Idle();
-      if  (timer.Cycle()>_helloCycle+20) { //after 1min without knock
+      if  (timer.Cycle()>_helloCycle+10) { //after 30s without knock
          _helloCycle=timer.Cycle()+300;  // next 15min waiting
          _calibrated=true;
       }
@@ -481,7 +482,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
            }
 
 
-           _KnockCycle=timer.Cycle();
+           //_KnockCycle=timer.Cycle();
            _salt=sp->salt; //accept new value
            hostRssiListen=buffer->rssiH;
 
@@ -664,6 +665,11 @@ bool Transceiver::Onward(IMFrame & frame)
 
 bool Transceiver::ForwardHello(IMFrame & frame)
 {
+      if (!BroadcastEnable){
+
+              DBGERR("&NOTBCE");
+              return false;
+           }
     IMFrameSetup setup_recv;
     frame.Get(&setup_recv);
     IMAddress a=frame.Header.SenderId;
@@ -746,7 +752,6 @@ void Transceiver::PrepareTransmission()
   t*=8;
   t =t %1000;
    TimerSetup(t);
-//   BroadcastEnable=(setup->mode && IMS_TRANSCEIVER);
    setupMode(myMode);
 }
 
@@ -788,6 +793,25 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
 
    return true;
 }
+
+bool Transceiver::ReceiveConfig(IMFrame & frame)
+{
+   IMFrameSetup * setup =frame.Setup();
+
+
+   if  (setup->MAC!=myMAC) {
+     DBGINFO("*****NOT FORME ");
+     DBGINFO(myMAC);
+      return false;
+   }
+   timer.Watchdog();
+   myMAC=setup->MAC2;
+   StoreSetup();
+   DBGINFO("CONNECT%");
+   StopListenBroadcast(); // no listen until data stage
+   return true;
+}
+
 
 
 
@@ -833,7 +857,7 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
               DBGINFO(" sendHello ");
            }
            DBGINFO(" \r\n");
-           return true;
+           return true;         //send hello and listening
         }
         else if (rxFrame.Hello())
         {
@@ -846,13 +870,21 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
            if (ReceiveWelcome(rxFrame))
            {
               DBGINFO(" Welcome ");
-               return true;
+               return true;         //stop listening
            }
 
         }
+        else if (rxFrame.CONFIG())
+        {
+           if (ReceiveConfig(rxFrame))
+           {
+              DBGINFO("CONFIG");
+              return true;
+           }
+        }
         else if (Onward(rxFrame))
         {
-              DBGINFO(" Onward ");
+              DBGINFO(" Onward ");    //dont stop listening
         }
         else if (rxFrame.ACK())
         {

@@ -124,6 +124,7 @@ public:
 
     IMAddress hostId;
     IMAddress serverId;
+    IMMAC startMAC;
     IMMAC myMAC;
 
     IMMAC hostMAC;
@@ -158,6 +159,7 @@ public:
     bool ReceiveKnock(IMFrame & frame);
     void ReceiveACK(IMFrame & frame);
     bool ReceiveWelcome(IMFrame & frame);
+    bool ReceiveConfig(IMFrame & frame);
     bool ResponseHello(IMFrame & frame);
     bool ForwardHello(IMFrame & frame);
     void SendACK(IMFrame & frame);
