@@ -4,6 +4,7 @@
  */
 
 #include "imatmega.h"
+#include "imdebug.h"
 
 
 volatile t_Time counterTimer2=0;
@@ -229,12 +230,12 @@ void enterSleep(void)
 
 #if defined(__AVR_ATmega328P__)
 void  ShutOffADC(void)
-{
+{   // https://www.gammon.com.au/power
     //https://www.seanet.com/~karllunt/atmegapowerdown.html
     ACSR = (1<<ACD);                        // disable A/D comparator
     ADCSRA = (0<<ADEN);                     // disable A/D converter
 //    DIDR0 = 0x3f;                           // disable all A/D inputs (ADC0-ADC5)
-    DIDR1 = 0x03;                           // disable AIN0 and AIN1
+//    DIDR1 = 0x03;                           // disable AIN0 and AIN1
 }
 
 void  SetupADC(void)
@@ -245,15 +246,17 @@ void  SetupADC(void)
 //    ADCSRA = (1<<ADEN)+7;                     // ADPS2, ADPS1 and ADPS0 prescaler
     ADCSRA = (1<<ADEN)| (1 << ADPS2) |  (1 << ADPS1);                     // ADPS2, ADPS1 and ADPS0 prescaler 64
 //    DIDR0 = 0x00;                           // disable all A/D inputs (ADC0-ADC5)
-    DIDR1 = 0x00;                           // disable AIN0 and AIN1
+//    DIDR1 = 0x00;                           // disable AIN0 and AIN1
 }
 
 
 void disableADCB()
 {
   ShutOffADC();
-  ADCSRA = 0;
+  ADCSRA = 0;                  //disable ADC
    DIDR0 = 0xff;                           // disable all A/D inputs (ADC0-ADC5)
+   DIDR1 = 0x03;                           // disable AIN0 and AIN1
+
    // turn off brown-out enable in software
   MCUCR = bit (BODS) | bit (BODSE);  // turn on brown-out enable select
   MCUCR = bit (BODS);        // this must be done within 4 clock cycles of above
@@ -361,6 +364,8 @@ void stopTimer2(t_Time aTime){
 
 void resetPin()
 {
+  MCUSR = 0;
+  wdt_disable();
  for (byte i=0; i<20; i++) {    //make all pins inputs with pullups enabled
         pinMode(i, INPUT);
         pinMode(i, OUTPUT);
@@ -387,14 +392,40 @@ void reboot(){
 //http://wiblocks.luciani.org/docs/app-notes/software-reset.html
 //nedeed modification of bootloader
   cli();
+  power_timer0_enable();
   wdt_disable();
   do{
-  wdt_enable(WDTO_15MS);
+  wdt_enable(WDTO_60MS);
   delay(100);
   for(;;){};
 //  while (1) {}
   }while(0);
 }
+
+unsigned int sqrt32(unsigned long n)
+{
+//http://www.stm32duino.com/viewtopic.php?t=56
+//http://www.codecodex.com/wiki/Calculate_an_integer_square_root
+unsigned int c = 0x8000;
+unsigned long g = 0x8000;
+
+for(;;) {
+
+     if(g*g > n) {
+          g ^= c;
+     }
+
+     c >>= 1;
+
+     if(c == 0) {
+          return g;
+     }
+
+     g |= c;
+
+     }
+}
+
 
 #define soft_restart()        \
 do                          \

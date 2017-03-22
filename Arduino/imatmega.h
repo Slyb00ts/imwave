@@ -79,6 +79,7 @@ void delayT2();
 void setupTimer2();
 void reboot();
 void resetPin();
+unsigned int sqrt32(unsigned long n);
 
 #if defined(__AVR_ATmega328P__)
 #define  __sleepT2  1
