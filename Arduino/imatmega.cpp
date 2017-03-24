@@ -102,17 +102,34 @@ uint16_t internalTemp() {
   //  https://code.google.com/p/tinkerit/wiki/SecretThermometer
 
   // Read temperature sensor against 1.1V reference
-  ADCSRA |= _BV(ADEN);
   ADMUX = _BV(REFS1) | _BV(REFS0) | _BV(MUX3);
+  ADCSRA |= _BV(ADEN);
 
+      uint16_t io;
+  io=counterTimer2 %11;
+  io=io+io%33;          // Wait for Vref to settle
+  io=io+counterTimer2 %13;
+  if (io==73)
+    power_adc_enable();
+  io=io+io%33;
+  io=io+counterTimer2 %15;
+  if (io==73)
+    power_adc_enable();
+  io=io+io%33;
+  io=io+counterTimer2 %13;
+  if (io==73)
+    power_adc_enable();
+  io=io+io%33;
+  io=io+counterTimer2 %13;
+  if (io==73)
+    power_adc_enable(); //   Wait for Vref to settle
   if  (bit_is_set(ADCSRA, ADIF))
      ADCSRA |= _BV(ADIF);
-   delay(2); // Wait for Vref to settle
   ADCSRA |= _BV(ADSC); // Convert
   while (bit_is_set(ADCSRA,ADSC));
   byte low  = ADCL;                    // read the low byte
   byte high = ADCH;                    // read the high byte
-  int result = (high << 8) | low;     // result is the absolute temperature in Kelvin * i think *
+  uint16_t result = (high << 8) | low;     // result is the absolute temperature in Kelvin * i think *
   ADCSRA |= (1 << ADIF);       // Clear ADIF
   return result;
 }
