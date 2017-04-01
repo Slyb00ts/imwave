@@ -36,7 +36,7 @@
   #define knockShift 10
 #endif
 
-#define IMVERSION 12
+#define IMVERSION 13
 
 
 Transceiver* Transceiver::ptr = 0;
@@ -166,21 +166,21 @@ float Transceiver::RssiSend()
 void Transceiver::LoadSetup()
 {
   eprom.ReadConfig();
-  myId=imEConfig.myId;
-  hostId=imEConfig.hostId;
-  serverId=imEConfig.serverId;
-  myMode=imEConfig.myMode;
-  myChannel=imEConfig.myChannel;
-//  myMAC=imEConfig.myMAC;
+  myId=imEConfig.Id;
+  hostId=imEConfig.HostId;
+  serverId=imEConfig.ServerId;
+  myMode=imEConfig.Mode;
+  myChannel=imEConfig.Channel;
+  myMAC=startMAC+imEConfig.MacLo;
 }
 
 void Transceiver::StoreSetup(){
-  imEConfig.myMode=myMode;
-  imEConfig.myId=myId;
-  imEConfig.myChannel=myChannel;
-  imEConfig.serverId=serverId;
-  imEConfig.hostId=hostId;
-  imEConfig.MacAddress=myMAC;
+  imEConfig.Mode=myMode;
+  imEConfig.Id=myId;
+  imEConfig.Channel=myChannel;
+  imEConfig.ServerId=serverId;
+  imEConfig.HostId=hostId;
+  imEConfig.MacLo=myMacLo;
   eprom.WriteConfig();
 }
 
@@ -590,7 +590,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
 
    _frame.Reset();
    _frame.Header.SourceId=myId;   //if not registerred then myId==0
-   _frame.Header.Function=IMF_HELLO ;
+   _frame.Header.Function=IMF_HELLO;
    _frame.Header.ReceiverId=frame.Header.SenderId;
    _frame.Header.DestinationId=frame.Header.SourceId;
    _frame.Header.Sequence=frame.Header.Sequence;
@@ -750,7 +750,7 @@ void Transceiver::PrepareTransmission()
    _calibrateshift=0;
   t_Time t=myId;
   t*=8;
-  t =t %1000;
+ // t =t %1000;
    TimerSetup(t);
    setupMode(myMode);
 }
@@ -772,6 +772,7 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    }
    timer.Watchdog();
    serverId=frame.Header.SourceId;
+   hostId=frame.Header.SenderId;
    myId=setup->address;
    myChannel=setup->slavechannel;
    myMode=setup->mode;
@@ -805,9 +806,18 @@ bool Transceiver::ReceiveConfig(IMFrame & frame)
       return false;
    }
    timer.Watchdog();
-   myMAC=setup->MAC2;
+   myMacLo=setup->MAC2;
+   myMAC=startMAC+myMacLo;
    StoreSetup();
    DBGINFO("CONNECT%");
+   buffer->setChannel(HostChannel);
+   frame.Header.Function = IMF_HELLO;
+   frame.Header.SourceId=myId;
+   frame.Header.ReceiverId=hostId;
+   frame.Header.DestinationId=serverId;
+   frame.Header.Sequence = seqnr++;
+   return Send(frame);
+
    StopListenBroadcast(); // no listen until data stage
    return true;
 }

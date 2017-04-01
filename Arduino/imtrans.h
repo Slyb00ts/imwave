@@ -129,6 +129,7 @@ public:
 
     IMMAC hostMAC;
     IMMAC serverMAC;
+    uint16_t myMacLo;
     byte myDevice;
     byte HostChannel;
     byte BroadcastChannel;

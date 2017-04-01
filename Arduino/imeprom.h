@@ -1,6 +1,6 @@
 //
 //    FILE: imeeprom.h
-// VERSION: 0.1.00
+// VERSION: 0.2.00
 // PURPOSE: EEPROM Read/Write for Arduino
 
 //
@@ -15,13 +15,16 @@
 
 static struct IMEConfig
 {
-	uint32_t MacAddress;
-        uint16_t myMode;
-        uint8_t myId;
-        uint8_t hostId;
-        uint8_t serverId;
-        uint8_t myChannel;
-        uint8_t myBroadcast;
+	uint16_t MacLo;
+        uint16_t MacHigh;
+        uint16_t Mode;
+        uint8_t Id;
+        uint8_t HostId;
+        uint8_t ServerId;
+        uint8_t Channel;
+        uint8_t Broadcast;
+        uint8_t Power;
+        uint8_t Future;
 
 }imEConfig;
 
