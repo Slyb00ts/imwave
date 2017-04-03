@@ -16,6 +16,7 @@
 #define IMF_FORWARD   0x20
 
 #define IMS_TRANSCEIVER 0x8000
+#define IMS_STEERING 0x4000
 #define _frameSize  32
 
 typedef uint8_t IMAddress;

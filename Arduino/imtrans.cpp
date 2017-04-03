@@ -36,8 +36,18 @@
   #define knockShift 10
 #endif
 
-#define IMVERSION 13
+#define IMVERSION 14
 
+#define DBGSLEEP 1
+
+#if DBGSLEEP>0
+   #define DBGPINWAKEUP() PORTD|=(B00000010)
+   #define DBGPINSLEEP()  PORTD&=~(B00000010)
+#else
+  #define DBGPINSLEEP(x) do{}while(0)
+  #define DBGPINWAKEUP(x) do{}while(0)
+
+#endif
 
 Transceiver* Transceiver::ptr = 0;
 
@@ -67,6 +77,7 @@ void Transceiver::Init(IMBuffer & buf)
   buffer->setFunction(&timer.doneReceived);
   TimerSetup(0);
   Deconnect();
+//  startMAC=myMAC;
   LoadSetup();
   PrepareTransmission();
 }
@@ -165,13 +176,17 @@ float Transceiver::RssiSend()
 
 void Transceiver::LoadSetup()
 {
+
   eprom.ReadConfig();
   myId=imEConfig.Id;
   hostId=imEConfig.HostId;
   serverId=imEConfig.ServerId;
   myMode=imEConfig.Mode;
   myChannel=imEConfig.Channel;
-  myMAC=startMAC+imEConfig.MacLo;
+  myMacLo=imEConfig.MacLo;
+  myMAC=(startMAC & 0xffff0000L )  | myMacLo;
+
+  //myMAC=startMAC+imEConfig.MacLo;
 }
 
 void Transceiver::StoreSetup(){
@@ -204,6 +219,7 @@ void Transceiver::Deconnect()
   router.addMAC(myMAC,0xFF);
 //  _KnockCycle=0;
   BroadcastEnable=false;
+  SteeringEnable=true;
 
   timer.Watchdog();
   SendKnock(true);
@@ -324,10 +340,13 @@ void Transceiver::Idle()
 {
    if (!_inSleep){
      _inSleep=true;
+     if (!SteeringEnable){
      buffer->Sleep();
      timer.setStage(IMTimer::IDDLESTAGE);
      power_spi_disable();
-  //   DBGPINLOW();
+     DBGPINSLEEP();
+     }
+     DBGPINLOW();
      DBGINFO("idle");
    }
 }
@@ -338,7 +357,8 @@ void Transceiver::Wakeup()
     _inSleep=false;
     power_spi_enable();
     buffer->Wakeup();
-//    DBGPINHIGH();
+    DBGPINHIGH();
+    DBGPINWAKEUP();
     DBGINFO("wakeup");
   }
 }
@@ -350,8 +370,8 @@ void Transceiver::ContinueListen()
         ListenData();
      else
         DoListenBroadcast();
-
 }
+
 void Transceiver::ListenBroadcast()
 {
    if (timer.Watchdog(1500))  //1hour
@@ -385,8 +405,11 @@ void Transceiver::ListenBroadcast()
        */
 
      if (timer.Cycle()>(_KnockCycle+20))   {
+         if (!_calibrated)
+              SendKnock(true);
          _calibrated=true;
-        Idle();
+      //   if (!SeetingEnable)
+             Idle();
          return;
      }
      if ((timer.Cycle() & 0x4) ==0)
@@ -407,7 +430,7 @@ void Transceiver::DoListenBroadcast()
 
 void Transceiver::ListenData()
 {
-   if (BroadcastEnable){
+   if (BroadcastEnable || SteeringEnable ){
       Wakeup();
       buffer->setChannel(myChannel);
       timer.setStage(LISTENDATA);
@@ -419,6 +442,7 @@ void Transceiver::ListenData()
 
 void Transceiver::StopListen()
 {
+   if (SteeringEnable) return;
    if (Connected()){
       if       (timer.Cycle()>(_helloCycle+10))  //check 30s
         _calibrated=false;
@@ -441,7 +465,7 @@ void Transceiver::StopListen()
 
 void Transceiver::StopListenBroadcast()
 {
-   if ( _calibrated) //check 3min
+   if ( _calibrated  ) //check 3min
     {
      Idle();
 //     timer.setStage(IMTimer::IDDLESTAGE);
@@ -565,7 +589,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
      if (timer.Cycle()<_helloCycle)
        return false;
      xr=random(60);
-     _helloCycle=timer.Cycle() +(xr & 1);
+     _helloCycle=timer.Cycle() +(xr & 0x1);
 
    }
    DBGINFO("[[");
@@ -581,7 +605,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    myHop=sp->address;
    myHop++;
   // _cycleshift=1;
-   hostId=frame.Header.SourceId;
+   hostId=frame.Header.SenderId;
    HostChannel=sp->hostchannel;
 
    buffer->setChannel(HostChannel);
@@ -712,7 +736,8 @@ bool Transceiver::BackwardWelcome(IMFrame & frame)
 
 void Transceiver::setupMode(uint16_t aMode)
 {
-  BroadcastEnable=(aMode & IMS_TRANSCEIVER);
+  BroadcastEnable=(aMode & IMS_TRANSCEIVER)!=0;
+  SteeringEnable=(aMode & IMS_STEERING)!=0;
   uint8_t xCycle= aMode & 0xFF;
   if (xCycle==1) {
     _rateData=3;
@@ -764,6 +789,7 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
 //   DBGINFO(setup->MAC);
 //   DBGINFO(":");
 //   DBGINFO(setup->MAC2);
+   DBGLEDON();
    if  (setup->MAC!=myMAC) {
      DBGINFO("*****NOT FORME ");
      DBGINFO(myMAC);
@@ -791,35 +817,48 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    DBGINFO(myId);
    DBGINFO("CONNECT%");
    StopListenBroadcast(); // no listen until data stage
-
+   DBGLEDOFF();
    return true;
 }
 
 bool Transceiver::ReceiveConfig(IMFrame & frame)
 {
    IMFrameSetup * setup =frame.Setup();
-
+  digitalWrite(9,HIGH);
 
    if  (setup->MAC!=myMAC) {
      DBGINFO("*****NOT FORME ");
      DBGINFO(myMAC);
       return false;
    }
-   timer.Watchdog();
-   myMacLo=setup->MAC2;
-   myMAC=startMAC+myMacLo;
-   StoreSetup();
-   DBGINFO("CONNECT%");
-   buffer->setChannel(HostChannel);
-   frame.Header.Function = IMF_HELLO;
-   frame.Header.SourceId=myId;
-   frame.Header.ReceiverId=hostId;
-   frame.Header.DestinationId=serverId;
-   frame.Header.Sequence = seqnr++;
-   return Send(frame);
 
-   StopListenBroadcast(); // no listen until data stage
+
+
+   timer.Watchdog();
+   myMacLo=setup->MAC2 & 0xffff;
+   myMAC=(startMAC & 0xffff0000L )  | myMacLo;
+   StoreSetup();
+   DBGINFO("CONFIG%");
+   buffer->setChannel(HostChannel);
+      IMFrame _frame;
+        IMFrameSetup * _setup=_frame.Setup();
+
+
+   _frame.Header.Function = IMF_HELLO;
+   _frame.Header.SourceId=myId;
+   _frame.Header.ReceiverId=frame.Header.SenderId;
+   _frame.Header.DestinationId=frame.Header.SourceId;
+   _frame.Header.Sequence=frame.Header.Sequence;
+   _setup->MAC= myMAC;
+   _setup->MAC2=serverMAC;
+
+
+   Send(_frame);
+   Deconnect();
    return true;
+
+  // DoListenBroadcast(); // no listen until data stage
+  // return true;
 }
 
 
@@ -889,7 +928,7 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
            if (ReceiveConfig(rxFrame))
            {
               DBGINFO("CONFIG");
-              return true;
+              return false;
            }
         }
         else if (Onward(rxFrame))
