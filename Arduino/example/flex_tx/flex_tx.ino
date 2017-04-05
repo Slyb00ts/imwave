@@ -1,9 +1,7 @@
 #include <Wire.h>
 #include <avr/power.h>
 #include <imframe.h>
-#include <imcc1101.h>
-#include <imsht.h>
-#include <imcharger.h>
+#include "imcc1101.h"
 
 #define PinAkku A2
 #define EnableI2C A3
@@ -12,10 +10,8 @@
 #define EnableAkku A1
 #define EnableRS485 5
 
-IMCharger	imCharger;
 IMCC1101	imCC1101;
-IMSht2x		imSht2x;
-
+long _temp=0;
 typedef struct {
 	float temperature;
 	float humidity;
@@ -34,12 +30,11 @@ void setup()
 	digitalWrite(EnableI2C, HIGH);
 	//digitalWrite(EnableRS485, LOW);
 
-	imCharger.Init();
 	imCC1101.Init();
 }
 
 void loop()
-{
+{  _temp++;
 	IMFrame imFrame;
 	IMFrameBody imFrameBody;
 	byte TX_buffer[61] = { 0 };
@@ -47,8 +42,7 @@ void loop()
 	imFrame.Header.SourceId = 100;
 	imFrame.Header.Function = 1;
 	imFrame.Header.DestinationId = 1;	
-	imFrameBody.temperature = imSht2x.GetTemperature();
-	imFrameBody.humidity = imSht2x.GetHumidity();
+	imFrameBody.temperature = _temp;
 
 	memcpy(imFrame.Body, &imFrameBody, sizeof(imFrameBody));
 	memcpy(TX_buffer, &imFrame, sizeof(imFrame));

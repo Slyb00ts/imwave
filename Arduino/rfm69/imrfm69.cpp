@@ -73,6 +73,7 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
 
     ///* 0x13 */ { REG_OCP, RF_OCP_ON | RF_OCP_TRIM_95  }, // over current protection (default is 95mA)
     ///* 0x18 */ { REG_LNA, RF_LNA_ZIN_50| RF_LNA_GAINSELECT_MAX  },
+  /* 0x18 */ { REG_LNA, RF_LNA_ZIN_50| RF_LNA_GAINSELECT_AUTO  },
 
     // RXBW defaults are { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_24 | RF_RXBW_EXP_5} (RxBw: 10.4KHz)
     /* 0x19 */ { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_16 | RF_RXBW_EXP_2 }, // (BitRate < 2 * RxBw)
@@ -108,7 +109,7 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   SPI.setClockDivider(SPI_CLOCK_DIV4); // decided to slow down from DIV2 after SPI stalling in some instances, especially visible on mega1284p when RFM69 and FLASH chip both present
   _lock=0;
   unsigned long start = millis();
-  uint8_t timeout = 150;
+  long timeout = 150;
   do writeReg(REG_SYNCVALUE1, 0xAA); while (readReg(REG_SYNCVALUE1) != 0xaa && millis()-start < timeout);
   start = millis();
   do writeReg(REG_SYNCVALUE1, 0x55); while (readReg(REG_SYNCVALUE1) != 0x55 && millis()-start < timeout);
@@ -119,7 +120,7 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   // Encryption is persistent between resets and can trip you up during debugging.
   // Disable it during initialization so we always start from a known state.
   encrypt(0);
- // setHighPower(true); // called regardless if it's a RFM69W or RFM69HW
+  setHighPower(true); // called regardless if it's a RFM69W or RFM69HW
 
 //  setHighPower(_isRFM69HW); // called regardless if it's a RFM69W or RFM69HW
   setMode(RF69_MODE_STANDBY);
@@ -219,7 +220,7 @@ void RFM69::idle() {
 //set this node's address
 void RFM69::setAddress(uint8_t addr)
 {
-  _address = addr;
+//  _address = addr;
   writeReg(REG_NODEADRS, _address);
 }
 
@@ -238,9 +239,9 @@ void RFM69::setNetwork(uint8_t networkID)
 //       - for RFM69HW the range is from 0-31 [5dBm to 20dBm]  (PA1 & PA2 on PA_BOOST pin & high Power PA settings - see section 3.3.7 in datasheet, p22)
 void RFM69::setPowerLevel(uint8_t powerLevel)
 {
-  _powerLevel = (powerLevel > 31 ? 31 : powerLevel);
-  if (_isRFM69HW) _powerLevel /= 2;
-  writeReg(REG_PALEVEL, (readReg(REG_PALEVEL) & 0xE0) | _powerLevel);
+//  _powerLevel = (powerLevel > 31 ? 31 : powerLevel);
+//  if (_isRFM69HW) _powerLevel /= 2;
+  writeReg(REG_PALEVEL, (readReg(REG_PALEVEL) & 0xE0) | powerLevel);
 }
 
 bool RFM69::canSend()
@@ -283,10 +284,10 @@ bool RFM69::send( const void* buffer, uint8_t bufferSize)
 void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize)
 {
   setMode(RF69_MODE_STANDBY); // turn off receiver to prevent reception while filling fifo
-  uint32_t ttt=0;
-  while (((readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00) &&(ttt<1000)) {++ttt;}; // wait for ModeReady
+  uint16_t ttt=0;
+  while (((readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00) &&(ttt<2000)) {++ttt;}; // wait for ModeReady
   writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_00); // DIO0 is "Packet Sent"
-  if (bufferSize > RF69_MAX_DATA_LEN) bufferSize = RF69_MAX_DATA_LEN;
+//  if (bufferSize > RF69_MAX_DATA_LEN) bufferSize = RF69_MAX_DATA_LEN;
 
   // write to FIFO
   select();
@@ -442,7 +443,7 @@ int16_t RFM69::readRSSI(bool forceTrigger) {
     while ((readReg(REG_RSSICONFIG) & RF_RSSI_DONE) == 0x00); // wait for RSSI_Ready
   }
   rssi = readReg(REG_RSSIVALUE);
-  if (rssi=255){
+  if (rssi==255){
 //    while ((readReg(REG_RSSICONFIG) & RF_RSSI_DONE) == 0x00); // wait for RSSI_Ready
     rssi = readReg(REG_RSSIVALUE);
   }
@@ -497,12 +498,21 @@ void RFM69::promiscuous(bool onOff) {
 
 // for RFM69HW only: you must call setHighPower(true) after initialize() or else transmission won't work
 void RFM69::setHighPower(bool onOff) {
-  _isRFM69HW = onOff;
-  writeReg(REG_OCP, _isRFM69HW ? RF_OCP_OFF : RF_OCP_ON);
-  if (_isRFM69HW) // turning ON
-    writeReg(REG_PALEVEL, (readReg(REG_PALEVEL) & 0x1F) | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_ON); // enable P1 & P2 amplifier stages
+  _isRFM69HW = true;
+//  writeReg(REG_OCP, _isRFM69HW ? RF_OCP_OFF : RF_OCP_ON);
+  //writeReg(REG_OCP, RF_OCP_ON | RF_OCP_TRIM_95 );
+  if (onOff) // turning ON
+  //    {REG_PALEVEL, RF_PALEVEL_PA0_OFF | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_ON  | RF_PALEVEL_OUTPUTPOWER_11111}, // enable P1 & P2 amplifier stages
+
+//    writeReg(REG_PALEVEL, (readReg(REG_PALEVEL) & 0x1F) | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_ON); // enable P1 & P2 amplifier stages
+    writeReg(REG_PALEVEL, RF_PALEVEL_PA0_OFF | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_OFF  | RF_PALEVEL_OUTPUTPOWER_10111); // enable P1 & P2 amplifier stages
   else
-    writeReg(REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | _powerLevel); // enable P0 only
+    writeReg(REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | 28); // enable P0 only
+
+//  /* 0x07 */ writeReg( REG_FRFMSB, 0xD9);
+//    /* 0x08 */ writeReg( REG_FRFMID, 0x70);
+ //   /* 0x09 */ writeReg( REG_FRFLSB, 0x10 );
+//   setHighPowerRegs(onOff);
 }
 
 // internal function

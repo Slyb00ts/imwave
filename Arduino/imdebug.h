@@ -8,7 +8,7 @@
 #define imDebug_h
 
 #define DBGLVL 0
-#define DBGLED 0
+#define DBGLED 9
 #define DBGPIN 5
 #define DBGCLOCK 6
 
@@ -23,13 +23,15 @@
 
 
 //Used for error signaling (ON when restransmitting, OFF on receive success)
-#define ERRLEDON() digitalWrite(ERRLEDNO,HIGH)
-#define ERRLEDOFF() digitalWrite(ERRLEDNO,LOW)
 #define ERRLEDINIT() pinMode(ERRLEDNO, OUTPUT)
 #if DBGLED>=1
+  #define DBGLEDON() digitalWrite(DBGLED,HIGH)
+  #define DBGLEDOFF() digitalWrite(DBGLED,LOW)
   #define ERRFLASH() ERRLEDON(); delay(50);  ERRLEDOFF();
 #else
-  #define ERRFLASH(x) do{}while(0)
+  #define ERRFLASHA(x) do{}while(0)
+  #define DBGLEDON(x) do{}while(0)
+  #define DBGLEDOFF(x) do{}while(0)
 #endif
 
 #if DBGPIN>0

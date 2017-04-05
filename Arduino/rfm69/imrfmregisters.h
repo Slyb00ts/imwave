@@ -949,7 +949,7 @@
 
 // RegPreamble
 #define RF_PREAMBLESIZE_MSB_VALUE         0x00  // Default
-#define RF_PREAMBLESIZE_LSB_VALUE         0x08  // Default
+#define RF_PREAMBLESIZE_LSB_VALUE         0x04  // Default
 
 
 // RegSyncConfig

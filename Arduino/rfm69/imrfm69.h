@@ -109,8 +109,8 @@ class RFM69 {
 //      _interruptNum = interruptNum;
       _mode = RF69_MODE_STANDBY;
       _promiscuousMode = false;
-      _powerLevel = 28;
-      _isRFM69HW = isRFM69HW;
+ //     _powerLevel = 28;
+      _isRFM69HW = false;
       receivedData=&receivedDataNull;
     }
 
@@ -151,7 +151,7 @@ class RFM69 {
     uint8_t _interruptPin;
     uint8_t _address;
     bool _promiscuousMode;
-    uint8_t _powerLevel;
+  //  uint8_t _powerLevel;
     bool _isRFM69HW;
 //    uint8_t _SPCR;
 //    uint8_t _SPSR;
