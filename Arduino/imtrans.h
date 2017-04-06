@@ -72,6 +72,7 @@ private:
     byte _connected;
     bool _calibrated;
     bool _inSleep;
+    bool _doSleep;
 
     t_Time ReceiveTime;
     long _helloCycle;
@@ -79,9 +80,10 @@ private:
     byte myHop;
     byte myChannel;
     IMAddress myId;
-    byte myMode;
+    uint16_t myMode;
     uint16_t _salt;
     uint16_t _calibrateshift;
+    uint16_t _broadcastshift;
   //  uint16_t _calibrate;
     uint16_t _rateData;
     uint16_t _rateHello;
@@ -130,11 +132,14 @@ public:
     IMMAC hostMAC;
     IMMAC serverMAC;
     uint16_t myMacLo;
+    uint16_t dataw3;
+    uint16_t dataw4;
     byte myDevice;
     byte HostChannel;
     byte BroadcastChannel;
     bool NoRadio;
     bool BroadcastEnable;
+    bool SteeringEnable;
 //    funTransceiver onEvent;
 //    void Init(IMCC1101 & cc);
     void Init(IMBuffer & buf);
@@ -155,6 +160,7 @@ public:
     void StopListenBroadcast();
     bool ParseFrame(IMFrame & rxFrame);
     void Transmit();
+    uint16_t Deviation();
 
 
     bool ReceiveKnock(IMFrame & frame);
@@ -174,8 +180,6 @@ public:
     bool CycleDataPrev();
     float Rssi(byte h); //compute Rssi from byte
     float Rssi(); //return last Rssi
-    float RssiListen();
-    float RssiSend();
     void DisableWatchdog();
     static short ClassTest();
 

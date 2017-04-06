@@ -36,7 +36,7 @@
   #define knockShift 10
 #endif
 
-#define IMVERSION 14
+#define IMVERSION 15
 
 #define DBGSLEEP 1
 
@@ -61,9 +61,11 @@ Transceiver::Transceiver()
   BroadcastChannel=0;
 //  _calibrate=0;
   _calibrated=false;
+  _doSleep=false;
   _rateData=3;
   _rateHello=20;
   _calibrateshift=0;
+  _broadcastshift=0;
   TimerSetupAll();
 }
 
@@ -164,14 +166,6 @@ float Transceiver::Rssi()
 {
    return Rssi(buffer->rssiH);
 }
-float Transceiver::RssiListen()
-{
-   return Rssi(hostRssiListen);
-}
-float Transceiver::RssiSend()
-{
-   return Rssi(hostRssiSend);
-}
 
 
 void Transceiver::LoadSetup()
@@ -202,6 +196,7 @@ void Transceiver::StoreSetup(){
 void Transceiver::Deconnect()
 {
   _connected=false;
+  _doSleep=false;
   _salt=1;
 //  myId=0;
 //  hostId=0;
@@ -217,7 +212,6 @@ void Transceiver::Deconnect()
   _inSleep=true;
   router.reset();
   router.addMAC(myMAC,0xFF);
-//  _KnockCycle=0;
   BroadcastEnable=false;
   SteeringEnable=true;
 
@@ -380,14 +374,21 @@ void Transceiver::ListenBroadcast()
       Deconnect();
       buffer->Reboot();
    }
-
+   if (SteeringEnable){
+     Wakeup();
+     DoListenBroadcast();
+     return;
+   }
    if (Connected()){
      if (timer.Cycle()<_helloCycle)
        return;
-     if (timer.Cycle()==(_helloCycle+10)){
+     if (timer.Cycle()>(_helloCycle+10)){
+        if (_doSleep){
         SendKnock(true);
-        DoListenBroadcast();
-        return;
+        _doSleep=false;
+        }
+    //    DoListenBroadcast();
+    //    return;
      }
    } else {
        /*
@@ -405,15 +406,18 @@ void Transceiver::ListenBroadcast()
        */
 
      if (timer.Cycle()>(_KnockCycle+20))   {
-         if (!_calibrated)
+         if (!_doSleep){
               SendKnock(true);
-         _calibrated=true;
+              _doSleep=true;
+              _calibrated=true;
+           }
+       //  _calibrated=true;
       //   if (!SeetingEnable)
-             Idle();
+     //        Idle();
          return;
      }
-     if ((timer.Cycle() & 0x4) ==0)
-       return;
+  //   if ((timer.Cycle() & 0x4) ==0)
+  //     return;
    }
    DBGINFO("listenBroad ");
    DBGINFO(_KnockCycle);
@@ -444,28 +448,32 @@ void Transceiver::StopListen()
 {
    if (SteeringEnable) return;
    if (Connected()){
-      if       (timer.Cycle()>(_helloCycle+10))  //check 30s
-        _calibrated=false;
-      if  (_calibrated )
-          Idle();
-      if  (timer.Cycle()>_helloCycle+10) { //after 30s without knock
+//      if       (timer.Cycle()>(_helloCycle+10))  //check 30s
+//        _doSleep=false;
+//      if  (_doSleep )
+//          Idle();
+      if  (timer.Cycle()>_helloCycle+15) { //after 45s without knock
          _helloCycle=timer.Cycle()+300;  // next 15min waiting
+         _KnockCycle=timer.Cycle();
+         _connected=false;
          _calibrated=true;
+         _doSleep=true;
       }
 
    } else {
-     if (timer.Cycle() >(_KnockCycle+300)){   // check 15 min
+     if (timer.Cycle() >(_KnockCycle+300)){   // after  15 min    check Knock
         DBGINFO("StopListen");
         _KnockCycle=timer.Cycle();
         _calibrated=false;
-//        Idle();
+        _doSleep=false;
      }
    }
+   StopListenBroadcast();
 }
 
 void Transceiver::StopListenBroadcast()
 {
-   if ( _calibrated  ) //check 3min
+   if ( _doSleep && _calibrated ) //check 3min
     {
      Idle();
 //     timer.setStage(IMTimer::IDDLESTAGE);
@@ -481,6 +489,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                 if (sp->salt!=_salt){   //host reboot
                   // Deconnect();
                     _helloCycle=timer.Cycle();
+                    _doSleep=false;
                    DBGINFO("HOST REBOOT");
                 } else {
  //                  timer.Calibrate(millis()-BroadcastDelay-100);
@@ -496,7 +505,9 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
           //     if ((timer.Cycle() %6)==0)
                 timer.Calibrate(millisTNow()-BroadcastDelay-knockShift);
                 _calibrated=true;
-              DBGPINLOW();
+                dataw3=millisTNow() %3072L;
+                dataw4=TCNT2;
+     //         DBGPINLOW();
              //  return false;
            }
 
@@ -532,7 +543,11 @@ bool Transceiver::SendKnock(bool invalid)
    setup->address=myHop;
    if (invalid){
      setup->salt=0;
-     setup->mode=IMVERSION;
+     setup->mode=myMode;
+     setup->hostchannel=IMVERSION;
+     setup->slavechannel=ksequence;
+
+
    }
    return Send(_frame);
 }
@@ -574,7 +589,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    DBGINFO(_helloCycle);
    DBGINFO(")) ");
 //   _knocked++;
-   byte xr;
+   byte xr=random(100);
    if (Connected()){
      //if (_knocked % (TimerHelloCycle*_cycledata))  {
          if (timer.Cycle()<_helloCycle) {    //last call hasn't success
@@ -583,13 +598,13 @@ bool Transceiver::ResponseHello(IMFrame & frame)
            return false;
          }
      //}
-     _helloCycle=timer.Cycle() +3;  //if not success bypass cycle
-     xr=random(100)+60;
+//     _helloCycle=timer.Cycle() +3;  //if not success bypass cycle
+     xr+=60;
    } else {
      if (timer.Cycle()<_helloCycle)
        return false;
-     xr=random(60);
-     _helloCycle=timer.Cycle() +(xr & 0x1);
+    // xr=random(60);
+  //   _helloCycle=timer.Cycle() +(xr & 0x1);
 
    }
    DBGINFO("[[");
@@ -620,7 +635,8 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    _frame.Header.Sequence=frame.Header.Sequence;
    PrepareSetup(*setup);
     setup->rssi=hostRssiListen;
-    setup->mode=IMVERSION;
+    setup->mode=myMode;
+    setup->hostchannel=IMVERSION;
     setup->slavechannel=hsequence++;
 
    Send(_frame);
@@ -765,6 +781,8 @@ void Transceiver::setupMode(uint16_t aMode)
   } else {
     _rateHello=59;
   }
+  _broadcastshift=0;
+  if (BroadcastEnable)_broadcastshift=100;
 }
 
 void Transceiver::PrepareTransmission()
@@ -808,6 +826,7 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
       _cycleshift=(timer.Cycle()+myId) % _rateData; //only on first connection
 
    _connected=1;
+   _doSleep=true;
    _helloCycle=timer.Cycle()+_rateHello;//setup next Hello
   StoreSetup();
    if (myHop==2) {
@@ -1033,6 +1052,10 @@ void Transceiver::Rupture()
 //       timer.doneListen();
 }
 
+uint16_t Transceiver::Deviation()
+{
+  return timer.DeviationPlus;
+}
 
 
 #if defined(__AVR_ATmega32U4__)
