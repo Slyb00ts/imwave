@@ -178,8 +178,9 @@ void Transceiver::LoadSetup()
   myMode=imEConfig.Mode;
   myChannel=imEConfig.Channel;
   myMacLo=imEConfig.MacLo;
-  myMAC=(startMAC & 0xffff0000L )  | myMacLo;
-
+  if (startMAC!=0){
+    myMAC=(startMAC & 0xffff0000L )  | myMacLo;
+  }
   //myMAC=startMAC+imEConfig.MacLo;
 }
 
@@ -501,9 +502,10 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                         }
                         return false;
               }
-              DBGPINHIGH();
+     //         DBGPINHIGH();
           //     if ((timer.Cycle() %6)==0)
-                timer.Calibrate(millisTNow()-BroadcastDelay-knockShift);
+                timer.Calibrate(millisTNow()-BroadcastDelay-knockShift-_broadcastshift);
+          //      time.DeviationPlus=del;
                 _calibrated=true;
                 dataw3=millisTNow() %3072L;
                 dataw4=TCNT2;
@@ -546,8 +548,6 @@ bool Transceiver::SendKnock(bool invalid)
      setup->mode=myMode;
      setup->hostchannel=IMVERSION;
      setup->slavechannel=ksequence;
-
-
    }
    return Send(_frame);
 }
@@ -564,6 +564,8 @@ void Transceiver::Knock()
 //            return;
           }
   //        ListenData();
+      } else {
+         ListenBroadcast();
       }
 //      StopListenBroadcast();
 //   } else {
@@ -755,6 +757,7 @@ void Transceiver::setupMode(uint16_t aMode)
   BroadcastEnable=(aMode & IMS_TRANSCEIVER)!=0;
   SteeringEnable=(aMode & IMS_STEERING)!=0;
   uint8_t xCycle= aMode & 0xFF;
+  _broadcastshift=0;
   if (xCycle==1) {
     _rateData=3;
   } else if (xCycle==2)   {
@@ -769,19 +772,21 @@ void Transceiver::setupMode(uint16_t aMode)
     _rateData=1;
   }
   if (xCycle==1) {
-    _rateHello=119;
+    _rateHello=180;
   } else if (xCycle==2)   {
-    _rateHello=299;
+    _rateHello=360;
+    _broadcastshift=10;
   } else if (xCycle==3)   {
     _rateHello=599;
+    _broadcastshift=20;
   } else if (xCycle==4)   {
     _rateHello=1199;
   } else if (xCycle==5)   {
     _rateHello=1199;
   } else {
     _rateHello=59;
+//    _rateHello=3;
   }
-  _broadcastshift=0;
   if (BroadcastEnable)_broadcastshift=100;
 }
 
