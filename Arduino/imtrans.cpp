@@ -38,7 +38,7 @@
 
 #define IMVERSION 15
 
-#define DBGSLEEP 1
+#define DBGSLEEP 0
 
 #if DBGSLEEP>0
    #define DBGPINWAKEUP() PORTD|=(B00000010)
@@ -142,7 +142,8 @@ bool Transceiver::GetFrame(IMFrame& frame)
           DBGERR("Address");
           DBGERR(frame.Header.ReceiverId);
       };
-       if (io){
+       if (io)
+       {
                io= frame.checkCRC();
        }
        if (!io) {
@@ -170,7 +171,6 @@ float Transceiver::Rssi()
 
 void Transceiver::LoadSetup()
 {
-
   eprom.ReadConfig();
   myId=imEConfig.Id;
   hostId=imEConfig.HostId;
@@ -178,13 +178,15 @@ void Transceiver::LoadSetup()
   myMode=imEConfig.Mode;
   myChannel=imEConfig.Channel;
   myMacLo=imEConfig.MacLo;
-  if (startMAC!=0){
+  if (startMAC!=0)
+  {
     myMAC=(startMAC & 0xffff0000L )  | myMacLo;
   }
   //myMAC=startMAC+imEConfig.MacLo;
 }
 
-void Transceiver::StoreSetup(){
+void Transceiver::StoreSetup()
+{
   imEConfig.Mode=myMode;
   imEConfig.Id=myId;
   imEConfig.Channel=myChannel;
@@ -206,7 +208,6 @@ void Transceiver::Deconnect()
   _cycleshift=0;
   _calibrated=false;
 
-//  _knocked=0;
   _helloCycle=0;   //on Deconnect reset skipping
   _KnockCycle=timer.Cycle();
   myChannel=0;
@@ -333,26 +334,26 @@ void Transceiver::Transmit()
 
 void Transceiver::Idle()
 {
-   if (!_inSleep){
+   if (!_inSleep)
+   {
      _inSleep=true;
      if (!SteeringEnable){
-     buffer->Sleep();
-     timer.setStage(IMTimer::IDDLESTAGE);
-     power_spi_disable();
-     DBGPINSLEEP();
+       buffer->Sleep();
+       timer.setStage(IMTimer::IDDLESTAGE);
+       power_spi_disable();
+       DBGPINSLEEP();
      }
-     DBGPINLOW();
      DBGINFO("idle");
    }
 }
 
 void Transceiver::Wakeup()
 {
-  if (_inSleep){
+  if (_inSleep)
+  {
     _inSleep=false;
     power_spi_enable();
     buffer->Wakeup();
-    DBGPINHIGH();
     DBGPINWAKEUP();
     DBGINFO("wakeup");
   }
@@ -375,12 +376,14 @@ void Transceiver::ListenBroadcast()
       Deconnect();
       buffer->Reboot();
    }
-   if (SteeringEnable){
+   if (SteeringEnable)
+   {
      Wakeup();
      DoListenBroadcast();
      return;
    }
-   if (Connected()){
+   if (Connected())
+   {
      if (timer.Cycle()<_helloCycle)
        return;
      if (timer.Cycle()>(_helloCycle+10)){
@@ -407,14 +410,12 @@ void Transceiver::ListenBroadcast()
        */
 
      if (timer.Cycle()>(_KnockCycle+20))   {
-         if (!_doSleep){
+         if (!_doSleep)
+         {
               SendKnock(true);
               _doSleep=true;
               _calibrated=true;
-           }
-       //  _calibrated=true;
-      //   if (!SeetingEnable)
-     //        Idle();
+         }
          return;
      }
   //   if ((timer.Cycle() & 0x4) ==0)
@@ -493,7 +494,6 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                     _doSleep=false;
                    DBGINFO("HOST REBOOT");
                 } else {
- //                  timer.Calibrate(millis()-BroadcastDelay-100);
                 }
               } else {
                         DBGINFO(" alien host ");
@@ -502,15 +502,8 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                         }
                         return false;
               }
-     //         DBGPINHIGH();
-          //     if ((timer.Cycle() %6)==0)
                 timer.Calibrate(millisTNow()-BroadcastDelay-knockShift-_broadcastshift);
-          //      time.DeviationPlus=del;
                 _calibrated=true;
-                dataw3=millisTNow() %3072L;
-                dataw4=TCNT2;
-     //         DBGPINLOW();
-             //  return false;
            }
 
            if (sp->salt==0) {    //received invalid knock
@@ -567,21 +560,6 @@ void Transceiver::Knock()
       } else {
          ListenBroadcast();
       }
-//      StopListenBroadcast();
-//   } else {
-/*       if ((timer.Cycle() % (TimerKnockCycle))==0){
-          if (_cycleshift){  //hello sended
-            _cycleshift=0;
-          }else{
-            DBGINFO("InvalidKnock ");
-            SendKnock(true);
-            DoListenBroadcast();
-            DBGINFO("\r\n");
-          }
-       }
-       */
- //  }
-
 }
 
 
@@ -638,6 +616,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    PrepareSetup(*setup);
     setup->rssi=hostRssiListen;
     setup->mode=myMode;
+    setup->mode=Deviation();
     setup->hostchannel=IMVERSION;
     setup->slavechannel=hsequence++;
 
@@ -677,11 +656,6 @@ bool Transceiver::Onward(IMFrame & frame)
         }
         else
         {
-     //      if (!Connected())
-     //      {
-     //         DBGERR("&NOTCNT");
-     //         return true;
-     //      }
 
         if (!BroadcastEnable){
 
@@ -701,7 +675,6 @@ bool Transceiver::Onward(IMFrame & frame)
            }
            return true;
         }
-
 }
 
 
@@ -797,8 +770,8 @@ void Transceiver::PrepareTransmission()
    myChannel=0;
    _calibrateshift=0;
   t_Time t=myId;
-  t*=8;
- // t =t %1000;
+  t*=16;
+  t =t %2200;
    TimerSetup(t);
    setupMode(myMode);
 }
@@ -861,7 +834,6 @@ bool Transceiver::ReceiveConfig(IMFrame & frame)
    timer.Watchdog();
    myMacLo=setup->MAC2 & 0xffff;
    myMAC=(startMAC & 0xffff0000L )  | myMacLo;
-   StoreSetup();
    DBGINFO("CONFIG%");
    buffer->setChannel(HostChannel);
       IMFrame _frame;
@@ -878,6 +850,9 @@ bool Transceiver::ReceiveConfig(IMFrame & frame)
 
 
    Send(_frame);
+   myId=0;
+   myMode=0;
+   StoreSetup();
    Deconnect();
    return true;
 
@@ -975,7 +950,6 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
         buffer->StartReceive();
 
         return true;
-
 }
 
 
@@ -1026,22 +1000,20 @@ short Transceiver::ClassTest()
 bool Transceiver::CycleData()
 {
   return       (timer.Cycle() % _rateData) ==_cycleshift;
-
 }
 
-void Transceiver::printCycle(){
+void Transceiver::printCycle()
+{
         DBGINFO("[[cycle:");
         DBGINFO(timer.Cycle() % _rateData);
         DBGINFO("%");
         DBGINFO(_cycleshift);
         DBGINFO("]]");
-
 }
 
 bool Transceiver::CycleDataPrev()
 {
   return       ((timer.Cycle()+1) % _rateData) ==_cycleshift;
-
 }
 
 void Transceiver::DisableWatchdog()

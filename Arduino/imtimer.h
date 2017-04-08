@@ -33,6 +33,8 @@ typedef void( * funIMTimer )( byte );
 #define STOPDATA 5
 #define LISTENBROADCAST 101
 #define LISTENDATA 102
+#define MEASUREDATA 103
+
 #define CRONHOUR 201
 #define CRONDAY 202
 #define REBOOTLAP 250
@@ -55,6 +57,7 @@ class  IMTimer
     t_Time start;
     byte current;
     volatile byte _listen;
+    volatile byte _measure;
     unsigned short nearStage;
     t_Time nearTime;
     static const int maxStages = 8;
@@ -83,6 +86,7 @@ class  IMTimer
         byte WaitStage();
         void setStage(byte stage);
         static void doneReceived(byte count);
+        static void doneMeasure();
         void doneListen();
         void doneWrite();
         void ResetDeviation();

@@ -5,7 +5,6 @@ byte toggle;
 #endif
 
 IMTimer* IMTimer::ptrr = 0;
-//volatile byte IMTimer::State = 0;
 
 IMTimer::IMTimer()
 {
@@ -29,11 +28,12 @@ void IMTimer::Calibrate(t_Time time)
   if (time> 10000)
    start=time-stages[PERIOD];
 
-   del=(time-del)%1000;
+   del=(time-del)%CycleDuration;
    if (del){
      DBGINFO("calib:");
      DBGINFO(del);
    }
+   /*
    if (del<500)
      DeviationPlus+=del;
    else
@@ -41,6 +41,7 @@ void IMTimer::Calibrate(t_Time time)
      DeviationMinus-=del;
      DeviationMinus+=1000;
    }
+  */  DeviationPlus=del;
 
    if (current!=LISTENBROADCAST){
      DBGINFO("BROADCAST");
@@ -58,7 +59,7 @@ void IMTimer::ResetDeviation()
 t_Time IMTimer::getTime()
 {
  // return getTime(millisT2());
-   return ((millisT2()-start) %stages[PERIOD]);
+   return ((millisTNow()-start) %stages[PERIOD]);
 }
  /*
 t_Time IMTimer::getTime(t_Time time)
@@ -181,6 +182,12 @@ byte IMTimer::WaitStage()
   //     DBGPINHIGH();
        return current;
      }
+     if (_measure){
+       _measure=0;
+       stopTimer2(start);
+  //     DBGPINHIGH();
+       return MEASUREDATA;
+     }
   }
 
   sei();
@@ -195,7 +202,7 @@ byte IMTimer::WaitStage()
        r=CRONHOUR;
      }
      DBGINFO(waiting);
-     waiting=0;
+ //    waiting=0;
 //     DBGPINLOW();
   }
   compute();
@@ -205,14 +212,18 @@ byte IMTimer::WaitStage()
 
  void IMTimer::doneReceived(byte count)
 {
-//       DBGINFO("RECEIVED");
-//  _listen++;
     ptrr->doneListen();
 }
+
+ void IMTimer::doneMeasure()
+{
+   ptrr->_measure++;
+}
+
 void IMTimer::doneListen()
 {
    _listen++;
-   waiting=0;
+//   waiting=0;
 }
 
 void IMTimer::doneWrite()
