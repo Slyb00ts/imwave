@@ -22,7 +22,7 @@ static struct IMEConfig
         uint8_t HostId;
         uint8_t ServerId;
         uint8_t Channel;
-        uint8_t Broadcast;
+        uint16_t SynchronizeCycle;
         uint8_t Power;
         uint8_t Future;
 
@@ -32,8 +32,8 @@ class IMEprom
 {
 	private:
 	public:
-		void ReadConfig(void);
-		void WriteConfig(void);
+		static void ReadConfig(void);
+		static void WriteConfig(void);
 
 };
 #endif

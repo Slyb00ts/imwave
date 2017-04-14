@@ -36,7 +36,7 @@
   #define knockShift 10
 #endif
 
-#define IMVERSION 15
+#define IMVERSION 16
 
 #define DBGSLEEP 0
 
@@ -157,7 +157,7 @@ bool Transceiver::GetFrame(IMFrame& frame)
 
 
 
-
+/*
 float Transceiver::Rssi(byte h  )
 {
    float rssi = h;
@@ -167,11 +167,11 @@ float Transceiver::Rssi()
 {
    return Rssi(buffer->rssiH);
 }
-
+  */
 
 void Transceiver::LoadSetup()
 {
-  eprom.ReadConfig();
+  IMEprom::ReadConfig();
   myId=imEConfig.Id;
   hostId=imEConfig.HostId;
   serverId=imEConfig.ServerId;
@@ -193,7 +193,7 @@ void Transceiver::StoreSetup()
   imEConfig.ServerId=serverId;
   imEConfig.HostId=hostId;
   imEConfig.MacLo=myMacLo;
-  eprom.WriteConfig();
+  IMEprom::WriteConfig();
 }
 
 void Transceiver::Deconnect()
@@ -386,7 +386,7 @@ void Transceiver::ListenBroadcast()
    {
      if (timer.Cycle()<_helloCycle)
        return;
-     if (timer.Cycle()>(_helloCycle+10)){
+     if (timer.Cycle()>(_helloCycle+4)){
         if (_doSleep){
         SendKnock(true);
         _doSleep=false;
@@ -454,7 +454,7 @@ void Transceiver::StopListen()
 //        _doSleep=false;
 //      if  (_doSleep )
 //          Idle();
-      if  (timer.Cycle()>_helloCycle+15) { //after 45s without knock
+      if  (timer.Cycle()>_helloCycle+10) { //after 45s without knock
          _helloCycle=timer.Cycle()+300;  // next 15min waiting
          _KnockCycle=timer.Cycle();
          _connected=false;
@@ -614,11 +614,13 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    _frame.Header.DestinationId=frame.Header.SourceId;
    _frame.Header.Sequence=frame.Header.Sequence;
    PrepareSetup(*setup);
-    setup->rssi=hostRssiListen;
-    setup->mode=myMode;
+    hsequence++;
+   setup->rssi=hostRssiListen;
+ //   setup->mode=myMode;
     setup->mode=Deviation();
     setup->hostchannel=IMVERSION;
-    setup->slavechannel=hsequence++;
+//     setup->slavechannel=hsequence++;
+    setup->slavechannel=timer.SynchronizeCycle;
 
    Send(_frame);
    return true;   //changed channel
@@ -760,6 +762,8 @@ void Transceiver::setupMode(uint16_t aMode)
     _rateHello=59;
 //    _rateHello=3;
   }
+  if (timer.SynchronizeCycle==0)
+     _rateHello=29;
   if (BroadcastEnable)_broadcastshift=100;
 }
 
@@ -770,8 +774,8 @@ void Transceiver::PrepareTransmission()
    myChannel=0;
    _calibrateshift=0;
   t_Time t=myId;
-  t*=16;
-  t =t %2200;
+  t*=32;
+  t =t %2248; //70 *32+8
    TimerSetup(t);
    setupMode(myMode);
 }

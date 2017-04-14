@@ -21,27 +21,58 @@ IMTimer::IMTimer()
         Setup(IMTimer::PERIOD,CycleDuration);
 }
 
+#define syncRate 10
 void IMTimer::Calibrate(t_Time time)
 {
   t_Time del=start;
+  t_Time  xCycle=((time-start)*syncRate)/CycleDuration;
   start=time;
   if (time> 10000)
-   start=time-stages[PERIOD];
+   start=time-CycleDuration;
 
    del=(time-del)%CycleDuration;
+   int xStep=del;
+   if (xStep>200)
+      xStep-=CycleDuration;
    if (del){
      DBGINFO("calib:");
      DBGINFO(del);
+
    }
-   /*
-   if (del<500)
-     DeviationPlus+=del;
-   else
+   DeviationPlus=del;
+   if (del==0)
+     return;
+   if ((xCycle>6*syncRate)&& (xCycle<300*syncRate)&& (xStep>-100)&&(xStep<100))
    {
-     DeviationMinus-=del;
-     DeviationMinus+=1000;
+       if ((xStep==1)) {
+         --SynchronizeCycle;
+         return;
+       }
+       if ((xStep==-1)) {
+         ++SynchronizeCycle;
+         return;
+       }
+       _synchronizeStart=0;
+      if (SynchronizeCycle>0){
+         int xc=xCycle/SynchronizeCycle;
+         if (SynchronizeStep>0) xStep-=xc;
+         if (SynchronizeStep<0) xStep+=xc;
+      }
+      if (xStep>0)
+      {
+        SynchronizeCycle=xCycle/xStep;
+        SynchronizeStep=-1;
+      } else if (xStep==0){
+        SynchronizeCycle=255;
+        SynchronizeStep=0;
+
+      } else{
+        SynchronizeCycle=xCycle/(-xStep);
+        SynchronizeStep=1;
+      }
    }
-  */  DeviationPlus=del;
+
+
 
    if (current!=LISTENBROADCAST){
      DBGINFO("BROADCAST");
@@ -172,9 +203,6 @@ byte IMTimer::WaitStage()
   t_Time nextTT=setNextTime();
   while ((millisT2()-start)<nextTT)
   {
-     waiting++;
-
- //    if (waiting %4==0)
      delayT2();
      if (_listen){
        _listen=0;
@@ -196,7 +224,15 @@ byte IMTimer::WaitStage()
   if (r==PERIOD) {
 //  DBGPINHIGH();
      cycle++;
+     _synchronizeStart+=syncRate;
+     if (_synchronizeStart >SynchronizeCycle){
+        _synchronizeStart-=SynchronizeCycle;
+        syncTimer2(SynchronizeStep);
+     }
+//     _synchronizeStart+=syncRate;
 //     watchdog++;
+//     if (((_synchronizeStart) % SynchronizeCycle)==0)
+  //     syncTimer2(SynchronizeStep);
      delaySleepT2(30);
      if ((cycle % CycleHour()) ==0){
        r=CRONHOUR;

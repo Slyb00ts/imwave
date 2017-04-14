@@ -51,10 +51,11 @@ class  IMTimer
   private:
     static IMTimer* ptrr; //static ptr to Sleep class for the ISR
     //static long counterTimer2; //static ptr to Sleep class for the ISR
-    t_Time waiting;
+  //  t_Time waiting;
     long cycle;
     uint16_t watchdog;
     t_Time start;
+    uint16_t _synchronizeStart;
     byte current;
     volatile byte _listen;
     volatile byte _measure;
@@ -74,6 +75,8 @@ class  IMTimer
 //        funIMTimer onListen;
         uint16_t DeviationPlus;                       //sum deviation in calibrate
         uint16_t DeviationMinus;                     //separate for shorter and longer
+        uint16_t SynchronizeCycle;
+        int8_t SynchronizeStep;
         static const byte IDDLESTAGE = 100;
         static const byte PERIOD = 0;
         static const byte LAP = 8;

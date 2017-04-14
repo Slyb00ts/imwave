@@ -66,7 +66,6 @@ private:
 //    IMQueue queue;
     IMRouting router;
     IMBuffer * buffer;
-    IMEprom eprom;
 
 //    TableACK  ack;
     byte _connected;
@@ -74,17 +73,16 @@ private:
     bool _inSleep;
     bool _doSleep;
 
-    t_Time ReceiveTime;
     long _helloCycle;
     long _KnockCycle;
     byte myHop;
     byte myChannel;
     IMAddress myId;
     uint16_t myMode;
+    uint16_t mySynchronize;
     uint16_t _salt;
     uint16_t _calibrateshift;
     uint16_t _broadcastshift;
-  //  uint16_t _calibrate;
     uint16_t _rateData;
     uint16_t _rateHello;
     uint16_t _cycleshift;
@@ -95,7 +93,6 @@ private:
 //    volatile byte ruptures[3];
     byte hostRssiSend;     //from hello
     byte hostRssiListen;  //from welcome
-//    float rssi;
     void Prepare(IMFrame & frame );
 //    void PrepareTransmit();
     bool Forward(IMFrame & frame);
@@ -132,8 +129,6 @@ public:
     IMMAC hostMAC;
     IMMAC serverMAC;
     uint16_t myMacLo;
-    uint16_t dataw3;
-    uint16_t dataw4;
     byte myDevice;
     byte HostChannel;
     byte BroadcastChannel;
@@ -178,8 +173,8 @@ public:
     void printCycle();
     bool CycleData();
     bool CycleDataPrev();
-    float Rssi(byte h); //compute Rssi from byte
-    float Rssi(); //return last Rssi
+//    float Rssi(byte h); //compute Rssi from byte
+//    float Rssi(); //return last Rssi
     void DisableWatchdog();
     static short ClassTest();
 

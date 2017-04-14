@@ -45,19 +45,19 @@ uint16_t internalVcc() {
   uint16_t io;
   io=counterTimer2 %11;
   io=io+io%33;          // Wait for Vref to settle
-  io=io+counterTimer2 %13;
+  io=io+counterTimer2Stop %13;
   if (io==73)
     power_adc_enable();
   io=io+io%33;
-  io=io+counterTimer2 %15;
+  io=io+counterTimer2Stop %15;
   if (io==73)
     power_adc_enable();
   io=io+io%33;
-  io=io+counterTimer2 %13;
+  io=io+counterTimer2Stop %13;
   if (io==73)
     power_adc_enable();
   io=io+io%33;
-  io=io+counterTimer2 %13;
+  io=io+counterTimer2Stop %13;
   if (io==73)
     power_adc_enable();
   if  (bit_is_set(ADCSRA, ADIF))
@@ -84,7 +84,7 @@ uint16_t internalTemp() {
   // routine provided by TCWORLD in Sparkfun forums - thank you very much TCWORLD!
   // see here for details: http://forum.sparkfun.com/viewtopic.php?f=32&t=32433
   ADMUX = 0b11000111;                  // set the adc to compare the internal temp sensor against
-  ADCSRB |= (1 << MUX5);               // the 2.56v internal reference (datasheet section 24.6)
+ * ADCSRB |= (1 << MUX5);               // the 2.56v internal reference (datasheet section 24.6)
   delay(5);                            // wait a moment for the adc to settle
 //  sbi(ADCSRA, ADSC);                   // initiate the first conversion - this one is junk as per datasheet
   ADCSRA |= _BV(ADSC); // Convert
@@ -149,6 +149,11 @@ t_Time millisTNow(){
  #else
    return millis();
  #endif
+}
+
+void syncTimer2(int8_t step)
+{
+  counterTimer2+=step;
 }
 
 
@@ -383,12 +388,13 @@ void resetPin()
 {
   MCUSR = 0;
   wdt_disable();
- for (byte i=0; i<20; i++) {    //make all pins inputs with pullups enabled
+  for (byte i=0; i<20; i++) {    //make all pins inputs with pullups enabled
         pinMode(i, INPUT);
         pinMode(i, OUTPUT);
         digitalWrite(i,LOW);
-   }
-
+  }
+  DDRD  = 0b11111111;    //All pins in PORTD are outputs
+  PORTD = 0b00000000;    //All pins in PORTD are low
 }
 
 void pciSetup(uint8_t pin)

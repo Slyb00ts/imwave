@@ -89,6 +89,9 @@ void  ShutOffADC(void);
 void  SetupADC(void);
 void waitASSR(void);
 #endif
+
+void syncTimer2(int8_t step);
+
 #ifdef CRYSTAL32K
 byte nextTimer2(void);
 byte addTimer2(byte aTime);
