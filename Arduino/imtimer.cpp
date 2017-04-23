@@ -21,7 +21,7 @@ IMTimer::IMTimer()
         Setup(IMTimer::PERIOD,CycleDuration);
 }
 
-#define syncRate 10
+#define syncRate 100
 void IMTimer::Calibrate(t_Time time)
 {
   t_Time del=start;

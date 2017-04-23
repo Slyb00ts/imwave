@@ -76,7 +76,6 @@ private:
     long _helloCycle;
     long _KnockCycle;
     byte myHop;
-    byte myChannel;
     IMAddress myId;
     uint16_t myMode;
     uint16_t mySynchronize;
@@ -129,6 +128,7 @@ public:
     IMMAC hostMAC;
     IMMAC serverMAC;
     uint16_t myMacLo;
+    byte myChannel;
     byte myDevice;
     byte HostChannel;
     byte BroadcastChannel;

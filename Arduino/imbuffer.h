@@ -43,7 +43,7 @@ class  IMBuffer
     unsigned short rSize;
     unsigned short crc;
     unsigned short rssiH;  //from last receive frame
-    void Init();
+    void Init(byte channel);
     bool Send();
     void Read();
     bool TestFrame();

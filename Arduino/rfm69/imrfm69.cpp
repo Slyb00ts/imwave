@@ -108,7 +108,7 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   SPI.setBitOrder(MSBFIRST);
   SPI.setClockDivider(SPI_CLOCK_DIV4); // decided to slow down from DIV2 after SPI stalling in some instances, especially visible on mega1284p when RFM69 and FLASH chip both present
   _lock=0;
-  unsigned long start = millis();
+  long start = millis();
   long timeout = 150;
   do writeReg(REG_SYNCVALUE1, 0xAA); while (readReg(REG_SYNCVALUE1) != 0xaa && millis()-start < timeout);
   start = millis();
@@ -497,6 +497,20 @@ void RFM69::promiscuous(bool onOff) {
 }
 
 // for RFM69HW only: you must call setHighPower(true) after initialize() or else transmission won't work
+void RFM69::setChannel(uint8_t channel){
+    uint8_t freqMSB=0xD9;
+    uint8_t freqMID=0x0;
+    uint8_t freqLSB=0x0;
+  if (channel==0) return;
+  if (channel==2) freqMID=0x20;
+  if (channel==3) freqMID=0x30;
+  if (channel==4) freqMID=0x40;
+
+  writeReg(REG_FRFMSB, freqMSB );
+  writeReg(REG_FRFMID, freqMID );
+  writeReg(REG_FRFLSB, freqLSB);
+
+}
 void RFM69::setHighPower(bool onOff) {
   _isRFM69HW = true;
 //  writeReg(REG_OCP, _isRFM69HW ? RF_OCP_OFF : RF_OCP_ON);

@@ -36,7 +36,7 @@
   #define knockShift 10
 #endif
 
-#define IMVERSION 16
+#define IMVERSION 17
 
 #define DBGSLEEP 0
 
@@ -75,7 +75,7 @@ void Transceiver::Init(IMBuffer & buf)
 //  _inSleep=true;
   power_spi_enable();
   if(!NoRadio)
-    buffer->Init();
+    buffer->Init(myChannel);
   buffer->setFunction(&timer.doneReceived);
   TimerSetup(0);
   Deconnect();
@@ -176,7 +176,7 @@ void Transceiver::LoadSetup()
   hostId=imEConfig.HostId;
   serverId=imEConfig.ServerId;
   myMode=imEConfig.Mode;
-  myChannel=imEConfig.Channel;
+//  myChannel=imEConfig.Channel;
   myMacLo=imEConfig.MacLo;
   if (startMAC!=0)
   {
@@ -189,7 +189,7 @@ void Transceiver::StoreSetup()
 {
   imEConfig.Mode=myMode;
   imEConfig.Id=myId;
-  imEConfig.Channel=myChannel;
+ // imEConfig.Channel=myChannel;
   imEConfig.ServerId=serverId;
   imEConfig.HostId=hostId;
   imEConfig.MacLo=myMacLo;
@@ -210,7 +210,7 @@ void Transceiver::Deconnect()
 
   _helloCycle=0;   //on Deconnect reset skipping
   _KnockCycle=timer.Cycle();
-  myChannel=0;
+//  myChannel=0;
   _inSleep=true;
   router.reset();
   router.addMAC(myMAC,0xFF);
@@ -295,7 +295,7 @@ void Transceiver::PrepareSetup(IMFrameSetup &se)
    se.MAC= myMAC;
    se.MAC2=serverMAC;
    se.salt=_salt;
-   se.hostchannel=myChannel;
+   se.hostchannel=HostChannel;
 }
 
 bool Transceiver::Send(IMFrame & frame)
@@ -438,7 +438,7 @@ void Transceiver::ListenData()
 {
    if (BroadcastEnable || SteeringEnable ){
       Wakeup();
-      buffer->setChannel(myChannel);
+//      buffer->setChannel(myChannel);
       timer.setStage(LISTENDATA);
       buffer->StartReceive();
    } else {
@@ -713,7 +713,7 @@ bool Transceiver::BackwardWelcome(IMFrame & frame)
     byte x=router.addAddress(setup_recv.MAC,setup_recv.address,setup_recv.slavechannel);
     if (x==0xFF)
        return false;
-    setup_recv.hostchannel=myChannel;
+  //  setup_recv.hostchannel=myChannel;
     frame.Put(&setup_recv);
     if (x==0) {
       buffer->setChannel(BroadcastChannel);        // source hop - listen on broadcast
@@ -771,7 +771,7 @@ void Transceiver::PrepareTransmission()
 {
    router.myId=myId;
    HostChannel=0;
-   myChannel=0;
+  // myChannel=0;
    _calibrateshift=0;
   t_Time t=myId;
   t*=32;
@@ -789,7 +789,7 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
 //   DBGINFO(setup->MAC);
 //   DBGINFO(":");
 //   DBGINFO(setup->MAC2);
-   DBGLEDON();
+//   DBGLEDON();
    if  (setup->MAC!=myMAC) {
      DBGINFO("*****NOT FORME ");
      DBGINFO(myMAC);
@@ -800,7 +800,7 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    serverId=frame.Header.SourceId;
    hostId=frame.Header.SenderId;
    myId=setup->address;
-   myChannel=setup->slavechannel;
+  // myChannel=setup->slavechannel;
    myMode=setup->mode;
    hostRssiSend=setup->rssi;
    PrepareTransmission();
@@ -818,7 +818,7 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    DBGINFO(myId);
    DBGINFO("CONNECT%");
    StopListenBroadcast(); // no listen until data stage
-   DBGLEDOFF();
+ //  DBGLEDOFF();
    return true;
 }
 

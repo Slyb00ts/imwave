@@ -19,12 +19,13 @@ RFM69  radio;  //The CC1101 device
 //#define ENABLE_ATC    //comment out this line to disable AUTO TRANSMISSION CONTROL
 
 
-void IMBuffer::Init()
+void IMBuffer::Init(byte channel)
 {
 //  cc1101=&cc;
   bool promiscuousMode = true; //set to 'true' to sniff all packets on the same network
     radio.initialize(FREQUENCY,NODEID,NETWORKID);
     radio.promiscuous(promiscuousMode);
+    radio.setChannel(channel);
 //  radio.readAllRegs();
 
 }

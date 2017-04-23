@@ -124,6 +124,7 @@ class RFM69 {
     virtual void receiveBegin();
     uint32_t getFrequency();
     void setFrequency(uint32_t freqHz);
+    void setChannel(uint8_t channel);
     void encrypt(const char* key);
     int16_t readRSSI(bool forceTrigger=false);
     void promiscuous(bool onOff=true);
