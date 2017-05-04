@@ -36,7 +36,7 @@
   #define knockShift 10
 #endif
 
-#define IMVERSION 17
+#define IMVERSION 19
 
 #define DBGSLEEP 0
 
@@ -215,7 +215,7 @@ void Transceiver::Deconnect()
   router.reset();
   router.addMAC(myMAC,0xFF);
   BroadcastEnable=false;
-  SteeringEnable=true;
+  SteeringEnable=false;
 
   timer.Watchdog();
   SendKnock(true);
@@ -395,21 +395,8 @@ void Transceiver::ListenBroadcast()
     //    return;
      }
    } else {
-       /*
-       if ((timer.Cycle() % (TimerKnockCycle))==0){
-          if (_cycleshift){  //hello sended
-            _cycleshift=0;
-          }else{
-            DBGINFO("InvalidKnock ");
-            SendKnock(true);
-            DoListenBroadcast();
-            DBGINFO("\r\n");
-            return;
-          }
-       }
-       */
 
-     if (timer.Cycle()>(_KnockCycle+20))   {
+     if (timer.Cycle()>(_KnockCycle+11))   {
          if (!_doSleep)
          {
               SendKnock(true);
@@ -554,9 +541,7 @@ void Transceiver::Knock()
             SendKnock(false);
             DBGINFO("\r\n");
             DoListenBroadcast();
-//            return;
           }
-  //        ListenData();
       } else {
          ListenBroadcast();
       }
@@ -619,8 +604,11 @@ bool Transceiver::ResponseHello(IMFrame & frame)
  //   setup->mode=myMode;
     setup->mode=Deviation();
     setup->hostchannel=IMVERSION;
+    if (!Connected())
+      setup->hostchannel=0;
 //     setup->slavechannel=hsequence++;
-    setup->slavechannel=timer.SynchronizeCycle;
+    setup->slavechannel=timer.SynchronizeCycle / 10;
+     setup->rssi =hsequence;
 
    Send(_frame);
    return true;   //changed channel
@@ -659,13 +647,13 @@ bool Transceiver::Onward(IMFrame & frame)
         else
         {
 
-        if (!BroadcastEnable){
+           if (!BroadcastEnable){
 
               DBGERR("&NOTBCE");
               return true;
            }
 
-        if (frame.Header.ReceiverId==myId)
+           if (frame.Header.ReceiverId==myId)
            {
              if (frame.Forward())
                 Forward(frame);
@@ -682,11 +670,11 @@ bool Transceiver::Onward(IMFrame & frame)
 
 bool Transceiver::ForwardHello(IMFrame & frame)
 {
-      if (!BroadcastEnable){
+    if (!BroadcastEnable){
 
               DBGERR("&NOTBCE");
               return false;
-           }
+    }
     IMFrameSetup setup_recv;
     frame.Get(&setup_recv);
     IMAddress a=frame.Header.SenderId;
@@ -701,7 +689,6 @@ bool Transceiver::ForwardHello(IMFrame & frame)
               DBGERR("ERRADDMAC");
               Deconnect();
               buffer->Reboot();
-      ;
     }
     return Forward(frame);
 }
@@ -752,18 +739,18 @@ void Transceiver::setupMode(uint16_t aMode)
     _rateHello=360;
     _broadcastshift=10;
   } else if (xCycle==3)   {
-    _rateHello=599;
+    _rateHello=720;
     _broadcastshift=20;
   } else if (xCycle==4)   {
-    _rateHello=1199;
+    _rateHello=1199*24;
   } else if (xCycle==5)   {
-    _rateHello=1199;
+    _rateHello=1199*24;
   } else {
-    _rateHello=59;
+    _rateHello=60;
 //    _rateHello=3;
   }
-  if (timer.SynchronizeCycle==0)
-     _rateHello=29;
+  if ((timer.SynchronizeCycle==0) &&(_rateHello <2000))
+     _rateHello=29;                                   // cycle>1h -> no sync
   if (BroadcastEnable)_broadcastshift=100;
 }
 
@@ -799,8 +786,12 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    timer.Watchdog();
    serverId=frame.Header.SourceId;
    hostId=frame.Header.SenderId;
+   if (myId!=setup->mode)
+     _connected=0;
    myId=setup->address;
   // myChannel=setup->slavechannel;
+   if (myMode!=setup->mode)
+     _connected=0;
    myMode=setup->mode;
    hostRssiSend=setup->rssi;
    PrepareTransmission();
@@ -859,9 +850,6 @@ bool Transceiver::ReceiveConfig(IMFrame & frame)
    StoreSetup();
    Deconnect();
    return true;
-
-  // DoListenBroadcast(); // no listen until data stage
-  // return true;
 }
 
 

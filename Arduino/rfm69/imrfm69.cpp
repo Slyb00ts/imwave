@@ -106,7 +106,7 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   SPI.begin();
   SPI.setDataMode(SPI_MODE0);
   SPI.setBitOrder(MSBFIRST);
-  SPI.setClockDivider(SPI_CLOCK_DIV4); // decided to slow down from DIV2 after SPI stalling in some instances, especially visible on mega1284p when RFM69 and FLASH chip both present
+//  SPI.setClockDivider(SPI_CLOCK_DIV4); // decided to slow down from DIV2 after SPI stalling in some instances, especially visible on mega1284p when RFM69 and FLASH chip both present
   _lock=0;
   long start = millis();
   long timeout = 150;
@@ -304,7 +304,7 @@ void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize)
   while (digitalRead(RF69_IRQ_PIN) == 0 && ((millisT2() - txStart) < RF69_TX_LIMIT_MS)); // wait for DIO0 to turn HIGH signalling transmission finish
   //while (readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PACKETSENT == 0x00); // wait for ModeReady
   setMode(RF69_MODE_STANDBY);
-   receiveBegin();
+//   receiveBegin();
 }
 
 // internal function - interrupt gets called when a packet is received
@@ -328,7 +328,7 @@ void RFM69::interruptHandler() {
 
   if ( (rr & RF_IRQFLAGS2_PAYLOADREADY))
   {
-//    RSSI = readRSSI();
+    RSSI = readRSSI();
 //    rr=readReg(REG_IRQFLAGS2);
          rr=readReg(REG_IRQFLAGS2);
     setMode(RF69_MODE_STANDBY);

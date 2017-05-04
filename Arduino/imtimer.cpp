@@ -40,7 +40,7 @@ void IMTimer::Calibrate(t_Time time)
 
    }
    DeviationPlus=del;
-   if (del==0)
+   if (del==0)         //xStep==0
      return;
    if ((xCycle>6*syncRate)&& (xCycle<300*syncRate)&& (xStep>-100)&&(xStep<100))
    {
@@ -52,6 +52,9 @@ void IMTimer::Calibrate(t_Time time)
          ++SynchronizeCycle;
          return;
        }
+//       if ((xStep==0)){
+//         return;
+//       }
        _synchronizeStart=0;
       if (SynchronizeCycle>0){
          int xc=xCycle/SynchronizeCycle;
@@ -63,7 +66,7 @@ void IMTimer::Calibrate(t_Time time)
         SynchronizeCycle=xCycle/xStep;
         SynchronizeStep=-1;
       } else if (xStep==0){
-        SynchronizeCycle=255;
+        SynchronizeCycle=0xffff;
         SynchronizeStep=0;
 
       } else{
