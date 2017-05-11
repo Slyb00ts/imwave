@@ -32,7 +32,7 @@ void IMTimer::Calibrate(t_Time time)
 
    del=(time-del)%CycleDuration;
    int xStep=del;
-   if (xStep>200)
+   if (xStep>300)
       xStep-=CycleDuration;
    if (del){
      DBGINFO("calib:");
@@ -42,7 +42,7 @@ void IMTimer::Calibrate(t_Time time)
    DeviationPlus=del;
    if (del==0)         //xStep==0
      return;
-   if ((xCycle>6*syncRate)&& (xCycle<300*syncRate)&& (xStep>-100)&&(xStep<100))
+   if ((xCycle>6*syncRate)&& (xCycle<1500*syncRate)&& (xStep>-200)&&(xStep<200))
    {
        if ((xStep==1)) {
          --SynchronizeCycle;
