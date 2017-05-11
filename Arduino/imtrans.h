@@ -72,6 +72,7 @@ private:
     bool _calibrated;
     bool _inSleep;
     bool _doSleep;
+    bool _noSync;
 
     long _helloCycle;
     long _KnockCycle;
@@ -102,6 +103,7 @@ private:
     bool BackwardWelcome(IMFrame & frame);
     void PrepareSetup(IMFrameSetup &se);
     bool SendKnock(bool invalid);
+    bool SendHello();
     bool myHost(IMFrame & frame);
     void StartReceive();
 //    void setChannel(byte channel);

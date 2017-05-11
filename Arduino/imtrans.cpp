@@ -36,7 +36,7 @@
   #define knockShift 10
 #endif
 
-#define IMVERSION 19
+#define IMVERSION 20
 
 #define DBGSLEEP 0
 
@@ -200,6 +200,7 @@ void Transceiver::Deconnect()
 {
   _connected=false;
   _doSleep=false;
+  hostMAC=0;
   _salt=1;
 //  myId=0;
 //  hostId=0;
@@ -207,6 +208,7 @@ void Transceiver::Deconnect()
   _rateHello=20;
   _cycleshift=0;
   _calibrated=false;
+  hostRssiListen=0;
 
   _helloCycle=0;   //on Deconnect reset skipping
   _KnockCycle=timer.Cycle();
@@ -435,24 +437,25 @@ void Transceiver::ListenData()
 
 void Transceiver::StopListen()
 {
-   if (SteeringEnable) return;
    if (Connected()){
 //      if       (timer.Cycle()>(_helloCycle+10))  //check 30s
 //        _doSleep=false;
 //      if  (_doSleep )
 //          Idle();
       if  (timer.Cycle()>_helloCycle+10) { //after 45s without knock
-         _helloCycle=timer.Cycle()+300;  // next 15min waiting
+         _helloCycle=timer.Cycle()+200;  // next 10min waiting
          _KnockCycle=timer.Cycle();
          _connected=false;
          _calibrated=true;
          _doSleep=true;
+         hostMAC=0;
       }
 
    } else {
      if (timer.Cycle() >(_KnockCycle+300)){   // after  15 min    check Knock
         DBGINFO("StopListen");
         _KnockCycle=timer.Cycle();
+        _helloCycle=0;
         _calibrated=false;
         _doSleep=false;
      }
@@ -462,10 +465,10 @@ void Transceiver::StopListen()
 
 void Transceiver::StopListenBroadcast()
 {
+   if (SteeringEnable) return;
    if ( _doSleep && _calibrated ) //check 3min
     {
      Idle();
-//     timer.setStage(IMTimer::IDDLESTAGE);
    }
 }
 
@@ -497,11 +500,9 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                       DBGINFO(" invalid ");
                       return false;
            }
-
-
-           //_KnockCycle=timer.Cycle();
            _salt=sp->salt; //accept new value
-           hostRssiListen=buffer->rssiH;
+              // hostRssiListen=buffer->rssiH;
+           hostRssiListen++;   //for debug
 
            if (ResponseHello(frame)){
                  DoListenBroadcast();      //return to broadcas channel (wait to WELCOME)
@@ -528,9 +529,14 @@ bool Transceiver::SendKnock(bool invalid)
      setup->mode=myMode;
      setup->hostchannel=IMVERSION;
      setup->slavechannel=ksequence;
+     setup->address=hostRssiListen;
+     if (_doSleep)          //_helloCycle+4
+       setup->slavechannel=0;
+
    }
    return Send(_frame);
 }
+
 
 
 void Transceiver::Knock()
@@ -543,6 +549,10 @@ void Transceiver::Knock()
             DoListenBroadcast();
           }
       } else {
+         if (_noSync && Connected() ){
+              if (timer.Cycle()>_helloCycle)
+                    SendHello();
+         }
          ListenBroadcast();
       }
 }
@@ -614,6 +624,31 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    return true;   //changed channel
 }
 
+bool Transceiver::SendHello()
+{
+  IMFrame _frame;
+   _frame.Reset();
+   _frame.Header.SourceId=myId;   //if not registerred then myId==0
+   _frame.Header.Function=IMF_HELLO;
+   _frame.Header.ReceiverId=hostId;
+   _frame.Header.DestinationId=serverId;
+   _frame.Header.Sequence=hsequence;
+  IMFrameSetup * setup=_frame.Setup();
+    PrepareSetup(*setup);
+    hsequence++;
+   setup->rssi=hostRssiListen;
+ //   setup->mode=myMode;
+    setup->mode=Deviation();
+    setup->hostchannel=IMVERSION;
+    if (!Connected())
+      setup->hostchannel=0;
+//     setup->slavechannel=hsequence++;
+    setup->slavechannel=timer.SynchronizeCycle / 10;
+     setup->rssi =hsequence;
+
+   Send(_frame);
+   return true;
+}
 
 
 bool Transceiver::Backward(IMFrame & frame)
@@ -719,6 +754,7 @@ void Transceiver::setupMode(uint16_t aMode)
   BroadcastEnable=(aMode & IMS_TRANSCEIVER)!=0;
   SteeringEnable=(aMode & IMS_STEERING)!=0;
   uint8_t xCycle= aMode & 0xFF;
+  _noSync=false;
   _broadcastshift=0;
   if (xCycle==1) {
     _rateData=3;
@@ -743,8 +779,10 @@ void Transceiver::setupMode(uint16_t aMode)
     _broadcastshift=20;
   } else if (xCycle==4)   {
     _rateHello=1199*24;
+    _noSync=true;
   } else if (xCycle==5)   {
     _rateHello=1199*24;
+    _noSync=true;
   } else {
     _rateHello=60;
 //    _rateHello=3;
@@ -826,7 +864,7 @@ bool Transceiver::ReceiveConfig(IMFrame & frame)
 
 
 
-   timer.Watchdog();
+//   timer.Watchdog();
    myMacLo=setup->MAC2 & 0xffff;
    myMAC=(startMAC & 0xffff0000L )  | myMacLo;
    DBGINFO("CONFIG%");
