@@ -48,6 +48,10 @@ RFM69* RFM69::selfPointer;
 
 bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
 {
+  _head=0;
+  _tail=0;
+  _lock=0;
+  _mode=0;
   const uint8_t CONFIG[][2] =
   {
     /* 0x01 */ { REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RF_OPMODE_STANDBY },
@@ -214,6 +218,7 @@ void RFM69::idle() {
  ++_lock;
   setMode(RF69_MODE_STANDBY);
   --_lock;
+  _lock=0;
 }
 
 
@@ -304,12 +309,13 @@ void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize)
   while (digitalRead(RF69_IRQ_PIN) == 0 && ((millisT2() - txStart) < RF69_TX_LIMIT_MS)); // wait for DIO0 to turn HIGH signalling transmission finish
   //while (readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PACKETSENT == 0x00); // wait for ModeReady
   setMode(RF69_MODE_STANDBY);
-//   receiveBegin();
+   receiveBegin();
 }
 
 // internal function - interrupt gets called when a packet is received
 void RFM69::interruptHandler() {
 //    RSSI = readRSSI(true);
+  DBGPINHIGH();
   ++IRNN;
   if (_mode != RF69_MODE_RX) return;
   if (_lock) return;
@@ -351,11 +357,12 @@ void RFM69::interruptHandler() {
  //  RX_time=millisTNow();
    receiveMode();
    receivedData(RF69_FRAME_LEN);
-     --_lock;
   } else{
 
     DBGINFO("****");
   }
+       --_lock;
+
 }
 
 // internal function
@@ -396,9 +403,6 @@ void RFM69::listenMode(){
 bool RFM69::receiveDone() {
 //ATOMIC_BLOCK(ATOMIC_FORCEON)
 //{
-//    Serial.print(">>");
-//    Serial.print(PAYLOADLEN);
-//    Serial.print(_mode);
 //  noInterrupts(); // re-enabled in unselect() via setMode() or via receiveBegin()
   if (_mode == RF69_MODE_RX )
   {
@@ -408,12 +412,10 @@ bool RFM69::receiveDone() {
   }
   else if (_mode == RF69_MODE_RX) // already in RX no payload yet
   {
-//    interrupts(); // explicitly re-enable interrupts
     return false;
   }
   receiveBegin();
   return false;
-//}
 }
 
 // To enable encryption: radio.encrypt("ABCDEFGHIJKLMNOP");
