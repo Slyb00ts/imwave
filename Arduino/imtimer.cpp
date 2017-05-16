@@ -206,7 +206,8 @@ byte IMTimer::WaitStage()
   t_Time nextTT=setNextTime();
   while ((millisT2()-start)<nextTT)
   {
-     delayT2();
+     if (!_listen && !_measure)
+        delayT2();
      if (_listen){
        _listen=0;
        stopTimer2(start);
