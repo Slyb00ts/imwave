@@ -36,7 +36,7 @@
   #define knockShift 10
 #endif
 
-#define IMVERSION 20
+#define IMVERSION 21
 
 #define DBGSLEEP 0
 
@@ -319,6 +319,10 @@ bool Transceiver::SendData(IMFrame & frame)
    frame.Header.ReceiverId=hostId;
    frame.Header.Sequence = seqnr++;
    frame.Header.DestinationId=serverId;
+   if (myId==0){
+    frame.Data()->w[8]=myMAC >> 16;
+    frame.Data()->w[9]=myMAC;
+   }
    return Send(frame);
 }
 
@@ -330,7 +334,7 @@ void Transceiver::Transmit()
          DBGINFO("Retry");
       }
       delaySleepT2(1);
-      ListenData();
+      ListenData();//stop listen when no broadcast
 }
 
 
@@ -502,8 +506,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
            }
            _salt=sp->salt; //accept new value
               // hostRssiListen=buffer->rssiH;
-           hostRssiListen++;   //for debug
-
+           hostRssiListen++;   //for debug  sake
            if (ResponseHello(frame)){
                  DoListenBroadcast();      //return to broadcas channel (wait to WELCOME)
                  return true;
@@ -564,7 +567,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    DBGINFO(_helloCycle);
    DBGINFO(")) ");
 //   _knocked++;
-   byte xr=random(100);
+   byte xr=0;
    if (Connected()){
      //if (_knocked % (TimerHelloCycle*_cycledata))  {
          if (timer.Cycle()<_helloCycle) {    //last call hasn't success
@@ -574,7 +577,6 @@ bool Transceiver::ResponseHello(IMFrame & frame)
          }
      //}
 //     _helloCycle=timer.Cycle() +3;  //if not success bypass cycle
-     xr+=60;
    } else {
      if (timer.Cycle()<_helloCycle)
        return false;
@@ -582,10 +584,13 @@ bool Transceiver::ResponseHello(IMFrame & frame)
   //   _helloCycle=timer.Cycle() +(xr & 0x1);
 
    }
+   if (timer.Cycle()>_helloCycle)
+       xr+=random(100);
    DBGINFO("[[");
    DBGINFO(xr);
    DBGINFO("]] ");
-   delaySleepT2(xr);
+   if (xr>0)
+     delaySleepT2(xr);
 
 
    IMFrameSetup *sp=frame.Setup();
@@ -775,7 +780,8 @@ void Transceiver::setupMode(uint16_t aMode)
     _rateHello=360;
     _broadcastshift=10;
   } else if (xCycle==3)   {
-    _rateHello=720;
+    _rateHello=1200;
+    _noSync=true;
     _broadcastshift=20;
   } else if (xCycle==4)   {
     _rateHello=1199*24;
@@ -787,7 +793,7 @@ void Transceiver::setupMode(uint16_t aMode)
     _rateHello=60;
 //    _rateHello=3;
   }
-  if ((timer.SynchronizeCycle==0) &&(_rateHello <2000))
+  if ((timer.SynchronizeCycle==0) &&(_rateHello <1000))
      _rateHello=29;                                   // cycle>1h -> no sync
   if (BroadcastEnable)_broadcastshift=100;
 }
