@@ -17,18 +17,18 @@
 class IMRouting
 {
   private:
-  int count;
+  byte count;
   IMAddress WARD[MAXTableRouting];          //hop address
   IMAddress ORIGIN[MAXTableRouting];        //device address
   IMMAC MACARRAY[MAXTableRouting];
-  byte CHANNEL[MAXTableRouting];           //device channel listen
+//  byte CHANNEL[MAXTableRouting];           //device channel listen
   byte Send(IMFrame & frame);
 //  IMAddress Forward(IMAddress addr);
   byte find(IMMAC  mac);
 
   public:
 //  uint32_t time[MAXTableRouting];
-  IMAddress myId;
+ // IMAddress myId;
   IMAddress Repeater(IMAddress addr);
   bool addMAC(IMMAC mac,IMAddress ward);
   byte addAddress(IMMAC mac,IMAddress addr, byte channel);

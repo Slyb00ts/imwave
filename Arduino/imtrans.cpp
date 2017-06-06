@@ -532,7 +532,7 @@ bool Transceiver::SendKnock(bool invalid)
      setup->mode=myMode;
      setup->hostchannel=IMVERSION;
      setup->slavechannel=ksequence;
-     setup->address=hostRssiListen;
+     setup->address=hostRssiListen;    //++on wellcome
      if (_doSleep)          //_helloCycle+4
        setup->slavechannel=0;
 
@@ -622,8 +622,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
     if (!Connected())
       setup->hostchannel=0;
 //     setup->slavechannel=hsequence++;
-    setup->slavechannel=timer.SynchronizeCycle / 10;
-     setup->rssi =hsequence;
+    setup->slavechannel=timer.SynchronizeCycle / 10;//debug sake
 
    Send(_frame);
    return true;   //changed channel
@@ -648,8 +647,8 @@ bool Transceiver::SendHello()
     if (!Connected())
       setup->hostchannel=0;
 //     setup->slavechannel=hsequence++;
-    setup->slavechannel=timer.SynchronizeCycle / 10;
-     setup->rssi =hsequence;
+//    setup->slavechannel=timer.SynchronizeCycle / 10;
+     setup->rssi =hsequence;  //DEBUG SAKE
 
    Send(_frame);
    return true;
@@ -747,7 +746,7 @@ bool Transceiver::BackwardWelcome(IMFrame & frame)
       frame.Header.ReceiverId=0;
     } else {
       frame.Header.ReceiverId=x;          //transmiter hop
-      buffer->setChannel(router.getChannel(x));  // set to channel of hop
+  //    buffer->setChannel(router.getChannel(x));  // set to channel of hop
       buffer->setChannel(BroadcastChannel);
     }
     return Send(frame);
@@ -800,7 +799,7 @@ void Transceiver::setupMode(uint16_t aMode)
 
 void Transceiver::PrepareTransmission()
 {
-   router.myId=myId;
+//   router.myId=myId;
    HostChannel=0;
   // myChannel=0;
    _calibrateshift=0;

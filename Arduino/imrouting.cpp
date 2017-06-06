@@ -5,7 +5,6 @@ byte IMRouting::Send(IMFrame & frame)
 {
 //   byte i = empty();
   return 0;
-
 }
 
 
@@ -19,7 +18,7 @@ IMAddress IMRouting::Repeater(IMAddress addr)
   }
   return 0;
 }
-
+/*
 byte IMRouting::getChannel(IMAddress addr)
 {
   for(byte i=1;i<count;i++)
@@ -29,7 +28,7 @@ byte IMRouting::getChannel(IMAddress addr)
   }
   return 0;
 }
-
+  */
 
 byte IMRouting::find(IMMAC mac)
 {
@@ -52,14 +51,14 @@ bool IMRouting::addMAC(IMMAC mac,IMAddress ward)
 
      MACARRAY[count]=mac;
      WARD[count]=ward;
+     ORIGIN[count]=0;
+//     CHANNEL[count]=0;
       ++count;
    DBGINFO("\r\nROUTING");
    DBGINFO(count);
    DBGINFO(":");
    DBGINFO(mac);
    DBGINFO(">");
-
-
    }
    return true;
 }
@@ -70,14 +69,11 @@ byte IMRouting::addAddress(IMMAC mac,IMAddress addr,byte channel)
    if (x){
 
       ORIGIN[x]=addr;
-      CHANNEL[x]=channel;
+//      CHANNEL[x]=channel;
       return WARD[x];
 
    }
    return 0xFF;
-
-
-
 }
 
 void IMRouting::reset()
