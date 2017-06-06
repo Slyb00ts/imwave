@@ -78,6 +78,7 @@ void Transceiver::Init(IMBuffer & buf)
     buffer->Init(myChannel);
   buffer->setFunction(&timer.doneReceived);
   TimerSetup(0);
+  LoadSetup();
   Deconnect();
 //  startMAC=myMAC;
   LoadSetup();
@@ -217,7 +218,7 @@ void Transceiver::Deconnect()
   router.reset();
   router.addMAC(myMAC,0xFF);
   BroadcastEnable=false;
-  SteeringEnable=false;
+//  SteeringEnable=false;
 
   timer.Watchdog();
   SendKnock(true);
@@ -343,7 +344,7 @@ void Transceiver::Idle()
    if (!_inSleep)
    {
      _inSleep=true;
-     if (!SteeringEnable){
+     if (!NoSleep){
        buffer->Sleep();
        timer.setStage(IMTimer::IDDLESTAGE);
        power_spi_disable();
@@ -382,7 +383,7 @@ void Transceiver::ListenBroadcast()
       Deconnect();
       buffer->Reboot();
    }
-   if (SteeringEnable)
+   if (NoSleep)
    {
      Wakeup();
      DoListenBroadcast();
@@ -429,7 +430,7 @@ void Transceiver::DoListenBroadcast()
 
 void Transceiver::ListenData()
 {
-   if (BroadcastEnable || SteeringEnable ){
+   if (BroadcastEnable || NoSleep ){
       Wakeup();
 //      buffer->setChannel(myChannel);
       timer.setStage(LISTENDATA);
@@ -469,7 +470,7 @@ void Transceiver::StopListen()
 
 void Transceiver::StopListenBroadcast()
 {
-   if (SteeringEnable) return;
+   if (NoSleep) return;
    if ( _doSleep && _calibrated ) //check 3min
     {
      Idle();
@@ -757,6 +758,9 @@ void Transceiver::setupMode(uint16_t aMode)
 {
   BroadcastEnable=(aMode & IMS_TRANSCEIVER)!=0;
   SteeringEnable=(aMode & IMS_STEERING)!=0;
+  if (SteeringEnable)
+    NoSleep=true;
+
   uint8_t xCycle= aMode & 0xFF;
   _noSync=false;
   _broadcastshift=0;

@@ -135,6 +135,7 @@ public:
     byte HostChannel;
     byte BroadcastChannel;
     bool NoRadio;
+    bool NoSleep;
     bool BroadcastEnable;
     bool SteeringEnable;
 //    funTransceiver onEvent;
