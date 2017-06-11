@@ -267,6 +267,8 @@ bool RFM69::send( const void* buffer, uint8_t bufferSize)
 {
   DBGINFO(IRNN);
   DBGINFO("IRNN@@@");
+  if (_lock) return false;
+
   writeReg(REG_PACKETCONFIG2, (readReg(REG_PACKETCONFIG2) & 0xFB) | RF_PACKET2_RXRESTART); // avoid RX deadlocks
    t_Time _Start = millisT2();
   while (!canSend() && ((millisT2() - _Start) < RF69_CSMA_LIMIT_MS));
@@ -505,8 +507,8 @@ void RFM69::setChannel(uint8_t channel){
     uint8_t freqLSB=0x0;
   if (channel==0) return;
   if (channel==2) freqMID=0x20;
-  if (channel==3) freqMID=0x30;
-  if (channel==4) freqMID=0x40;
+  if (channel==3) freqMID=0x40;
+  if (channel==4) freqMID=0x60;
 
   writeReg(REG_FRFMSB, freqMSB );
   writeReg(REG_FRFMID, freqMID );

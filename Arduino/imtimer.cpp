@@ -44,6 +44,8 @@ void IMTimer::Calibrate(t_Time time)
      return;
    if ((xCycle>6*syncRate)&& (xCycle<1500*syncRate)&& (xStep>-200)&&(xStep<200))
    {
+       if ((xCycle>48*syncRate)&&(xStep>80))  //bypass then sync >0066
+          return;
        if ((xStep==1)) {
          --SynchronizeCycle;
          return;
