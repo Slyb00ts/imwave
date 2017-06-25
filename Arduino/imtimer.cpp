@@ -208,18 +208,18 @@ byte IMTimer::WaitStage()
   t_Time nextTT=setNextTime();
   while ((millisT2()-start)<nextTT)
   {
-     if (!_listen && !_measure)
+//     if (!_listen && !_measure)
+     if (_measure==0)
         delayT2();
      if (_listen){
        _listen=0;
        stopTimer2(start);
-  //     DBGPINHIGH();
        return current;
      }
      if (_measure){
        _measure=0;
        stopTimer2(start);
-  //     DBGPINHIGH();
+       _measure=0;
        return MEASUREDATA;
      }
   }
@@ -239,8 +239,8 @@ byte IMTimer::WaitStage()
 //     watchdog++;
 //     if (((_synchronizeStart) % SynchronizeCycle)==0)
   //     syncTimer2(SynchronizeStep);
-     delaySleepT2(30);
-     if ((cycle % CycleHour()) ==0){
+//     delaySleepT2(30);
+       if ((cycle % CycleHour()) ==0){
        r=CRONHOUR;
      }
      DBGINFO(waiting);

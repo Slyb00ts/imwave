@@ -304,6 +304,8 @@ void Transceiver::PrepareSetup(IMFrameSetup &se)
 bool Transceiver::Send(IMFrame & frame)
 {
   if(NoRadio) return false;
+  if (_inSleep) return false;
+
   Prepare(frame);
   buffer->TX_buffer.packet=frame;
   DBGINFO("Send<");
@@ -341,16 +343,15 @@ void Transceiver::Transmit()
 
 void Transceiver::Idle()
 {
+   if (NoSleep)
+       return;
    if (!_inSleep)
    {
-     _inSleep=true;
-     if (!NoSleep){
+       _inSleep=true;
        buffer->Sleep();
        timer.setStage(IMTimer::IDDLESTAGE);
        power_spi_disable();
        DBGPINSLEEP();
-     }
-     DBGINFO("idle");
    }
 }
 
@@ -499,6 +500,10 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
               }
                 timer.Calibrate(millisTNow()-BroadcastDelay-knockShift-_broadcastshift);
                 _calibrated=true;
+                if (_noSync) {
+                  StopListenBroadcast();
+                  return false;
+                }
            }
 
            if (sp->salt==0) {    //received invalid knock

@@ -272,6 +272,8 @@ bool RFM69::send( const void* buffer, uint8_t bufferSize)
   writeReg(REG_PACKETCONFIG2, (readReg(REG_PACKETCONFIG2) & 0xFB) | RF_PACKET2_RXRESTART); // avoid RX deadlocks
    t_Time _Start = millisT2();
   while (!canSend() && ((millisT2() - _Start) < RF69_CSMA_LIMIT_MS));
+  if(!canSend())
+    return false;
   ++_lock;
     // receiveDone();
   sendFrame(0, buffer, bufferSize);
@@ -317,7 +319,7 @@ void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize)
 // internal function - interrupt gets called when a packet is received
 void RFM69::interruptHandler() {
 //    RSSI = readRSSI(true);
-  DBGPINHIGH();
+//  DBGPINHIGH();
   ++IRNN;
   if (_mode != RF69_MODE_RX) return;
   if (_lock) return;
@@ -338,7 +340,7 @@ void RFM69::interruptHandler() {
   {
     RSSI = readRSSI();
 //    rr=readReg(REG_IRQFLAGS2);
-         rr=readReg(REG_IRQFLAGS2);
+   //      rr=readReg(REG_IRQFLAGS2);
     setMode(RF69_MODE_STANDBY);
    // PAYLOADLEN=RF69_FRAME_LEN;
 
