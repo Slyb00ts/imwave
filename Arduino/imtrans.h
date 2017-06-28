@@ -83,11 +83,12 @@ private:
     uint16_t _salt;
     uint16_t _calibrateshift;
     uint16_t _broadcastshift;
-    uint16_t _rateData;
-    uint16_t _rateHello;
+    long _rateData;
+    long _rateHello;
     uint16_t _cycleshift;
     byte seqnr;
     byte ksequence;
+    byte wsequence;
     byte hsequence;
 
 //    volatile byte ruptures[3];
