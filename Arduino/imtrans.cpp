@@ -513,8 +513,9 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                       return false;
            }
            _salt=sp->salt; //accept new value
-              // hostRssiListen=buffer->rssiH;
-           hostRssiListen++;   //for debug  sake
+               hostRssiListen=buffer->rssiH;
+
+     //      hostRssiListen++;   //for debug  sake
            if (ResponseHello(frame)){
                  DoListenBroadcast();      //return to broadcas channel (wait to WELCOME)
                  return true;
@@ -541,7 +542,8 @@ bool Transceiver::SendKnock(bool invalid)
      setup->mode=myMode;
      setup->hostchannel=IMVERSION;
      setup->slavechannel=ksequence;
-     setup->address=hostRssiListen;    //++on wellcome
+     setup->rssi=hostRssiListen;
+     setup->address=wsequence;    //++on wellcome
      if (_doSleep)          //_helloCycle+4
        setup->slavechannel=0;
 
@@ -629,8 +631,10 @@ bool Transceiver::ResponseHello(IMFrame & frame)
     setup->hostchannel=IMVERSION;
     if (!Connected())
       setup->hostchannel=0;
-//     setup->slavechannel=hsequence++;
-    setup->slavechannel=timer.SynchronizeCycle / 10;//debug sake
+    setup->slavechannel=hsequence;
+ //   setup->address=wsequence;//debug
+ //   setup->slavechannel=timer.SynchronizeCycle / 10;//debug sake
+  //   setup->rssi =hsequence;   //debug sake
 
    Send(_frame);
    return true;   //changed channel
@@ -650,14 +654,14 @@ bool Transceiver::SendHello()
     PrepareSetup(*setup);
     hsequence++;
    setup->rssi=hostRssiListen;
- //   setup->mode=myMode;
-    setup->mode=Deviation();
+    setup->mode=myMode;
+ //   setup->mode=Deviation();
     setup->hostchannel=IMVERSION;
     if (!Connected())
       setup->hostchannel=0;
-//     setup->slavechannel=hsequence++;
+    setup->slavechannel=hsequence++;
 //    setup->slavechannel=timer.SynchronizeCycle / 10;
-     setup->rssi =hsequence;  //DEBUG SAKE
+//     setup->rssi =hsequence;  //DEBUG SAKE
 
    Send(_frame);
    return true;
@@ -844,6 +848,8 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
      return false;
    }
    timer.Watchdog();
+   hostRssiListen=buffer->rssiH;
+
    serverId=frame.Header.SourceId;
    hostId=frame.Header.SenderId;
    if (myId!=setup->mode)
@@ -864,7 +870,7 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    _helloCycle=timer.Cycle()+_rateHello;//setup next Hello
   StoreSetup();
    if (myHop==2) {
-     _calibrateshift=200;
+//     _calibrateshift=200;
      DBGINFO("C200SHIFT");
    }
    DBGINFO(myId);

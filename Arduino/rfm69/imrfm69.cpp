@@ -212,6 +212,7 @@ void RFM69::sleep() {
   ++_lock;
   setMode(RF69_MODE_SLEEP);
   --_lock;
+  _lock=0;
 }
 void RFM69::idle() {
 //  while ((readReg(REG_OPMODE) & RF_OPMODE_SEQUENCER_ON) != RF_OPMODE_SEQUENCER_ON);
@@ -309,8 +310,10 @@ void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize)
   // no need to wait for transmit mode to be ready since its handled by the radio
   setMode(RF69_MODE_TX);
 //  IRNN=0;
-   t_Time txStart = millisT2();
-  while (digitalRead(RF69_IRQ_PIN) == 0 && ((millisT2() - txStart) < RF69_TX_LIMIT_MS)); // wait for DIO0 to turn HIGH signalling transmission finish
+//   t_Time txStart = millisT2();
+   ttt=0;
+//  while (digitalRead(RF69_IRQ_PIN) == 0 && ((millisT2() - txStart) < RF69_TX_LIMIT_MS)); // wait for DIO0 to turn HIGH signalling transmission finish
+  while ((digitalRead(RF69_IRQ_PIN) == 0) && (ttt<10000)) {++ttt;}; // wait for DIO0 to turn HIGH signalling transmission finish
   //while (readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PACKETSENT == 0x00); // wait for ModeReady
   setMode(RF69_MODE_STANDBY);
    receiveBegin();
