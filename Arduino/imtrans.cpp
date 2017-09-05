@@ -36,7 +36,7 @@
   #define knockShift 10
 #endif
 
-#define IMVERSION 24
+#define IMVERSION 25
 
 #define DBGSLEEP 0
 
@@ -397,22 +397,25 @@ void Transceiver::ListenBroadcast()
           SendKnock(true);
           _doSleep=false;
           if (_noSync) {
-            _doSleep=false;
+            _doSleep=true;
             _helloCycle+=100;
           }
         }
-    //    DoListenBroadcast();
-    //    return;
      }
    } else {
 
-     if (timer.Cycle()>(_KnockCycle+11))   {
+     if (timer.Cycle()>(_helloCycle+4)){
+            _helloCycle+=timer.Cycle()+200;
+
+     }
+     if (timer.Cycle()>(_KnockCycle+7))   {
          if (!_doSleep)
          {
               SendKnock(true);
               _doSleep=true;
               _calibrated=true;
          }
+         _helloCycle=timer.Cycle()+300;
          return;
      }
   //   if ((timer.Cycle() & 0x4) ==0)
@@ -457,6 +460,11 @@ void Transceiver::StopListen()
          _calibrated=true;
          _doSleep=true;
          hostMAC=0;
+         if ((myMode & 7) <3) {
+           setupMode(3);
+          // PrepareTransmission();
+           myMode=19;
+         }
       }
 
    } else {
@@ -465,7 +473,11 @@ void Transceiver::StopListen()
         _KnockCycle=timer.Cycle();
         _helloCycle=0;
         _calibrated=false;
-        _doSleep=false;
+       // _doSleep=false;
+        if (_noSync) {
+            _calibrated=true;
+        }
+
      }
    }
    StopListenBroadcast();
@@ -563,7 +575,8 @@ void Transceiver::Knock()
             DoListenBroadcast();
           }
       } else {
-         if (_noSync && Connected() ){
+        // if (_noSync {&& Connected()} ){
+         if (_noSync  ){
               if (timer.Cycle()>_helloCycle)
                     SendHello();
          }
@@ -781,36 +794,36 @@ void Transceiver::setupMode(uint16_t aMode)
   if (xCycle==1) {
     _rateData=3;
   } else if (xCycle==2)   {
-    _rateData=20;
+    _rateData=20;            //1min
   } else if (xCycle==3)   {
-    _rateData=100;
+    _rateData=100;           //5min
   } else if (xCycle==4)   {
-    _rateData=300;
+    _rateData=300;          //15min
   } else if (xCycle==5)   {
     _rateData=1200;
   } else {
     _rateData=1;
   }
   if (xCycle==1) {
-    _rateHello=180;
+    _rateHello=180;             //9min
   } else if (xCycle==2)   {
-    _rateHello=360;
+    _rateHello=360;           //18min
+    _noSync=true;
     _broadcastshift=10;
   } else if (xCycle==3)   {
-    _rateHello=1200;
+    _rateHello=1200;              //1h
     _noSync=true;
     _broadcastshift=20;
   } else if (xCycle==4)   {
-    _rateHello=1199*24;
+    _rateHello=1199*6;         //6h
 //    DisableWatchdog();
     _noSync=true;
   } else if (xCycle==5)   {
-    _rateHello=1199*24;
+    _rateHello=1199*24;         //24h
  //   DisableWatchdog();
     _noSync=true;
   } else {
     _rateHello=60;
-//    _rateHello=3;
   }
   if ((timer.SynchronizeCycle==0) &&(_rateHello <1000))
      _rateHello=29;                                   // cycle>1h -> no sync
@@ -820,7 +833,6 @@ void Transceiver::setupMode(uint16_t aMode)
 
 void Transceiver::PrepareTransmission()
 {
-//   router.myId=myId;
    HostChannel=0;
   // myChannel=0;
    _calibrateshift=0;
@@ -834,13 +846,6 @@ void Transceiver::PrepareTransmission()
 bool Transceiver::ReceiveWelcome(IMFrame & frame)
 {
    IMFrameSetup * setup =frame.Setup();
-
-
-//   DBGINFO("\r\n%MAC");
-//   DBGINFO(setup->MAC);
-//   DBGINFO(":");
-//   DBGINFO(setup->MAC2);
-//   DBGLEDON();
    if  (setup->MAC!=myMAC) {
      DBGINFO("*****NOT FORME ");
      DBGINFO(myMAC);
@@ -891,9 +896,6 @@ bool Transceiver::ReceiveConfig(IMFrame & frame)
       return false;
    }
 
-
-
-//   timer.Watchdog();
    myMacLo=setup->MAC2 & 0xffff;
    myMAC=(startMAC & 0xffff0000L )  | myMacLo;
    DBGINFO("CONFIG%");

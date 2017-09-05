@@ -252,9 +252,9 @@ void RFM69::setPowerLevel(uint8_t powerLevel)
 
 bool RFM69::canSend()
 {
+  if (_lock) return false;
   if (_mode == RF69_MODE_STANDBY)
      return true;
-  if (_lock) return false;
   if (_mode == RF69_MODE_RX /*&& PAYLOADLEN == 0*/ /*&& readRSSI() < CSMA_LIMIT*/) // if signal stronger than -100dBm is detected assume channel activity
   {
 //    setMode(RF69_MODE_STANDBY);
@@ -518,6 +518,11 @@ void RFM69::setChannel(uint8_t channel){
   writeReg(REG_FRFMSB, freqMSB );
   writeReg(REG_FRFMID, freqMID );
   writeReg(REG_FRFLSB, freqLSB);
+  if (channel==3){
+    /* 0x03 */ // writeReg(REG_BITRATEMSB, RF_BITRATEMSB_200000);
+    /* 0x04 */ //writeReg( REG_BITRATELSB, RF_BITRATELSB_200000);
+
+  }
 
 }
 void RFM69::setHighPower(bool onOff) {
