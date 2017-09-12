@@ -1,12 +1,13 @@
 //
 //    FILE: transceiver.cpp
-// VERSION: 0.6.00
-// PURPOSE: DTransceiver library for Arduino
+// VERSION: 0.7.00
+// PURPOSE: Transceiver library for Arduino
 //
 // DATASHEET:
 //
 // HISTORY:
-// 0.6 by Dariusz Mazur (01/03/2016)
+// 0.7 by Dariusz Mazur (12/09/2017)     noSync
+// 0.6 by Dariusz Mazur (01/03/2016)     imEConfig
 // 0.5 by Dariusz Mazur (11/01/2016)
 // 0.4 by Dariusz Mazur (01/11/2015)
 // 0.2 by Dariusz Mazur (01/09/2015)
@@ -36,7 +37,7 @@
   #define knockShift 10
 #endif
 
-#define IMVERSION 25
+#define IMVERSION 26
 
 #define DBGSLEEP 0
 
@@ -104,17 +105,11 @@ void Transceiver::TimerSetup(t_Time cal)
 
 uint8_t Transceiver::GetData()
 {
-
   if (buffer->Received())
   {
-  //  ReceiveTime=buffer->RXTime();
-//    DBGINFO("Receive*<");
- //   printTime();
-   buffer->printReceive();
+    buffer->printReceive();
     return 1;
   } else{
- //   DBGINFO("+++++");
-//    DBGINFO(buffer->state);
     return 0;
   }
 }
@@ -160,17 +155,6 @@ bool Transceiver::GetFrame(IMFrame& frame)
 
 
 
-/*
-float Transceiver::Rssi(byte h  )
-{
-   float rssi = h;
-   return rssi;
-}
-float Transceiver::Rssi()
-{
-   return Rssi(buffer->rssiH);
-}
-  */
 
 void Transceiver::LoadSetup()
 {
@@ -413,16 +397,13 @@ void Transceiver::ListenBroadcast()
          {
               SendKnock(true);
               _doSleep=true;
-              _calibrated=true;
+              setupMode(3);
+              myMode=19;
          }
-         _helloCycle=timer.Cycle()+300;
+         _calibrated=true;
          return;
      }
-  //   if ((timer.Cycle() & 0x4) ==0)
-  //     return;
    }
-   DBGINFO("listenBroad ");
-   DBGINFO(_KnockCycle);
    Wakeup();
    DoListenBroadcast();
 }
@@ -458,25 +439,23 @@ void Transceiver::StopListen()
          _KnockCycle=timer.Cycle();
          _connected=false;
          _calibrated=true;
-         _doSleep=true;
+        // _doSleep=false;
          hostMAC=0;
-         if ((myMode & 7) <3) {
+  //       if ((myMode & 7) <3) {
            setupMode(3);
-          // PrepareTransmission();
            myMode=19;
          }
-      }
 
    } else {
      if (timer.Cycle() >(_KnockCycle+300)){   // after  15 min    check Knock
         DBGINFO("StopListen");
         _KnockCycle=timer.Cycle();
-        _helloCycle=0;
-        _calibrated=false;
+   //     _helloCycle=_KnockCycle;
+
        // _doSleep=false;
-        if (_noSync) {
-            _calibrated=true;
-        }
+  //      if (_noSync) {
+//            _calibrated=true;
+   //     }
 
      }
    }
@@ -857,7 +836,7 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
 
    serverId=frame.Header.SourceId;
    hostId=frame.Header.SenderId;
-   if (myId!=setup->mode)
+   if (myId!=setup->address)
      _connected=0;
    myId=setup->address;
   // myChannel=setup->slavechannel;
