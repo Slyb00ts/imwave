@@ -119,6 +119,7 @@ class RFM69 {
     void setNetwork(uint8_t networkID);
     bool canSend();
     bool canRead();
+    void waitSend();
     bool send( const void* buffer, uint8_t bufferSize);
     virtual bool receiveDone();
     virtual void receiveBegin();

@@ -86,7 +86,7 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
     /* 0x25 */ { REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_11 }, // DIO0 is the only IRQ we're using
     /* 0x26 */ { REG_DIOMAPPING2, RF_DIOMAPPING2_CLKOUT_OFF }, // DIO5 ClkOut disable for power saving
     /* 0x28 */ { REG_IRQFLAGS2, RF_IRQFLAGS2_FIFOOVERRUN }, // writing to this bit ensures that the FIFO & status flags are reset
-    /* 0x29 */ { REG_RSSITHRESH, 180 }, // must be set to dBm = (-Sensitivity / 2), default is 0xE4 = 228 so -114dBm
+    /* 0x29 */ { REG_RSSITHRESH, 200 }, // must be set to dBm = (-Sensitivity / 2), default is 0xE4 = 228 so -114dBm
     /* 0x2D */ { REG_PREAMBLELSB, RF_PREAMBLESIZE_LSB_VALUE }, // default 3 preamble bytes 0xAAAAAA
     /* 0x2E */ { REG_SYNCCONFIG, RF_SYNC_ON | RF_SYNC_FIFOFILL_AUTO | RF_SYNC_SIZE_3 | RF_SYNC_TOL_0 },
     /* 0x2F */ { REG_SYNCVALUE1, 0x2D },      // attempt to make this compatible with sync1 byte of RFM12B lib
@@ -96,7 +96,7 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
     /* 0x38 */ { REG_PAYLOADLENGTH, 32 }, // in variable length mode: the max frame size, not used in TX
     ///* 0x39 */ { REG_NODEADRS, nodeID }, // turned off because we're not using address filtering
     /* 0x3C */ { REG_FIFOTHRESH, RF_FIFOTHRESH_TXSTART_FIFONOTEMPTY  | RF_FIFOTHRESH_VALUE }, // TX on FIFO not empty
-    /* 0x3D */ { REG_PACKETCONFIG2, RF_PACKET2_RXRESTARTDELAY_2BITS | RF_PACKET2_AUTORXRESTART_ON | RF_PACKET2_AES_OFF }, // RXRESTARTDELAY must match transmitter PA ramp-down time (bitrate dependent)
+    /* 0x3D */ { REG_PACKETCONFIG2, RF_PACKET2_RXRESTARTDELAY_2BITS | RF_PACKET2_AUTORXRESTART_OFF | RF_PACKET2_AES_OFF }, // RXRESTARTDELAY must match transmitter PA ramp-down time (bitrate dependent)
     //for BR-19200: /* 0x3D */ { REG_PACKETCONFIG2, RF_PACKET2_RXRESTARTDELAY_NONE | RF_PACKET2_AUTORXRESTART_ON | RF_PACKET2_AES_OFF }, // RXRESTARTDELAY must match transmitter PA ramp-down time (bitrate dependent)
 //    /* 0x6F */ { REG_TESTLNA, RF_TESTLNA_NORMAL}, // run DAGC continuously in RX mode for Fading Margin Improvement, recommended default for AfcLowBetaOn=0
     /* 0x6F */ { REG_TESTDAGC, RF_DAGC_IMPROVED_LOWBETA0 }, // run DAGC continuously in RX mode for Fading Margin Improvement, recommended default for AfcLowBetaOn=0
@@ -309,9 +309,15 @@ void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize)
 
   // no need to wait for transmit mode to be ready since its handled by the radio
   setMode(RF69_MODE_TX);
+  delaySleepT2(3);
+  waitSend();
 //  IRNN=0;
 //   t_Time txStart = millisT2();
-   ttt=0;
+}
+
+void RFM69::waitSend()
+{
+  uint16_t ttt=0;
 //  while (digitalRead(RF69_IRQ_PIN) == 0 && ((millisT2() - txStart) < RF69_TX_LIMIT_MS)); // wait for DIO0 to turn HIGH signalling transmission finish
   while ((digitalRead(RF69_IRQ_PIN) == 0) && (ttt<10000)) {++ttt;}; // wait for DIO0 to turn HIGH signalling transmission finish
   //while (readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PACKETSENT == 0x00); // wait for ModeReady
