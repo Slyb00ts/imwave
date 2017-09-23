@@ -159,6 +159,7 @@ public:
     void StopListenBroadcast();
     bool ParseFrame(IMFrame & rxFrame);
     void Transmit();
+    void setPower(byte power);
     uint16_t Deviation();
 
 

@@ -161,6 +161,17 @@ void IMBuffer::setChannel(byte channel)
 //  cc1101.SetChannel(channel);
 }
 
+void IMBuffer::setPower(byte power)
+{
+  if (power>1)
+
+    radio.setPowerLevel(power);
+  else
+     radio.setHighPower(false);
+
+//  DBGINFO("CHN");  DBGINFO(channel);  DBGINFO("_");
+//  cc1101.SetChannel(channel);
+}
 
 
 bool IMBuffer::Rupture()

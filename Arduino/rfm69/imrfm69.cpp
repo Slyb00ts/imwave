@@ -247,7 +247,10 @@ void RFM69::setPowerLevel(uint8_t powerLevel)
 {
 //  _powerLevel = (powerLevel > 31 ? 31 : powerLevel);
 //  if (_isRFM69HW) _powerLevel /= 2;
-  writeReg(REG_PALEVEL, (readReg(REG_PALEVEL) & 0xE0) | powerLevel);
+  if (powerLevel==32)
+    writeReg(REG_PALEVEL, (RF_PALEVEL_PA0_OFF | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_ON  | 31));
+  else
+    writeReg(REG_PALEVEL, (RF_PALEVEL_PA0_OFF | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_OFF  | powerLevel));
 }
 
 bool RFM69::canSend()

@@ -88,6 +88,11 @@ void Transceiver::Init(IMBuffer & buf)
   PrepareTransmission();
 }
 
+void Transceiver::setPower(byte power)
+{
+   buffer->setPower(power);
+}
+
 void Transceiver::TimerSetupAll()
 {
     timer.Setup(STARTBROADCAST,BroadcastDelay);
