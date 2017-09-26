@@ -116,6 +116,7 @@ private:
     void setupMode(uint16_t aMode);
     void ContinueListen();
     void DoListenBroadcast();
+    bool CheckListenBroadcast();
     void LoadSetup();
     void StoreSetup();
     void PrepareTransmission();

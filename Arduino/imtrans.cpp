@@ -37,7 +37,7 @@
   #define knockShift 10
 #endif
 
-#define IMVERSION 26
+#define IMVERSION 27
 
 #define DBGSLEEP 0
 
@@ -86,6 +86,7 @@ void Transceiver::Init(IMBuffer & buf)
 //  startMAC=myMAC;
   LoadSetup();
   PrepareTransmission();
+  _noSync=true;
 }
 
 void Transceiver::setPower(byte power)
@@ -196,6 +197,7 @@ void Transceiver::Deconnect()
   _salt=1;
   _cycleshift=0;
   _calibrated=false;
+  _noSync=true;
   hostRssiListen=0;
 
 //  _helloCycle=0;   //on Deconnect reset skipping
@@ -363,24 +365,25 @@ void Transceiver::ContinueListen()
         DoListenBroadcast();
 }
 
-void Transceiver::ListenBroadcast()
+bool Transceiver::CheckListenBroadcast()
 {
    if (timer.Watchdog(1500+_rateHello*4))  //1hour
    {
       DBGINFO("WATCHDOG");
       Deconnect();
       buffer->Reboot();
+      return true;
    }
    if (NoSleep)
    {
      Wakeup();
      DoListenBroadcast();
-     return;
+     return true;
    }
    if (Connected())
    {
      if (timer.Cycle()<_helloCycle)
-       return;
+       return false;
      if (timer.Cycle()>(_helloCycle+4)){
         if (_doSleep){
           SendKnock(true);
@@ -405,12 +408,14 @@ void Transceiver::ListenBroadcast()
               setupMode(3);
               myMode=19;
          }
-         _calibrated=true;
-         return;
+         _calibrated=false;
+         _noSync=true;
+         return false;
      }
    }
-   Wakeup();
-   DoListenBroadcast();
+   return true;
+//   Wakeup();
+//   DoListenBroadcast();
 }
 
 void Transceiver::DoListenBroadcast()
@@ -443,12 +448,13 @@ void Transceiver::StopListen()
          _helloCycle=timer.Cycle()+200;  // next 10min waiting
          _KnockCycle=timer.Cycle();
          _connected=false;
-         _calibrated=true;
         // _doSleep=false;
          hostMAC=0;
   //       if ((myMode & 7) <3) {
            setupMode(3);
            myMode=19;
+           _calibrated=false;
+           _noSync=true;
          }
 
    } else {
@@ -457,7 +463,7 @@ void Transceiver::StopListen()
         _KnockCycle=timer.Cycle();
    //     _helloCycle=_KnockCycle;
 
-       // _doSleep=false;
+        _doSleep=false;
   //      if (_noSync) {
 //            _calibrated=true;
    //     }
@@ -469,11 +475,22 @@ void Transceiver::StopListen()
 
 void Transceiver::StopListenBroadcast()
 {
-   if (NoSleep) return;
-   if ( _doSleep && _calibrated ) //check 3min
-    {
-     Idle();
+   if (!NoSleep) {
+   if (_connected){
+     if ( _doSleep && _calibrated ) //check 3min
+     {
+        Idle();
+        return;
+     }
+   }else{
+      if (_noSync){
+        Idle();
+        return;
+      }
    }
+   }
+   Wakeup();
+   DoListenBroadcast();
 }
 
 
@@ -551,20 +568,30 @@ bool Transceiver::SendKnock(bool invalid)
 
 void Transceiver::Knock()
 {
+      bool bb=CheckListenBroadcast();
       if (BroadcastEnable){
           if ((timer.Cycle() % TimerKnockCycle)==0){
             DBGINFO("Knock ");
             SendKnock(false);
+            bb=true;
             DBGINFO("\r\n");
-            DoListenBroadcast();
+           // DoListenBroadcast();
           }
       } else {
         // if (_noSync {&& Connected()} ){
+
          if (_noSync  ){
-              if (timer.Cycle()>_helloCycle)
+              if (timer.Cycle()>_helloCycle){
                     SendHello();
+                    bb=true;
+                  //  DoListenBroadcast();
+              }
          }
-         ListenBroadcast();
+        // ListenBroadcast();
+      }
+      if (bb) {
+        Wakeup();
+        DoListenBroadcast();
       }
 }
 
@@ -865,14 +892,12 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    DBGINFO(myId);
    DBGINFO("CONNECT%");
    StopListenBroadcast(); // no listen until data stage
- //  DBGLEDOFF();
    return true;
 }
 
 bool Transceiver::ReceiveConfig(IMFrame & frame)
 {
    IMFrameSetup * setup =frame.Setup();
-  digitalWrite(9,HIGH);
 
    if  (setup->MAC!=myMAC) {
      DBGINFO("*****NOT FORME ");
