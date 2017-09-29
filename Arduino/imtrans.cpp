@@ -629,7 +629,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    IMFrameSetup *sp=frame.Setup();
    IMFrame _frame;
    hostMAC=sp->MAC;
-   serverMAC=sp->MAC2;
+  // serverMAC=sp->MAC2;
    myHop=sp->address;
    myHop++;
   // _cycleshift=1;
@@ -664,7 +664,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    return true;   //changed channel
 }
 
-bool Transceiver::SendHello()
+void Transceiver::SendHello()
 {
   IMFrame _frame;
   Wakeup();
@@ -688,7 +688,7 @@ bool Transceiver::SendHello()
 //     setup->rssi =hsequence;  //DEBUG SAKE
 
    Send(_frame);
-   return true;
+ //  return true;
 }
 
 
@@ -836,7 +836,7 @@ void Transceiver::setupMode(uint16_t aMode)
   } else {
     _rateHello=60;
   }
-  if ((timer.SynchronizeCycle==0) &&(_rateHello <1000))
+  if ((timer.SynchronizeCycle==0) &&(_rateHello <200))
      _rateHello=29;                                   // cycle>1h -> no sync
   if (BroadcastEnable)_broadcastshift=100;
   if (_noSync) _calibrated=true;

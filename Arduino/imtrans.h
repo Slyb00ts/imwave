@@ -104,7 +104,7 @@ private:
     bool BackwardWelcome(IMFrame & frame);
     void PrepareSetup(IMFrameSetup &se);
     bool SendKnock(bool invalid);
-    bool SendHello();
+    void SendHello();
     bool myHost(IMFrame & frame);
     void StartReceive();
 //    void setChannel(byte channel);
