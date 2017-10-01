@@ -114,7 +114,7 @@ private:
     void TimerSetupAll();
     void TimerSetup(t_Time cal);
     void setupMode(uint16_t aMode);
-    void ContinueListen();
+//    void ContinueListen();
     void DoListenBroadcast();
     bool CheckListenBroadcast();
     void LoadSetup();

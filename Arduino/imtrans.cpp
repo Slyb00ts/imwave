@@ -37,7 +37,7 @@
   #define knockShift 10
 #endif
 
-#define IMVERSION 27
+#define IMVERSION 28
 
 #define DBGSLEEP 0
 
@@ -355,7 +355,7 @@ void Transceiver::Wakeup()
     DBGINFO("wakeup");
   }
 }
-
+ /*
 
 void Transceiver::ContinueListen()
 {
@@ -364,6 +364,7 @@ void Transceiver::ContinueListen()
      else
         DoListenBroadcast();
 }
+*/
 
 bool Transceiver::CheckListenBroadcast()
 {
@@ -390,7 +391,7 @@ bool Transceiver::CheckListenBroadcast()
           _doSleep=false;
           if (_noSync) {
             _doSleep=true;
-            _helloCycle+=100;
+            _helloCycle+=1200;
           }
         }
      }
@@ -403,16 +404,20 @@ bool Transceiver::CheckListenBroadcast()
      if (timer.Cycle()>(_KnockCycle+7))   {
          if (!_doSleep)
          {
+              _helloCycle=timer.Cycle()+1200;
               SendKnock(true);
               _doSleep=true;
+              if (!_noSync){
               setupMode(3);
               myMode=19;
+              }
          }
          _calibrated=false;
          _noSync=true;
          return false;
      }
    }
+   if (_noSync) return false;
    return true;
 //   Wakeup();
 //   DoListenBroadcast();
@@ -444,29 +449,25 @@ void Transceiver::StopListen()
 //        _doSleep=false;
 //      if  (_doSleep )
 //          Idle();
-      if  (timer.Cycle()>_helloCycle+10) { //after 45s without knock
-         _helloCycle=timer.Cycle()+200;  // next 10min waiting
+
+      if  (timer.Cycle()>_helloCycle+7) { //after 45s without knock
          _KnockCycle=timer.Cycle();
+         _helloCycle=_KnockCycle+1;  // next 10min waiting
          _connected=false;
-        // _doSleep=false;
+         _doSleep=false;
          hostMAC=0;
-  //       if ((myMode & 7) <3) {
-           setupMode(3);
-           myMode=19;
-           _calibrated=false;
-           _noSync=true;
-         }
+         _calibrated=false;
+         _noSync=true;
+     }
 
    } else {
      if (timer.Cycle() >(_KnockCycle+300)){   // after  15 min    check Knock
         DBGINFO("StopListen");
         _KnockCycle=timer.Cycle();
-   //     _helloCycle=_KnockCycle;
+        _helloCycle=_KnockCycle;
 
         _doSleep=false;
-  //      if (_noSync) {
-//            _calibrated=true;
-   //     }
+        _noSync=true;
 
      }
    }
@@ -818,15 +819,15 @@ void Transceiver::setupMode(uint16_t aMode)
   if (xCycle==1) {
     _rateHello=180;             //9min
   } else if (xCycle==2)   {
-    _rateHello=360;           //18min
+    _rateHello=1200*6;           //6h
     _noSync=true;
     _broadcastshift=10;
   } else if (xCycle==3)   {
-    _rateHello=1200;              //1h
+    _rateHello=1200*12;              //12h
     _noSync=true;
     _broadcastshift=20;
   } else if (xCycle==4)   {
-    _rateHello=1199*6;         //6h
+    _rateHello=1199*24;         //24h
 //    DisableWatchdog();
     _noSync=true;
   } else if (xCycle==5)   {
@@ -836,7 +837,7 @@ void Transceiver::setupMode(uint16_t aMode)
   } else {
     _rateHello=60;
   }
-  if ((timer.SynchronizeCycle==0) &&(_rateHello <200))
+  if ((timer.SynchronizeCycle==0) &&(_rateHello <360))
      _rateHello=29;                                   // cycle>1h -> no sync
   if (BroadcastEnable)_broadcastshift=100;
   if (_noSync) _calibrated=true;
