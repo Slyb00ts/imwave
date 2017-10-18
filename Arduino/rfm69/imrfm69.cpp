@@ -325,7 +325,8 @@ void RFM69::waitSend()
   while ((digitalRead(RF69_IRQ_PIN) == 0) && (ttt<10000)) {++ttt;}; // wait for DIO0 to turn HIGH signalling transmission finish
   //while (readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PACKETSENT == 0x00); // wait for ModeReady
   setMode(RF69_MODE_STANDBY);
-   receiveBegin();
+ //  receiveBegin();
+
 }
 
 // internal function - interrupt gets called when a packet is received
@@ -535,16 +536,16 @@ void RFM69::setChannel(uint8_t channel){
 
 }
 void RFM69::setHighPower(bool onOff) {
-  _isRFM69HW = true;
+  _isRFM69HW = false;
 //  writeReg(REG_OCP, _isRFM69HW ? RF_OCP_OFF : RF_OCP_ON);
   //writeReg(REG_OCP, RF_OCP_ON | RF_OCP_TRIM_95 );
   if (onOff) // turning ON
   //    {REG_PALEVEL, RF_PALEVEL_PA0_OFF | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_ON  | RF_PALEVEL_OUTPUTPOWER_11111}, // enable P1 & P2 amplifier stages
 
 //    writeReg(REG_PALEVEL, (readReg(REG_PALEVEL) & 0x1F) | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_ON); // enable P1 & P2 amplifier stages
-    writeReg(REG_PALEVEL, RF_PALEVEL_PA0_OFF | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_OFF  | RF_PALEVEL_OUTPUTPOWER_10111); // enable P1 & P2 amplifier stages
+    writeReg(REG_PALEVEL, RF_PALEVEL_PA0_OFF | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_OFF  | RF_PALEVEL_OUTPUTPOWER_11111); // enable P1 & P2 amplifier stages
   else
-    writeReg(REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | 28); // enable P0 only
+    writeReg(REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | 28); // enable P0 only        28max
 
 //  /* 0x07 */ writeReg( REG_FRFMSB, 0xD9);
 //    /* 0x08 */ writeReg( REG_FRFMID, 0x70);
