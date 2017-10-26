@@ -37,7 +37,7 @@
   #define knockShift 10
 #endif
 
-#define IMVERSION 28
+#define IMVERSION 30
 
 #define DBGSLEEP 0
 
@@ -62,6 +62,8 @@ Transceiver::Transceiver()
   BroadcastChannel=0;
   ksequence=0;
   wsequence=0;
+  hsequence=0;
+  invalidSequence=0;
 //  _calibrate=0;
   _calibrated=false;
   _doSleep=false;
@@ -69,6 +71,7 @@ Transceiver::Transceiver()
   _rateHello=20;
   _calibrateshift=0;
   _broadcastshift=0;
+  NoSleep=false;
   TimerSetupAll();
 }
 
@@ -119,22 +122,6 @@ uint8_t Transceiver::GetData()
     return 0;
   }
 }
-
-/*
-bool Transceiver::Routing(IMFrame & frame)
-{
-    IMAddress a=routing.Forward(frame.Header.DestinationId);
-    if (a!=0xFF)
-    {
-      frame.Header.ReceiverId=a;
-      Push(frame);
-      return true;
-    } else{
-      DBGERR("ERR Routing");
-      return false;
-    }
-}
-*/
 
 
 
@@ -235,46 +222,17 @@ void Transceiver::Prepare(IMFrame & frame)
 }
 
 
-bool Transceiver::TestLow()
-{
-/*   IMFrame _frame;
-   IMFrameSetup *setup=_frame.Setup();
-   _frame.Reset();
-
-  TX_buffer.packet=_frame;
-  PrepareTransmit();
-  printSend();
-  state=TransceiverWrite;
-  if  (cc1101->SendData((uint8_t*)&(TX_buffer.packet),TX_buffer.len)) {
-    return true;
-  } else  {
-    DBGERR("! SEND");
-    return false;
-  }
-  */
-  return false;
-}
-
 void Transceiver::Push(IMFrame & frame)
 {
 //   queue.push(frame);
 }
 
-
+/*
 bool Transceiver::SendQueue()
 {
    byte io=0;
-/*   while (queue.pop(TX_buffer.packet))  {
-     PrepareTransmit();
-     if (Send())
-     {
-        ack.Send(TX_buffer.packet);
-        io++;
-     }
-   }
-   */
    return io;
-}
+} */
 
 
 bool Transceiver::RetryData()
@@ -297,9 +255,6 @@ bool Transceiver::Send(IMFrame & frame)
 
   Prepare(frame);
   buffer->TX_buffer.packet=frame;
-  DBGINFO("Send<");
-//  printTime();
-//  buffer->printSend();
   return buffer->Send();
 }
 
@@ -355,16 +310,7 @@ void Transceiver::Wakeup()
     DBGINFO("wakeup");
   }
 }
- /*
 
-void Transceiver::ContinueListen()
-{
-     if (Connected())
-        ListenData();
-     else
-        DoListenBroadcast();
-}
-*/
 
 bool Transceiver::CheckListenBroadcast()
 {
@@ -386,6 +332,7 @@ bool Transceiver::CheckListenBroadcast()
      if (timer.Cycle()<_helloCycle)
        return false;
      if (timer.Cycle()>(_helloCycle+4)){
+        _calibrated=false;
         if (_doSleep){
           SendKnock(true);
           _doSleep=false;
@@ -576,19 +523,14 @@ void Transceiver::Knock()
             SendKnock(false);
             bb=true;
             DBGINFO("\r\n");
-           // DoListenBroadcast();
           }
       } else {
-        // if (_noSync {&& Connected()} ){
-
          if (_noSync  ){
               if (timer.Cycle()>_helloCycle){
                     SendHello();
                     bb=true;
-                  //  DoListenBroadcast();
               }
          }
-        // ListenBroadcast();
       }
       if (bb) {
         Wakeup();
@@ -840,7 +782,7 @@ void Transceiver::setupMode(uint16_t aMode)
   if ((timer.SynchronizeCycle==0) &&(_rateHello <360))
      _rateHello=29;                                   // cycle>1h -> no sync
   if (BroadcastEnable)_broadcastshift=100;
-  if (_noSync) _calibrated=true;
+  //if (_noSync) _calibrated=true;
 }
 
 void Transceiver::PrepareTransmission()

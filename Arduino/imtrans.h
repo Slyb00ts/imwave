@@ -90,6 +90,7 @@ private:
     byte ksequence;
     byte wsequence;
     byte hsequence;
+    uint16_t invalidSequence;
 
 //    volatile byte ruptures[3];
     byte hostRssiSend;     //from hello
@@ -108,7 +109,7 @@ private:
     bool myHost(IMFrame & frame);
     void StartReceive();
 //    void setChannel(byte channel);
-    bool SendQueue();
+//    bool SendQueue();
     bool RetryData();
     bool Onward(IMFrame & frame);
     void TimerSetupAll();
@@ -117,6 +118,7 @@ private:
 //    void ContinueListen();
     void DoListenBroadcast();
     bool CheckListenBroadcast();
+    void Idle();
     void LoadSetup();
     void StoreSetup();
     void PrepareTransmission();
@@ -147,11 +149,10 @@ public:
     uint8_t GetData();
     bool GetFrame(IMFrame&frame);
     void Rupture();
-    void Idle();
     bool Parse();
     void Wakeup();
 
-    bool TestLow();
+//    bool TestLow();
     void Deconnect();
     void Knock();
     void ListenData();
