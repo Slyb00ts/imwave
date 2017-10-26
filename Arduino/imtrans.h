@@ -22,6 +22,7 @@
 //#include "imack.h"
 //#include "imqueue.h"
 #include "imrouting.h"
+#include "imtube.h"
 #include "imtimer.h"
 #include "imatmega.h"
 #include "imbuffer.h"
@@ -66,6 +67,7 @@ private:
 //    IMQueue queue;
     IMRouting router;
     IMBuffer * buffer;
+    IMTube tube;
 
 //    TableACK  ack;
     byte _connected;
@@ -88,9 +90,7 @@ private:
     uint16_t _cycleshift;
     byte seqnr;
     byte ksequence;
-    byte wsequence;
     byte hsequence;
-    uint16_t invalidSequence;
 
 //    volatile byte ruptures[3];
     byte hostRssiSend;     //from hello

@@ -29,6 +29,7 @@ class IMRouting
   public:
 //  uint32_t time[MAXTableRouting];
  // IMAddress myId;
+  IMRouting();
   IMAddress Repeater(IMAddress addr);
   bool addMAC(IMMAC mac,IMAddress ward);
   byte addAddress(IMMAC mac,IMAddress addr, byte channel);

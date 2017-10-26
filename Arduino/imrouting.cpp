@@ -1,6 +1,13 @@
 #include <imrouting.h>
 
 
+IMRouting::IMRouting()
+{
+  reset();
+//   byte i = empty();
+//  return 0;
+}
+
 byte IMRouting::Send(IMFrame & frame)
 {
 //   byte i = empty();

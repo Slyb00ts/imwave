@@ -61,9 +61,8 @@ Transceiver::Transceiver()
   myChannel=0;
   BroadcastChannel=0;
   ksequence=0;
-  wsequence=0;
   hsequence=0;
-  invalidSequence=0;
+//  invalidSequence=0;
 //  _calibrate=0;
   _calibrated=false;
   _doSleep=false;
@@ -499,15 +498,14 @@ bool Transceiver::SendKnock(bool invalid)
    PrepareSetup(*setup);
    setup->address=myHop;
    if (invalid){
+     tube.PrepareInvalid(*setup);
      setup->salt=0;
      setup->mode=myMode;
      setup->hostchannel=IMVERSION;
-     setup->slavechannel=invalidSequence;
      setup->rssi=hostRssiListen;
-     setup->address=wsequence;    //++on wellcome
      if (_doSleep)          //_helloCycle+4
        setup->rssi=0;
-     if (invalidSequence>30){
+     if (tube.invalidSequence>30){
         DBGINFO("WATCHDOG");
         Deconnect();
         buffer->Reboot();
@@ -833,7 +831,7 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
 
    _connected=1;
    _doSleep=true;
-   wsequence++;
+   tube.wsequence++;
    _helloCycle=timer.Cycle()+_rateHello;//setup next Hello
   StoreSetup();
    if (myHop==2) {
