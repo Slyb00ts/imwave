@@ -141,7 +141,6 @@ bool Transceiver::GetFrame(IMFrame& frame)
           DBGERR("!!CRC ");
           DBGERR(frame.CRC());
        };
-
         DBGINFO(" RSSI: ");           DBGINFO(Rssi());            DBGINFO("dBm  ");
     return io;
 }
@@ -314,7 +313,7 @@ void Transceiver::Wakeup()
 
 bool Transceiver::CheckListenBroadcast()
 {
-   if (timer.Watchdog(1500+_rateHello*4))  //1hour
+   if (timer.Watchdog(3600+_rateHello*4))  //3hours
    {
       DBGINFO("WATCHDOG");
       Deconnect();
@@ -344,10 +343,10 @@ bool Transceiver::CheckListenBroadcast()
      }
    } else {
 
-     if (timer.Cycle()>(_helloCycle+4)){
-            _helloCycle+=timer.Cycle()+200;
+//     if (timer.Cycle()>(_helloCycle+4)){
+//            _helloCycle+=timer.Cycle()+200;
 
-     }
+//     }
      if (timer.Cycle()>(_KnockCycle+7))   {
          if (!_doSleep)
          {
@@ -355,8 +354,9 @@ bool Transceiver::CheckListenBroadcast()
               SendKnock(true);
               _doSleep=true;
               if (!_noSync){
-              setupMode(3);
-              myMode=19;
+             //   _noSync=true;
+             // setupMode(3);
+            //  myMode=19;
               }
          }
          _calibrated=false;
@@ -502,11 +502,19 @@ bool Transceiver::SendKnock(bool invalid)
      setup->salt=0;
      setup->mode=myMode;
      setup->hostchannel=IMVERSION;
-     setup->slavechannel=ksequence;
+     setup->slavechannel=invalidSequence;
      setup->rssi=hostRssiListen;
      setup->address=wsequence;    //++on wellcome
      if (_doSleep)          //_helloCycle+4
-       setup->slavechannel=0;
+       setup->rssi=0;
+     if (invalidSequence>30){
+        DBGINFO("WATCHDOG");
+        Deconnect();
+        buffer->Reboot();
+        Send(_frame);
+        return Send(_frame);
+
+     }
 
    }
    return Send(_frame);
@@ -550,8 +558,8 @@ bool Transceiver::ResponseHello(IMFrame & frame)
      //if (_knocked % (TimerHelloCycle*_cycledata))  {
          if (timer.Cycle()<_helloCycle) {    //last call hasn't success
 
-           DBGINFO("notsendHello ");
-           return false;
+     //      DBGINFO("notsendHello ");
+     //      return false;
          }
      //}
 //     _helloCycle=timer.Cycle() +3;  //if not success bypass cycle
