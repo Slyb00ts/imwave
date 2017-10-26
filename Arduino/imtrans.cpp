@@ -208,7 +208,7 @@ bool Transceiver::Connected()
 
 bool Transceiver::myHost(IMFrame & frame)
 {
-     return hostMAC==frame.Setup()->MAC;
+     return (hostId== frame.Header.SenderId)||(  hostMAC==frame.Setup()->MAC);
 }
 
 
@@ -342,10 +342,6 @@ bool Transceiver::CheckListenBroadcast()
      }
    } else {
 
-//     if (timer.Cycle()>(_helloCycle+4)){
-//            _helloCycle+=timer.Cycle()+200;
-
-//     }
      if (timer.Cycle()>(_KnockCycle+7))   {
          if (!_doSleep)
          {
@@ -450,6 +446,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                   // Deconnect();
                     _helloCycle=timer.Cycle();
                     _doSleep=false;
+                    _calibrated=false;
                    DBGINFO("HOST REBOOT");
                 } else {
                 }
@@ -728,6 +725,7 @@ bool Transceiver::BackwardWelcome(IMFrame & frame)
     if (x==0xFF)
        return false;
   //  setup_recv.hostchannel=myChannel;
+    setup_recv.MAC2=myMAC;
     frame.Put(&setup_recv);
     if (x==0) {
       buffer->setChannel(BroadcastChannel);        // source hop - listen on broadcast
@@ -824,6 +822,8 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    if (myMode!=setup->mode)
      _connected=0;
    myMode=setup->mode;
+  // hostMAC=setup->MAC2;
+
    hostRssiSend=setup->rssi;
    PrepareTransmission();
    if (!_connected)
@@ -966,6 +966,10 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
 
               return false;
         }
+        Wakeup();
+        SendKnock(true);
+    //    DoListenBroadcast();
+
         buffer->StartReceive();
 
         return true;
