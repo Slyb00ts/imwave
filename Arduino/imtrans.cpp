@@ -37,7 +37,7 @@
   #define knockShift 10
 #endif
 
-#define IMVERSION 31
+#define IMVERSION 32
 
 #define DBGSLEEP 0
 
@@ -331,6 +331,8 @@ bool Transceiver::CheckListenBroadcast()
        return false;
      if (timer.Cycle()>(_helloCycle+4)){
         _calibrated=false;
+        _KnockCycle=timer.Cycle();
+
         if (_doSleep){
           SendKnock(true);
           _doSleep=false;
@@ -423,13 +425,12 @@ void Transceiver::StopListenBroadcast()
         Idle();
         return;
      }
-   }else{
-      if (_noSync){
+   };
+   if (_noSync){
         Idle();
         return;
-      }
-   }
-   }
+   };
+   };
    Wakeup();
    DoListenBroadcast();
 }
@@ -446,6 +447,8 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                    // _doSleep=false;
                     _calibrated=false;
                     _noSync=true;
+                     _KnockCycle=timer.Cycle();
+
                     DBGINFO("HOST REBOOT");
                 } else {
                 }
@@ -969,9 +972,13 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
         SendKnock(true);
     //    DoListenBroadcast();
 
-        buffer->StartReceive();
+       if (CheckListenBroadcast()) {
 
+        buffer->StartReceive();
         return true;
+      }
+      StopListenBroadcast();
+        return false;
 }
 
 
