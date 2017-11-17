@@ -189,6 +189,7 @@ void Transceiver::Deconnect()
   _KnockCycle=timer.Cycle();
   _helloCycle=_KnockCycle;
   _inSleep=true;
+  tube.Reset();
   router.reset();
   router.addMAC(myMAC,0xFF);
   BroadcastEnable=false;
@@ -968,11 +969,11 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
 
               return false;
         }
-        Wakeup();
-        SendKnock(true);
-    //    DoListenBroadcast();
+       //    DoListenBroadcast();
 
        if (CheckListenBroadcast()) {
+        Wakeup();
+//        SendKnock(true);
 
         buffer->StartReceive();
         return true;
