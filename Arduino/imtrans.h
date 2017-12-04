@@ -48,7 +48,7 @@
 #if DBGLVL>=1
   #define BroadcastDuration 200
 #else
-  #define BroadcastDuration 100
+  #define BroadcastDuration 130
 #endif
 
 

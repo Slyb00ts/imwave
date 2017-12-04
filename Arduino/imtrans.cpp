@@ -107,7 +107,7 @@ void Transceiver::TimerSetup(t_Time cal)
    // _calibrate=cal;
     timer.Setup(STARTDATA,DataDelay+cal-_calibrateshift);
     timer.Setup(STOPDATA,DataDelay+DataDuration+cal-_calibrateshift);
-    timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration+cal-_calibrateshift); //when shift knock
+    timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration-_calibrateshift); //when shift knock
 }
 
 
@@ -751,7 +751,7 @@ void Transceiver::setupMode(uint16_t aMode)
 
   uint8_t xCycle= aMode & 0xFF;
   _noSync=false;
-  _broadcastshift=0;
+  _broadcastshift=10;
   if (xCycle==1) {
     _rateData=3;
   } else if (xCycle==2)   {
@@ -770,18 +770,20 @@ void Transceiver::setupMode(uint16_t aMode)
   } else if (xCycle==2)   {
     _rateHello=1200*6;           //6h
     _noSync=true;
-    _broadcastshift=10;
+    _broadcastshift=-20;
   } else if (xCycle==3)   {
     _rateHello=1200*12;              //12h
     _noSync=true;
-    _broadcastshift=20;
+    _broadcastshift=-20;
   } else if (xCycle==4)   {
     _rateHello=1199*24;         //24h
 //    DisableWatchdog();
+    _broadcastshift=-20;
     _noSync=true;
   } else if (xCycle==5)   {
     _rateHello=1199*24;         //24h
  //   DisableWatchdog();
+    _broadcastshift=-20;
     _noSync=true;
   } else {
     _rateHello=60;
