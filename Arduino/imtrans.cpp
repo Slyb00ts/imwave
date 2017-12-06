@@ -57,9 +57,8 @@ Transceiver::Transceiver()
   noInterrupts();
   randomSeed(internalrandom());
   ptr = this;	//the ptr points to this object
-  HostChannel=0;
+ // HostChannel=0;
   myChannel=0;
-  BroadcastChannel=0;
   ksequence=0;
   hsequence=0;
 //  invalidSequence=0;
@@ -68,7 +67,7 @@ Transceiver::Transceiver()
   _doSleep=false;
   _rateData=3;
   _rateHello=20;
-  _calibrateshift=0;
+//  _calibrateshift=0;
   _broadcastshift=0;
   NoSleep=false;
   TimerSetupAll();
@@ -244,7 +243,6 @@ void Transceiver::PrepareSetup(IMFrameSetup &se)
    se.MAC= myMAC;
    se.MAC2=serverMAC;
    se.salt=_salt;
-   se.hostchannel=HostChannel;
 }
 
 bool Transceiver::Send(IMFrame & frame)
@@ -259,7 +257,7 @@ bool Transceiver::Send(IMFrame & frame)
 
 bool Transceiver::SendData(IMFrame & frame)
 {
-   buffer->setChannel(HostChannel);
+//   buffer->setChannel(HostChannel);
    frame.Header.Function = IMF_DATA;
    frame.Header.SourceId=myId;
    frame.Header.ReceiverId=hostId;
@@ -369,7 +367,7 @@ bool Transceiver::CheckListenBroadcast()
 void Transceiver::DoListenBroadcast()
 {
    timer.setStage(LISTENBROADCAST);
-   buffer->setChannel(BroadcastChannel);
+//   buffer->setChannel(BroadcastChannel);
    buffer->StartReceive();
 }
 
@@ -393,7 +391,7 @@ void Transceiver::StopListen()
 //      if  (_doSleep )
 //          Idle();
 
-      if  (timer.Cycle()>_helloCycle+7) { //after 45s without knock
+      if (timer.Cycle()>_helloCycle+7) { //after 45s without knock
          _KnockCycle=timer.Cycle();
          _helloCycle=_KnockCycle+1;  // next 10min waiting
          _connected=false;
@@ -487,7 +485,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
 bool Transceiver::SendKnock(bool invalid)
 {
    Wakeup();
-   buffer->setChannel(BroadcastChannel);
+//   buffer->setChannel(BroadcastChannel);
    IMFrame _frame;
    IMFrameSetup *setup=_frame.Setup();
    _frame.Reset();
@@ -550,7 +548,6 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    DBGINFO("((");
    DBGINFO(_helloCycle);
    DBGINFO(")) ");
-//   _knocked++;
    byte xr=0;
    if (Connected()){
      //if (_knocked % (TimerHelloCycle*_cycledata))  {
@@ -562,8 +559,6 @@ bool Transceiver::ResponseHello(IMFrame & frame)
      //}
 //     _helloCycle=timer.Cycle() +3;  //if not success bypass cycle
    } else {
-//     if (timer.Cycle()<_helloCycle)
-//       return false;
 
    }
    if (timer.Cycle()>_helloCycle)
@@ -583,10 +578,8 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    myHop++;
   // _cycleshift=1;
    hostId=frame.Header.SenderId;
-   HostChannel=sp->hostchannel;
 
    Wakeup();
-   buffer->setChannel(HostChannel);
 
    IMFrameSetup * setup=_frame.Setup();
 
@@ -659,7 +652,6 @@ bool Transceiver::Forward(IMFrame & frame)
    IMFrame _frame;
    _frame=frame;
    DBGINFO("FORWARD");
-   buffer->setChannel(HostChannel);
    _frame.Header.Function=frame.Header.Function | IMF_FORWARD;
    _frame.Header.ReceiverId=hostId;
    return Send(_frame);
@@ -731,12 +723,9 @@ bool Transceiver::BackwardWelcome(IMFrame & frame)
     setup_recv.MAC2=myMAC;
     frame.Put(&setup_recv);
     if (x==0) {
-      buffer->setChannel(BroadcastChannel);        // source hop - listen on broadcast
       frame.Header.ReceiverId=0;
     } else {
       frame.Header.ReceiverId=x;          //transmiter hop
-  //    buffer->setChannel(router.getChannel(x));  // set to channel of hop
-      buffer->setChannel(BroadcastChannel);
     }
     return Send(frame);
 }
@@ -796,9 +785,6 @@ void Transceiver::setupMode(uint16_t aMode)
 
 void Transceiver::PrepareTransmission()
 {
-   HostChannel=0;
-  // myChannel=0;
-   _calibrateshift=0;
   t_Time t=myId;
   t*=32;
   t =t %2248; //70 *32+8
@@ -861,8 +847,6 @@ bool Transceiver::ReceiveConfig(IMFrame & frame)
 
    myMacLo=setup->MAC2 & 0xffff;
    myMAC=(startMAC & 0xffff0000L )  | myMacLo;
-   DBGINFO("CONFIG%");
-   buffer->setChannel(HostChannel);
       IMFrame _frame;
         IMFrameSetup * _setup=_frame.Setup();
 
