@@ -37,7 +37,7 @@
   #define knockShift 10
 #endif
 
-#define IMVERSION 32
+#define IMVERSION 33
 
 #define DBGSLEEP 0
 
@@ -809,7 +809,7 @@ void Transceiver::PrepareTransmission()
 bool Transceiver::ReceiveWelcome(IMFrame & frame)
 {
    IMFrameSetup * setup =frame.Setup();
-   if  (setup->MAC!=myMAC) {
+   if (setup->MAC!=myMAC) {
      DBGINFO("*****NOT FORME ");
      DBGINFO(myMAC);
      BackwardWelcome(frame);
@@ -853,7 +853,7 @@ bool Transceiver::ReceiveConfig(IMFrame & frame)
 {
    IMFrameSetup * setup =frame.Setup();
 
-   if  (setup->MAC!=myMAC) {
+   if (setup->MAC!=myMAC) {
      DBGINFO("*****NOT FORME ");
      DBGINFO(myMAC);
       return false;
@@ -885,6 +885,42 @@ bool Transceiver::ReceiveConfig(IMFrame & frame)
 }
 
 
+bool Transceiver::ReceiveOrder(IMFrame & frame)
+{
+   IMFrameSetup * setup =frame.Setup();
+
+   if (setup->MAC!=myMAC) {
+     DBGINFO("*****NOT FORME ");
+     DBGINFO(myMAC);
+      return false;
+   }
+
+   myMacLo=setup->MAC2 & 0xffff;
+   byte io;
+   if (funOrder) {
+       DBGLEDON();
+      io=funOrder(setup->device1);
+   } else{
+      io=255;
+   }
+
+      IMFrame _frame;
+        IMFrameSetup * _setup=_frame.Setup();
+
+   _frame.Header.Function = IMF_ORDERREP;
+   _frame.Header.SourceId=myId;
+   _frame.Header.ReceiverId=frame.Header.SenderId;
+   _frame.Header.DestinationId=frame.Header.SourceId;
+   _frame.Header.Sequence=frame.Header.Sequence;
+   _setup->MAC= myMAC;
+   _setup->MAC2=serverMAC;
+   _setup->device2=io;
+
+
+   Send(_frame);
+   return true;
+}
+
 
 
 
@@ -907,11 +943,10 @@ bool Transceiver::Parse()
 {
   static IMFrame rxFrame;
 
-  if(GetFrame(rxFrame))
+  if (GetFrame(rxFrame))
       {
         if (!ParseFrame(rxFrame))
         {
-   //       DBGINFO(" rxGET ");
         } else{
           return true;
         }
@@ -941,7 +976,14 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
         {
            if (ReceiveWelcome(rxFrame))
            {
-              DBGINFO(" Welcome ");
+               return true;         //stop listening
+           }
+
+        }
+        else if (rxFrame.Order())
+        {
+           if (ReceiveOrder(rxFrame))
+           {
                return true;         //stop listening
            }
 

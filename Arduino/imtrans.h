@@ -58,6 +58,7 @@
 
 
 extern "C" void PCINT0_vect(void)__attribute__ ((signal)); // handle pin change interrupt for D8 to D13 here
+typedef byte( * funOrderTransceiver )(uint16_t );
 
 
 class Transceiver
@@ -81,9 +82,9 @@ private:
     byte myHop;
     IMAddress myId;
     uint16_t myMode;
-    uint16_t mySynchronize;
+  //  uint16_t mySynchronize;
     uint16_t _salt;
-    uint16_t _calibrateshift;
+  //  uint16_t _calibrateshift;
     uint16_t _broadcastshift;
     long _rateData;
     long _rateHello;
@@ -124,6 +125,7 @@ private:
     void PrepareTransmission();
 public:
     Transceiver();
+    funOrderTransceiver funOrder;
     IMTimer  timer;
 
     IMAddress hostId;
@@ -169,6 +171,7 @@ public:
     void ReceiveACK(IMFrame & frame);
     bool ReceiveWelcome(IMFrame & frame);
     bool ReceiveConfig(IMFrame & frame);
+    bool ReceiveOrder(IMFrame & frame);
     bool ResponseHello(IMFrame & frame);
     bool ForwardHello(IMFrame & frame);
     void SendACK(IMFrame & frame);

@@ -64,7 +64,7 @@ class  IMTimer
     static const int maxStages = 8;
     t_Time stages[maxStages];
     void compute();
-    t_Time getTime();
+//    t_Time getTime();
 //    t_Time getTime(t_Time time);
     t_Time setNextTime();
 
@@ -99,6 +99,7 @@ class  IMTimer
         void Calibrate(t_Time time);
         void printTime();
         long CycleHour();
+        t_Time getTime();
 
 
   private:

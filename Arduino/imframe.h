@@ -14,6 +14,7 @@
 #define IMF_CONFIG    0x0C        // MAC setup
 #define IMF_REPEAT    0x80
 #define IMF_FORWARD   0x20
+#define IMF_ORDERREP  0x8A
 
 #define IMS_TRANSCEIVER 0x8000
 #define IMS_STEERING 0x4000
@@ -180,6 +181,10 @@ typedef struct
         bool CONFIG()
         {
           return Header.Function==IMF_CONFIG;
+        }
+        bool Order()
+        {
+          return Header.Function==IMF_ORDER;
         }
 
         bool NeedACK()
