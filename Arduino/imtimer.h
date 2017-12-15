@@ -43,8 +43,10 @@ typedef void( * funIMTimer )( byte );
 
 
 
-
 extern "C" void PCINT0_vect(void)__attribute__ ((signal)); // handle pin change interrupt for D8 to D13 here
+typedef void( * funStepTimer )(void );
+
+
 
 class  IMTimer
 {
@@ -67,12 +69,14 @@ class  IMTimer
 //    t_Time getTime();
 //    t_Time getTime(t_Time time);
     t_Time setNextTime();
+     static void StepTimerNull(void);
 
 
   public:
         IMTimer();
 //        funIMTimer onStage;
 //        funIMTimer onListen;
+        static funStepTimer funStep;
         uint16_t DeviationPlus;                       //sum deviation in calibrate
         uint16_t DeviationMinus;                     //separate for shorter and longer
         uint16_t SynchronizeCycle;

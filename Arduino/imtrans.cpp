@@ -1092,6 +1092,10 @@ uint16_t Transceiver::Deviation()
   return timer.DeviationPlus;
 }
 
+void Transceiver::setTimerFunction(funStepTimer fun)
+{
+  timer.funStep=fun;
+}
 
 #if defined(__AVR_ATmega32U4__)
 

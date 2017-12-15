@@ -144,6 +144,7 @@ public:
     bool NoSleep;
     bool BroadcastEnable;
     bool SteeringEnable;
+    void setTimerFunction(funStepTimer fun);
 //    funTransceiver onEvent;
 //    void Init(IMCC1101 & cc);
     void Init(IMBuffer & buf);

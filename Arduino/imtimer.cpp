@@ -5,11 +5,15 @@ byte toggle;
 #endif
 
 IMTimer* IMTimer::ptrr = 0;
+funStepTimer IMTimer::funStep=&IMTimer::StepTimerNull;
+
 
 IMTimer::IMTimer()
 {
 	ptrr = this;	//the ptr points to this object
         noInterrupts();
+        funStep=&StepTimerNull;
+
   #if defined(__sleepT2)
         setupTimer2();
         void disableADCB();
@@ -272,6 +276,10 @@ void IMTimer::doneWrite()
 {
 }
 
+void IMTimer::StepTimerNull(){
+    toggle = ~toggle;
+    digitalWrite(DBGCLOCK,toggle);
+}
 short IMTimer::ClassTest()
 {
     IMTimer t;
@@ -299,10 +307,11 @@ ISR(TIMER2_COMPA_vect) {
   incTimer2();
   #endif
   #ifdef DBGCLOCK
-    toggle = ~toggle;
+   IMTimer::funStep();
+//    toggle = ~toggle;
  //   digitalWrite(DBGCLOCK,HIGH);
 //    digitalWrite(DBGCLOCK,LOW);
-    digitalWrite(DBGCLOCK,toggle);
+//    digitalWrite(DBGCLOCK,toggle);
   #endif
 }
 #endif
