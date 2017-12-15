@@ -104,9 +104,9 @@ void Transceiver::TimerSetupAll()
 void Transceiver::TimerSetup(t_Time cal)
 {
    // _calibrate=cal;
-    timer.Setup(STARTDATA,DataDelay+cal-_calibrateshift);
-    timer.Setup(STOPDATA,DataDelay+DataDuration+cal-_calibrateshift);
-    timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration-_calibrateshift); //when shift knock
+    timer.Setup(STARTDATA,DataDelay+cal);
+    timer.Setup(STOPDATA,DataDelay+DataDuration+cal);
+    timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration); //when shift knock
 }
 
 
@@ -365,7 +365,6 @@ bool Transceiver::CheckListenBroadcast()
 void Transceiver::DoListenBroadcast()
 {
    timer.setStage(LISTENBROADCAST);
-//   buffer->setChannel(BroadcastChannel);
    buffer->StartReceive();
 }
 
@@ -373,7 +372,6 @@ void Transceiver::ListenData()
 {
    if (BroadcastEnable || NoSleep ){
       Wakeup();
-//      buffer->setChannel(myChannel);
       timer.setStage(LISTENDATA);
       buffer->StartReceive();
    } else {
@@ -480,7 +478,6 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
 bool Transceiver::SendKnock(bool invalid)
 {
    Wakeup();
-//   buffer->setChannel(BroadcastChannel);
    IMFrame _frame;
    IMFrameSetup *setup=_frame.Setup();
    _frame.Reset();
@@ -630,7 +627,6 @@ bool Transceiver::Backward(IMFrame & frame)
    DBGINFO("BACKWARD");
    _frame.Header.Function=frame.Header.Function | IMF_FORWARD;
    _frame.Header.ReceiverId=router.Repeater(frame.Header.DestinationId);
-   buffer->setChannel(router.getChannel(_frame.Header.ReceiverId));  //get proper channel form router
    return Send(_frame);
 }
 

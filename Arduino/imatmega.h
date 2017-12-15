@@ -96,6 +96,7 @@ void syncTimer2(int8_t step);
 byte nextTimer2(void);
 byte addTimer2(byte aTime);
 void  stopTimer2(t_Time aNext);
+void setMaxStepTimer(byte aStep);
 #else
  t_Time incTimer2(void);
  void  stopTimer2(t_Time aNext);
