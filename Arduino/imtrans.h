@@ -138,8 +138,8 @@ public:
     uint16_t myMacLo;
     byte myChannel;
     byte myDevice;
-    byte HostChannel;
-    byte BroadcastChannel;
+ //   byte HostChannel;
+ //   byte BroadcastChannel;
     bool NoRadio;
     bool NoSleep;
     bool BroadcastEnable;

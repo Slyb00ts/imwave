@@ -320,8 +320,6 @@ bool Transceiver::CheckListenBroadcast()
    }
    if (NoSleep)
    {
-     Wakeup();
-     DoListenBroadcast();
      return true;
    }
    if (Connected())
@@ -453,9 +451,6 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                 }
               } else {
                         DBGINFO(" alien host ");
-                        if (sp->salt==0) {    //received invalid knock
-                           DBGINFO(" invalid ");
-                        }
                         return false;
               }
                 timer.Calibrate(millisTNow()-BroadcastDelay-knockShift-_broadcastshift);
@@ -529,7 +524,7 @@ void Transceiver::Knock()
             DBGINFO("\r\n");
           }
       } else {
-         if (_noSync  ){
+         if (_noSync){
               if (timer.Cycle()>_helloCycle){
                     SendHello();
                     bb=true;
@@ -545,9 +540,6 @@ void Transceiver::Knock()
 
 bool Transceiver::ResponseHello(IMFrame & frame)
 {
-   DBGINFO("((");
-   DBGINFO(_helloCycle);
-   DBGINFO(")) ");
    byte xr=0;
    if (Connected()){
      //if (_knocked % (TimerHelloCycle*_cycledata))  {
@@ -561,11 +553,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    } else {
 
    }
-   if (timer.Cycle()>_helloCycle)
-       xr+=random(100);
-   DBGINFO("[[");
-   DBGINFO(xr);
-   DBGINFO("]] ");
+  //     random(100);
    if (xr>0)
      delaySleepT2(xr);
 
