@@ -179,7 +179,7 @@ void IMTimer::setStage(byte stage)
 
 t_Time IMTimer::setNextTime()
 {
-  t_Time nextTT1=millisT2()-start;
+  t_Time nextTT1=millisTNow()-start;
   if (nextTT1>0xFFFFFFF)
      nextTT1+= stages[PERIOD];
   if (nextTT1>0xFFFFFFF)
@@ -210,7 +210,7 @@ byte IMTimer::WaitStage()
   setSleepModeT2();
   sei();
   t_Time nextTT=setNextTime();
-  while ((millisT2()-start)<nextTT)
+  while ((millisTNow()-start)<nextTT)
   {
 //     if (!_listen && !_measure)
      if (_measure==0)

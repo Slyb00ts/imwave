@@ -41,14 +41,14 @@
 
 
 #define BroadcastDelay 200
-#define BroadcastDuration 100
+//#define BroadcastDuration 100
 
 #define DataDelay 600
 #define DataDuration 200
 #if DBGLVL>=1
   #define BroadcastDuration 200
 #else
-  #define BroadcastDuration 130
+  #define BroadcastDuration 80
 #endif
 
 

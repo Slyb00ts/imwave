@@ -9,6 +9,7 @@
 
 volatile t_Time counterTimer2=0;
 volatile t_Time counterTimer2Stop=0;
+volatile byte counterTimer2MaxStep=220;
 
 
 //http://stackoverflow.com/questions/13538080/why-should-i-calibrate-the-oscillator-in-avr-programming
@@ -364,9 +365,13 @@ byte addTimer2(byte aTime){
   counterTimer2+=(aTime+1);
   if ((counterTimer2) >= counterTimer2Stop)
    return 0;
-  if ((counterTimer2+220)<counterTimer2Stop)
-     return 210;
-  return counterTimer2Stop-counterTimer2;
+  t_Time xDiv=counterTimer2Stop-counterTimer2;
+  if (xDiv>counterTimer2MaxStep)
+      xDiv=counterTimer2MaxStep;
+  return xDiv;
+//  if ((counterTimer2+220)<counterTimer2Stop)
+//     return 210;
+//  return counterTimer2Stop-counterTimer2;
 }
 
 byte nextTimer2()
@@ -383,6 +388,10 @@ void stopTimer2(t_Time aTime){
 
 
 #endif
+
+void setMaxStepTimer(byte aStep){
+ counterTimer2MaxStep=aStep;
+}
 
 void resetPin()
 {
