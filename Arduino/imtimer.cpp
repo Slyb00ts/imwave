@@ -22,6 +22,12 @@ IMTimer::IMTimer()
         DeviationMinus=0;
         watchdog=0;
         cycle=0;
+        start=0;
+        _synchronizeStart=0;
+        nearTime=0;
+        nearTimeTT=0;
+        SynchronizeStep=0;
+        SynchronizeCycle=0;
         Setup(IMTimer::PERIOD,CycleDuration);
 }
 
@@ -197,16 +203,6 @@ t_Time IMTimer::setNextTime()
 }
 byte IMTimer::WaitStage()
 {
-/*  DBGINFO("\r\n{{");
-  DBGINFO(nearTime);
-  DBGINFO('%');
-  DBGINFO(millis());
-  DBGINFO('%');
-  DBGINFO(getTime());
-  DBGINFO('%');
-  DBGINFO(cycle);
-  Serial.flush();
-*/
   setSleepModeT2();
   sei();
   t_Time nextTT=setNextTime();
