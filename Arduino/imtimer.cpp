@@ -161,9 +161,9 @@ void IMTimer::Setup(byte stage, unsigned long waittime)
 void IMTimer::compute()
 {
   t_Time last=nearTime;
-  if (last>=(stages[PERIOD]-10))
+  if (last>=(stages[PERIOD]-50))
       last=1;
-  nearTime=stages[PERIOD]-10;
+  nearTime=stages[PERIOD]-50;
   nearStage=PERIOD;
   for(byte i=1 ;i<maxStages;i++)
   {
@@ -213,12 +213,12 @@ byte IMTimer::WaitStage()
         delayT2();
      if (_listen){
        _listen=0;
-       stopTimer2(start);
+      // stopTimer2(start);
        return current;
      }
      if (_measure){
        _measure=0;
-       stopTimer2(start);
+    //   stopTimer2(start);
        _measure=0;
        return MEASUREDATA;
      }
