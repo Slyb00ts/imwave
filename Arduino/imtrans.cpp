@@ -37,7 +37,7 @@
   #define knockShift 10
 #endif
 
-#define IMVERSION 33
+#define IMVERSION 34
 
 #define DBGSLEEP 0
 

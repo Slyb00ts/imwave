@@ -62,6 +62,7 @@ class  IMTimer
     volatile byte _listen;
     volatile byte _measure;
     unsigned short nearStage;
+    t_Time nearTimeTT;
     t_Time nearTime;
     static const int maxStages = 8;
     t_Time stages[maxStages];

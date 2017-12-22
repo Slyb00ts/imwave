@@ -160,7 +160,8 @@ void IMTimer::Setup(byte stage, unsigned long waittime)
 
 void IMTimer::compute()
 {
-  t_Time last=nearTime;
+ // t_Time last=nearTime;
+  t_Time last=getTime();
   if (last>=(stages[PERIOD]-50))
       last=1;
   nearTime=stages[PERIOD]-50;
@@ -195,18 +196,23 @@ t_Time IMTimer::setNextTime()
   if (nextTT>0xFFFFFFF)
      nextTT+= stages[PERIOD];
 
-  if (nextTT<nextTT1)
+  if (nextTT<nextTT1)  {
      nextTT+= stages[PERIOD];
+  }
+
   stopTimer2(nextTT+start);
-  return nextTT;
+  return nextTT+start;
 
 }
 byte IMTimer::WaitStage()
 {
   setSleepModeT2();
   sei();
+  t_Time dTT=millisTNow()-nearTimeTT;
+  if ((dTT>10)){
   t_Time nextTT=setNextTime();
-  while ((millisTNow()-start)<nextTT)
+  nearTimeTT=nextTT;
+  while ((millisTNow())<nextTT)
   {
 //     if (!_listen && !_measure)
      if (_measure==0)
@@ -222,6 +228,7 @@ byte IMTimer::WaitStage()
        _measure=0;
        return MEASUREDATA;
      }
+  }
   }
 
   sei();
