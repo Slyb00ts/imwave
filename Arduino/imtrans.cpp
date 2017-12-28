@@ -578,7 +578,10 @@ bool Transceiver::ResponseHello(IMFrame & frame)
     hsequence++;
    setup->rssi=hostRssiListen;
  //   setup->mode=myMode;
-    setup->mode=Deviation();
+  //  setup->mode=Deviation();
+  //  t_Time  xcc=timer.getTime()leDuration;
+    setup->device2=xr;
+    setup->mode=timer.getTime();
     setup->hostchannel=IMVERSION;
     if (!Connected())
       setup->hostchannel=0;
@@ -607,6 +610,7 @@ void Transceiver::SendHello()
    setup->rssi=hostRssiListen;
     setup->mode=myMode;
  //   setup->mode=Deviation();
+    setup->mode=0xC88;
     setup->hostchannel=IMVERSION;
     if (!Connected())
       setup->hostchannel=0;
@@ -649,9 +653,7 @@ bool Transceiver::Onward(IMFrame & frame)
         }
         else
         {
-
            if (!BroadcastEnable){
-
               DBGERR("&NOTBCE");
               return true;
            }
@@ -855,23 +857,20 @@ bool Transceiver::ReceiveConfig(IMFrame & frame)
 
 bool Transceiver::ReceiveOrder(IMFrame & frame)
 {
-   IMFrameSetup * setup =frame.Setup();
-
-   if (setup->MAC!=myMAC) {
-     DBGINFO("*****NOT FORME ");
-     DBGINFO(myMAC);
-      return false;
+    if (!myHost(frame)){
+ //        return false;
    }
 
-   myMacLo=setup->MAC2 & 0xffff;
    byte io;
+   byte xin;
+   xin=setup->device1;
    if (funOrder) {
        DBGLEDON();
       io=funOrder(setup->device1);
    } else{
       io=255;
    }
-
+    Wakeup();
       IMFrame _frame;
         IMFrameSetup * _setup=_frame.Setup();
 

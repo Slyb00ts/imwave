@@ -538,7 +538,7 @@ void RFM69::setChannel(uint8_t channel){
 void RFM69::setHighPower(bool onOff) {
   _isRFM69HW = false;
 //  writeReg(REG_OCP, _isRFM69HW ? RF_OCP_OFF : RF_OCP_ON);
-  //writeReg(REG_OCP, RF_OCP_ON | RF_OCP_TRIM_95 );
+//  writeReg(REG_OCP, RF_OCP_OFF | RF_OCP_TRIM_95 );
   if (onOff) // turning ON
   //    {REG_PALEVEL, RF_PALEVEL_PA0_OFF | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_ON  | RF_PALEVEL_OUTPUTPOWER_11111}, // enable P1 & P2 amplifier stages
 

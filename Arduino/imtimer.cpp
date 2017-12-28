@@ -250,9 +250,6 @@ byte IMTimer::WaitStage()
        if ((cycle % CycleHour()) ==0){
        r=CRONHOUR;
      }
-     DBGINFO(waiting);
- //    waiting=0;
-//     DBGPINLOW();
   }
   compute();
 //  setNextTime();        hand after 1min
