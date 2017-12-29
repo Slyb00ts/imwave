@@ -24,7 +24,7 @@ static struct IMEConfig
         uint8_t Channel;
         uint16_t SynchronizeCycle;
         uint8_t Power;
-        uint8_t Future;
+        uint8_t Order;
 
 }imEConfig;
 

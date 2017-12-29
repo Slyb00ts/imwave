@@ -154,12 +154,14 @@ void Transceiver::LoadSetup()
   serverId=imEConfig.ServerId;
   myMode=imEConfig.Mode;
 //  myChannel=imEConfig.Channel;
-  myMacLo=imEConfig.MacLo;
+  uint16_t xMacLo=imEConfig.MacLo;
   if (startMAC!=0)
   {
-    myMAC=(startMAC & 0xffff0000L )  | myMacLo;
+    myMAC=(startMAC & 0xffff0000L )  | xMacLo;
   }
-  //myMAC=startMAC+imEConfig.MacLo;
+  if (funOrder) {
+        funOrder(imEConfig.Order);
+  }
 }
 
 void Transceiver::StoreSetup()
@@ -169,7 +171,7 @@ void Transceiver::StoreSetup()
  // imEConfig.Channel=myChannel;
   imEConfig.ServerId=serverId;
   imEConfig.HostId=hostId;
-  imEConfig.MacLo=myMacLo;
+ // imEConfig.MacLo=myMacLo;
   IMEprom::WriteConfig();
 }
 
@@ -453,11 +455,11 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
               }
                 timer.Calibrate(millisTNow()-BroadcastDelay-knockShift-_broadcastshift);
                 _calibrated=true;
-                if (_noSync) {
-                  StopListenBroadcast();
-                  return false;
-                }
            }
+           if (_noSync) {
+             return false;
+           }
+
 
            if (sp->salt==0) {    //received invalid knock
                       DBGINFO(" invalid ");
@@ -831,10 +833,11 @@ bool Transceiver::ReceiveConfig(IMFrame & frame)
       return false;
    }
 
-   myMacLo=setup->MAC2 & 0xffff;
-   myMAC=(startMAC & 0xffff0000L )  | myMacLo;
+   uint16_t xMacLo=setup->MAC2 & 0xffff;
+   myMAC=(startMAC & 0xffff0000L )  | xMacLo;
       IMFrame _frame;
-        IMFrameSetup * _setup=_frame.Setup();
+       _frame.Reset();
+    IMFrameSetup * _setup=_frame.Setup();
 
 
    _frame.Header.Function = IMF_HELLO;
@@ -862,11 +865,11 @@ bool Transceiver::ReceiveOrder(IMFrame & frame)
    }
 
    byte io;
-   byte xin;
-   xin=setup->device1;
+   byte xOrder;
+   xOrder=setup->device1;
    if (funOrder) {
-       DBGLEDON();
-      io=funOrder(setup->device1);
+       //DBGLEDON();
+      io=funOrder(xOrder);
    } else{
       io=255;
    }
@@ -874,17 +877,22 @@ bool Transceiver::ReceiveOrder(IMFrame & frame)
       IMFrame _frame;
         IMFrameSetup * _setup=_frame.Setup();
 
+   _frame.Reset();
    _frame.Header.Function = IMF_ORDERREP;
    _frame.Header.SourceId=myId;
    _frame.Header.ReceiverId=frame.Header.SenderId;
    _frame.Header.DestinationId=frame.Header.SourceId;
    _frame.Header.Sequence=frame.Header.Sequence;
+    PrepareSetup(*_setup);
    _setup->MAC= myMAC;
    _setup->MAC2=serverMAC;
    _setup->device2=io;
+   _setup->device1=xOrder;
 
 
    Send(_frame);
+   imEConfig.Order=xOrder;
+   StoreSetup();
    return true;
 }
 
@@ -929,9 +937,8 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
            if (ReceiveKnock(rxFrame))
            {
               DBGINFO(" sendHello ");
+              return true;         //send hello and listening
            }
-           DBGINFO(" \r\n");
-           return true;         //send hello and listening
         }
         else if (rxFrame.Hello())
         {
@@ -978,19 +985,17 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
               if (rxFrame.NeedACK())
                        SendACK(rxFrame);
 
-              return false;
         }
        //    DoListenBroadcast();
 
        if (CheckListenBroadcast()) {
         Wakeup();
-//        SendKnock(true);
 
         buffer->StartReceive();
         return true;
       }
       StopListenBroadcast();
-        return false;
+      return false;
 }
 
 
