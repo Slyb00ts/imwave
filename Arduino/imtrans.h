@@ -158,7 +158,8 @@ public:
 //    bool TestLow();
     void Deconnect();
     void Knock();
-    void ListenData();
+    bool ContinueListen();
+   // void ListenData();
     void ListenBroadcast();
     void StopListen();
     void StopListenBroadcast();

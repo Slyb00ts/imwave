@@ -280,7 +280,14 @@ void Transceiver::Transmit()
          DBGINFO("Retry");
       }
       delaySleepT2(1);
-      ListenData();//stop listen when no broadcast
+//      ListenData();//stop listen when no broadcast
+   if (BroadcastEnable || NoSleep ){
+      Wakeup();
+      timer.setStage(LISTENDATA);
+      buffer->StartReceive();
+   } else {
+      StopListenBroadcast();
+   }
 }
 
 
@@ -370,16 +377,6 @@ void Transceiver::DoListenBroadcast()
    buffer->StartReceive();
 }
 
-void Transceiver::ListenData()
-{
-   if (BroadcastEnable || NoSleep ){
-      Wakeup();
-      timer.setStage(LISTENDATA);
-      buffer->StartReceive();
-   } else {
-      StopListen();
-   }
-}
 
 void Transceiver::StopListen()
 {
@@ -473,7 +470,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                  DoListenBroadcast();      //return to broadcas channel (wait to WELCOME)
                  return true;
            }
-           StopListenBroadcast(); // no listen until data stage
+    //       StopListenBroadcast(); // no listen until data stage
            return false;
 }
 
@@ -868,7 +865,6 @@ bool Transceiver::ReceiveOrder(IMFrame & frame)
    byte xOrder;
    xOrder=setup->device1;
    if (funOrder) {
-       //DBGLEDON();
       io=funOrder(xOrder);
    } else{
       io=255;
@@ -942,7 +938,6 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
         }
         else if (rxFrame.Hello())
         {
-           DBGINFO("HELLO");
            if (ForwardHello(rxFrame))
               DBGINFO(" FORW ");
         }
@@ -986,18 +981,19 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
                        SendACK(rxFrame);
 
         }
-       //    DoListenBroadcast();
+        return ContinueListen();
+}
 
-       if (CheckListenBroadcast()) {
+bool Transceiver::ContinueListen(){
+      if (CheckListenBroadcast()) {
         Wakeup();
 
         buffer->StartReceive();
+
         return true;
       }
       StopListenBroadcast();
       return false;
-}
-
 
 
 
