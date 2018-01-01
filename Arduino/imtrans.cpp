@@ -380,6 +380,9 @@ void Transceiver::DoListenBroadcast()
 
 void Transceiver::StopListen()
 {
+   if (NoSleep) {
+     return;
+   }
    if (Connected()){
 //      if       (timer.Cycle()>(_helloCycle+10))  //check 30s
 //        _doSleep=false;
@@ -442,7 +445,11 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                     _calibrated=false;
                     _noSync=true;
                      _KnockCycle=timer.Cycle();
-
+                     if (sp->salt==0)
+                       {    //received invalid knock
+                         return false;
+                       }
+                    _salt=sp->salt; //accept new value
                     DBGINFO("HOST REBOOT");
                 } else {
                 }
@@ -787,6 +794,7 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
      return false;
    }
    timer.Watchdog();
+   hsequence--;
    hostRssiListen=buffer->rssiH;
 
    serverId=frame.Header.SourceId;
@@ -809,7 +817,6 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    _doSleep=true;
    tube.wsequence++;
    _helloCycle=timer.Cycle()+_rateHello;//setup next Hello
-  StoreSetup();
    if (myHop==2) {
 //     _calibrateshift=200;
      DBGINFO("C200SHIFT");
@@ -817,6 +824,7 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    DBGINFO(myId);
    DBGINFO("CONNECT%");
    StopListenBroadcast(); // no listen until data stage
+   StoreSetup();
    return true;
 }
 
@@ -849,6 +857,7 @@ bool Transceiver::ReceiveConfig(IMFrame & frame)
    Send(_frame);
    myId=0;
    myMode=0;
+   imEConfig.MacLo=xMacLo;
    StoreSetup();
    Deconnect();
    return true;
@@ -858,8 +867,9 @@ bool Transceiver::ReceiveConfig(IMFrame & frame)
 bool Transceiver::ReceiveOrder(IMFrame & frame)
 {
     if (!myHost(frame)){
- //        return false;
+          return false;
    }
+   IMFrameSetup * setup =frame.Setup();
 
    byte io;
    byte xOrder;
@@ -995,6 +1005,7 @@ bool Transceiver::ContinueListen(){
       StopListenBroadcast();
       return false;
 
+}
 
 
 void Transceiver::printStatus()

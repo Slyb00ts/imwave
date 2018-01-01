@@ -312,7 +312,7 @@ void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize)
 
   // no need to wait for transmit mode to be ready since its handled by the radio
   setMode(RF69_MODE_TX);
-//  delaySleepT2(3);   delay can be 40ms on interrups
+ // delaySleepT2(3);  // delay can be 40ms on interrups
   waitSend();
 //  IRNN=0;
 //   t_Time txStart = millisT2();

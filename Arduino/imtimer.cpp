@@ -28,6 +28,8 @@ IMTimer::IMTimer()
         nearTimeTT=0;
         SynchronizeStep=0;
         SynchronizeCycle=0;
+        for (byte i=0;i<maxStages;i++)
+          stages[i]=0;
         Setup(IMTimer::PERIOD,CycleDuration);
 }
 
@@ -200,7 +202,6 @@ t_Time IMTimer::setNextTime()
      nextTT+= stages[PERIOD];
   }
 
-  stopTimer2(nextTT+start);
   return nextTT+start;
 
 }
@@ -209,8 +210,9 @@ byte IMTimer::WaitStage()
   setSleepModeT2();
   sei();
   t_Time dTT=millisTNow()-nearTimeTT;
-  if ((dTT>10)){
+  if ((dTT>20)){
   t_Time nextTT=setNextTime();
+  stopTimer2(nextTT);
   nearTimeTT=nextTT;
   while ((millisTNow())<nextTT)
   {
@@ -248,10 +250,11 @@ byte IMTimer::WaitStage()
   //     syncTimer2(SynchronizeStep);
 //     delaySleepT2(30);
        if ((cycle % CycleHour()) ==0){
-       r=CRONHOUR;
+         r=CRONHOUR;
      }
   }
   compute();
+  nearTimeTT=setNextTime();
 //  setNextTime();        hand after 1min
   return r;
 }
