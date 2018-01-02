@@ -108,6 +108,7 @@ private:
     bool SendKnock(bool invalid);
     void SendHello();
     bool myHost(IMFrame & frame);
+    bool forMe(IMFrame & frame);
     void StartReceive();
 //    void setChannel(byte channel);
 //    bool SendQueue();

@@ -279,7 +279,7 @@ void Transceiver::Transmit()
       {
          DBGINFO("Retry");
       }
-      delaySleepT2(1);
+//      delaySleepT2(1);
 //      ListenData();//stop listen when no broadcast
    if (BroadcastEnable || NoSleep ){
       Wakeup();
@@ -863,10 +863,14 @@ bool Transceiver::ReceiveConfig(IMFrame & frame)
    return true;
 }
 
+bool Transceiver::forMe(IMFrame & frame){
+  return (  myMAC==frame.Setup()->MAC);
+}
+
 
 bool Transceiver::ReceiveOrder(IMFrame & frame)
 {
-    if (!myHost(frame)){
+    if (!forMe(frame)){
           return false;
    }
    IMFrameSetup * setup =frame.Setup();
