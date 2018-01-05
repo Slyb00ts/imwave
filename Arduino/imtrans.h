@@ -116,6 +116,7 @@ private:
     bool Onward(IMFrame & frame);
     void TimerSetupAll();
     void TimerSetup(t_Time cal);
+    void TimerSetupKnock();
     void setupMode(uint16_t aMode);
 //    void ContinueListen();
     void DoListenBroadcast();

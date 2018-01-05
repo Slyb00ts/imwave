@@ -109,6 +109,19 @@ void Transceiver::TimerSetup(t_Time cal)
     timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration); //when shift knock
 }
 
+void Transceiver::TimerSetupKnock()
+{
+  return ;
+   t_Time cal;
+   // _calibrate=cal;
+   cal=0;
+   if (_noSync)
+     cal=50;
+    timer.Setup(STARTBROADCAST,BroadcastDelay+cal);
+    timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration-cal); //when shift knock
+}
+
+
 
 uint8_t Transceiver::GetData()
 {
@@ -351,19 +364,15 @@ bool Transceiver::CheckListenBroadcast()
    } else {
 
      if (timer.Cycle()>(_KnockCycle+7))   {
+         _noSync=true;
          if (!_doSleep)
          {
               _helloCycle=timer.Cycle()+1200;
               SendKnock(true);
               _doSleep=true;
-              if (!_noSync){
-             //   _noSync=true;
-             // setupMode(3);
-            //  myMode=19;
-              }
-         }
+              TimerSetupKnock();
+          }
          _calibrated=false;
-         _noSync=true;
          return false;
      }
    }
@@ -397,6 +406,7 @@ void Transceiver::StopListen()
          hostMAC=0;
          _calibrated=false;
          _noSync=true;
+         TimerSetupKnock();
      }
 
    } else {
@@ -444,6 +454,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                    // _doSleep=false;
                     _calibrated=false;
                     _noSync=true;
+                    TimerSetupKnock();
                      _KnockCycle=timer.Cycle();
                      if (sp->salt==0)
                        {    //received invalid knock
@@ -461,7 +472,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                 _calibrated=true;
            }
            if (_noSync) {
-             return false;
+             return true; //knock between sendHello and receiveWelcome
            }
 
 

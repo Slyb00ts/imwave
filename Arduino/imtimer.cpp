@@ -210,7 +210,7 @@ byte IMTimer::WaitStage()
   setSleepModeT2();
   sei();
   t_Time dTT=millisTNow()-nearTimeTT;
-  if ((dTT>20)){
+  if ((dTT>30)){
   t_Time nextTT=setNextTime();
   stopTimer2(nextTT);
   nearTimeTT=nextTT;
