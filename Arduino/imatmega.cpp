@@ -146,6 +146,8 @@ t_Time millisT2(){
 
 t_Time millisTNow(){
  #if defined(__sleepT2)
+   while (bit_is_set(ASSR,TCN2UB));
+
    return counterTimer2+TCNT2;
  #else
    return millis();
