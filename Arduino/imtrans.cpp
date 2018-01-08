@@ -37,7 +37,7 @@
   #define knockShift 10
 #endif
 
-#define IMVERSION 34
+#define IMVERSION 35
 
 #define DBGSLEEP 0
 
@@ -106,6 +106,7 @@ void Transceiver::TimerSetup(t_Time cal)
    // _calibrate=cal;
     timer.Setup(STARTDATA,DataDelay+cal);
     timer.Setup(STOPDATA,DataDelay+DataDuration+cal);
+    TimerSetupKnock();
     timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration); //when shift knock
 }
 
@@ -458,7 +459,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                      _KnockCycle=timer.Cycle();
                      if (sp->salt==0)
                        {    //received invalid knock
-                         return false;
+                         return true;
                        }
                     _salt=sp->salt; //accept new value
                     DBGINFO("HOST REBOOT");
@@ -466,10 +467,11 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                 }
               } else {
                         DBGINFO(" alien host ");
-                        return false;
+                        return true;
               }
                 timer.Calibrate(millisTNow()-BroadcastDelay-knockShift-_broadcastshift);
                 _calibrated=true;
+                hsequence--;
            }
            if (_noSync) {
              return true; //knock between sendHello and receiveWelcome
@@ -538,6 +540,8 @@ void Transceiver::Knock()
             DBGINFO("\r\n");
           }
       } else {
+         if (bb)
+          hsequence++;
          if (_noSync){
               if (timer.Cycle()>_helloCycle){
                     SendHello();
@@ -963,15 +967,11 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
         }
         else if (rxFrame.Hello())
         {
-           if (ForwardHello(rxFrame))
-              DBGINFO(" FORW ");
+           return (ForwardHello(rxFrame));
         }
         else if (rxFrame.Welcome())
         {
-           if (ReceiveWelcome(rxFrame))
-           {
-               return true;         //stop listening
-           }
+           return (ReceiveWelcome(rxFrame));
 
         }
         else if (rxFrame.Order())
@@ -1021,7 +1021,7 @@ bool Transceiver::ContinueListen(){
       return false;
 
 }
-
+              return true;
 
 void Transceiver::printStatus()
 {
