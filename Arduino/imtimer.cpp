@@ -188,21 +188,21 @@ void IMTimer::setStage(byte stage)
 
 t_Time IMTimer::setNextTime()
 {
-  t_Time nextTT1=millisTNow()-start;
-  if (nextTT1>0xFFFFFFF)
-     nextTT1+= stages[PERIOD];
-  if (nextTT1>0xFFFFFFF)
-     nextTT1+= stages[PERIOD];
+  t_Time nextTT1=millisTNow();
+//  if (nextTT1>0xFFFFFFF)
+//     nextTT1+= stages[PERIOD];
+//  if (nextTT1>0xFFFFFFF)
+//     nextTT1+= stages[PERIOD];
 
   t_Time nextTT=nextTT1-getTime()+nearTime;
-  if (nextTT>0xFFFFFFF)
-     nextTT+= stages[PERIOD];
+//  if (nextTT>0xFFFFFFF)
+//     nextTT+= stages[PERIOD];
 
   if (nextTT<nextTT1)  {
      nextTT+= stages[PERIOD];
   }
 
-  return nextTT+start;
+  return nextTT;
 
 }
 byte IMTimer::WaitStage()
@@ -211,10 +211,16 @@ byte IMTimer::WaitStage()
   sei();
   t_Time dTT=millisTNow()-nearTimeTT;
   if ((dTT>30)){
-  t_Time nextTT=setNextTime();
-  stopTimer2(nextTT);
-  nearTimeTT=nextTT;
-  while ((millisTNow())<nextTT)
+//  DBGLEDON();
+//  if ((dTT+5)>5){
+//  t_Time nextTT=setNextTime();
+  stopTimer2(nearTimeTT);
+  if ((nearTime)>3000){
+//      DBGLEDON();
+  }
+//  nearTimeTT=nextTT;
+//  }
+  while ((millisTNow())<nearTimeTT)
   {
 //     if (!_listen && !_measure)
      if (_measure==0)
@@ -237,12 +243,11 @@ byte IMTimer::WaitStage()
 
   byte r= nearStage;
   if (r==PERIOD) {
-//  DBGPINHIGH();
      cycle++;
      _synchronizeStart+=syncRate;
      if (_synchronizeStart >SynchronizeCycle){
         _synchronizeStart-=SynchronizeCycle;
-        syncTimer2(SynchronizeStep);
+ //       syncTimer2(SynchronizeStep);
      }
 //     _synchronizeStart+=syncRate;
 //     watchdog++;
