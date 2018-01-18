@@ -34,10 +34,10 @@
 #if DBGLVL>=1
   #define knockShift 40
 #else
-  #define knockShift 10
+  #define knockShift 30
 #endif
 
-#define IMVERSION 35
+#define IMVERSION 36
 
 #define DBGSLEEP 0
 
@@ -67,6 +67,7 @@ Transceiver::Transceiver()
   _doSleep=false;
   _rateData=3;
   _rateHello=20;
+  funOrder=NULL;
 //  _calibrateshift=0;
   _broadcastshift=0;
   NoSleep=false;
@@ -88,6 +89,9 @@ void Transceiver::Init(IMBuffer & buf)
   LoadSetup();
   PrepareTransmission();
   _noSync=true;
+  TimerSetupKnock();
+  hostRssiListen=0;
+
 }
 
 void Transceiver::setPower(byte power)
@@ -119,7 +123,7 @@ void Transceiver::TimerSetupKnock()
    if (_noSync)
      cal=50;
     timer.Setup(STARTBROADCAST,BroadcastDelay+cal);
-    timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration-cal); //when shift knock
+    timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration); //when shift knock
 }
 
 
@@ -198,7 +202,7 @@ void Transceiver::Deconnect()
   _cycleshift=0;
   _calibrated=false;
   _noSync=true;
-  hostRssiListen=0;
+  TimerSetupKnock();
 
 //  _helloCycle=0;   //on Deconnect reset skipping
   _KnockCycle=timer.Cycle();
@@ -467,7 +471,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                 }
               } else {
                         DBGINFO(" alien host ");
-                        return true;
+                        return false;
               }
                 timer.Calibrate(millisTNow()-BroadcastDelay-knockShift-_broadcastshift);
                 _calibrated=true;
@@ -480,7 +484,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
 
            if (sp->salt==0) {    //received invalid knock
                       DBGINFO(" invalid ");
-                      return false;
+                      return true;
            }
            _salt=sp->salt; //accept new value
                hostRssiListen=buffer->rssiH;
@@ -559,17 +563,8 @@ void Transceiver::Knock()
 bool Transceiver::ResponseHello(IMFrame & frame)
 {
    byte xr=0;
-   if (Connected()){
-     //if (_knocked % (TimerHelloCycle*_cycledata))  {
-         if (timer.Cycle()<_helloCycle) {    //last call hasn't success
-
-     //      DBGINFO("notsendHello ");
-     //      return false;
-         }
-     //}
-//     _helloCycle=timer.Cycle() +3;  //if not success bypass cycle
-   } else {
-
+   if (timer.Cycle()>_helloCycle){
+ //      xr+=((timer.Cycle()-_helloCycle)*10) ;
    }
   //     random(100);
    if (xr>0)
@@ -784,8 +779,8 @@ void Transceiver::setupMode(uint16_t aMode)
   } else {
     _rateHello=60;
   }
-  if ((timer.SynchronizeCycle==0) &&(_rateHello <360))
-     _rateHello=29;                                   // cycle>1h -> no sync
+//  if ((timer.SynchronizeCycle==0) &&(_rateHello <360))
+//     _rateHello=29;                                   // cycle>1h -> no sync
   if (BroadcastEnable)_broadcastshift=100;
   //if (_noSync) _calibrated=true;
 }
@@ -795,8 +790,9 @@ void Transceiver::PrepareTransmission()
   t_Time t=myId;
   t*=32;
   t =t %2248; //70 *32+8
-   TimerSetup(t);
    setupMode(myMode);
+   TimerSetup(t);
+
 }
 
 bool Transceiver::ReceiveWelcome(IMFrame & frame)
@@ -1004,9 +1000,9 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
               DBGINFO(" tue ");
               if (rxFrame.NeedACK())
                        SendACK(rxFrame);
-
+              return true;
         }
-        return ContinueListen();
+        return false;
 }
 
 bool Transceiver::ContinueListen(){
@@ -1021,7 +1017,7 @@ bool Transceiver::ContinueListen(){
       return false;
 
 }
-              return true;
+
 
 void Transceiver::printStatus()
 {

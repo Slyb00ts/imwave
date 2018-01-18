@@ -80,7 +80,7 @@ void IMTimer::Calibrate(t_Time time)
         SynchronizeCycle=xCycle/xStep;
         SynchronizeStep=-1;
       } else if (xStep==0){
-        SynchronizeCycle=0xffff;
+        SynchronizeCycle=0x7fff;
         SynchronizeStep=0;
 
       } else{
@@ -164,9 +164,9 @@ void IMTimer::compute()
 {
  // t_Time last=nearTime;
   t_Time last=getTime();
-  if (last>=(stages[PERIOD]-50))
+  if (last>=(stages[PERIOD]-80))
       last=1;
-  nearTime=stages[PERIOD]-50;
+  nearTime=stages[PERIOD]-80;
   nearStage=PERIOD;
   for(byte i=1 ;i<maxStages;i++)
   {
