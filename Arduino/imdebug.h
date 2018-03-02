@@ -9,7 +9,7 @@
 
 #define DBGLVL 0
 #define DBGLED 9
-#define DBGPIN 5
+#define DBGPIN 0
 #define DBGCLOCK 6
 
 

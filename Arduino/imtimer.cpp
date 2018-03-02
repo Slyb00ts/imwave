@@ -176,7 +176,6 @@ void IMTimer::compute()
         nearStage=i;
       }
   }
-
 }
 
 
