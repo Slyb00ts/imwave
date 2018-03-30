@@ -52,12 +52,10 @@ do {                                   \
 #define  goSleepA()                     \
 do {                                   \
     sleep_enable();                    \
-    //sleep_bod_disable();             \
     sei();                             \
     sleep_cpu();                       \
     sleep_disable();                   \
     sei();                             \
-// } sei();                            \
 }  while (0)
 
 /*
