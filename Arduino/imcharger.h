@@ -55,24 +55,25 @@
 
 class IMCharger
 {
-	private:
-		void	WatchdogRst(void);
-		uint8_t ReadReg(uint8_t regist);
-		void	SetTerminationLimit(uint8_t limit);
-		void	SetCurrentLimit(uint8_t limit);
-		void	SetVbat(uint8_t voltage);
-		void	SetUSBLimit(uint8_t limit);
-		uint8_t	ReadFault(void);
-		uint8_t	ReadStat(void);
-		void	EnableCharging(void);
-		void	DisableCharging(void);
-		void	DisableTS(void);
-		void	WriteReg(uint8_t regist, uint8_t value);
-	public:		
-		boolean	Init(void);
-		void	EnableStatLED(void);
-		void	KeepAlive(void);
-		uint8_t	GetVinStat(void);
-		uint8_t	IsChrg(void);
+  private:
+	void WatchdogRst(void);
+	uint8_t ReadReg(uint8_t regist);
+	void SetTerminationLimit(uint8_t limit);
+	void SetCurrentLimit(uint8_t limit);
+	void SetVbat(uint8_t voltage);
+	void SetUSBLimit(uint8_t limit);
+	uint8_t ReadFault(void);
+	uint8_t ReadStat(void);
+	void EnableCharging(void);
+	void DisableCharging(void);
+	void DisableTS(void);
+	void WriteReg(uint8_t regist, uint8_t value);
+
+  public:
+	boolean Init(void);
+	void EnableStatLED(void);
+	void KeepAlive(void);
+	uint8_t GetVinStat(void);
+	uint8_t IsChrg(void);
 };
 #endif

@@ -5,18 +5,15 @@ IMTube::IMTube()
 
   Reset();
 }
-void IMTube::PrepareInvalid(IMFrameSetup & se)
+void IMTube::PrepareInvalid(IMFrameSetup &se)
 {
-     ++invalidSequence;
-     se.slavechannel=invalidSequence;
-     se.address=wsequence;    //++on wellcome
-
+  ++invalidSequence;
+  se.slavechannel = invalidSequence;
+  se.address = wsequence; //++on wellcome
 }
 
 void IMTube::Reset()
 {
-     invalidSequence=0;
-     wsequence=0;
-
-  }
-
+  invalidSequence = 0;
+  wsequence = 0;
+}

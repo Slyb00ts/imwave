@@ -1,26 +1,23 @@
 #include <imrouting.h>
 
-
 IMRouting::IMRouting()
 {
   reset();
-//   byte i = empty();
-//  return 0;
+  //   byte i = empty();
+  //  return 0;
 }
 
-byte IMRouting::Send(IMFrame & frame)
+byte IMRouting::Send(IMFrame &frame)
 {
-//   byte i = empty();
+  //   byte i = empty();
   return 0;
 }
 
-
-
 IMAddress IMRouting::Repeater(IMAddress addr)
 {
-  for(byte i=1;i<count;i++)
+  for (byte i = 1; i < count; i++)
   {
-    if (ORIGIN[i]==addr)
+    if (ORIGIN[i] == addr)
       return WARD[i];
   }
   return 0;
@@ -39,51 +36,52 @@ byte IMRouting::getChannel(IMAddress addr)
 
 byte IMRouting::find(IMMAC mac)
 {
- for(byte i=1;i<count;i++)
+  for (byte i = 1; i < count; i++)
   {
-    if (MACARRAY[i]==mac)
+    if (MACARRAY[i] == mac)
       return i;
   }
   return 0;
-
 }
-bool IMRouting::addMAC(IMMAC mac,IMAddress ward)
+bool IMRouting::addMAC(IMMAC mac, IMAddress ward)
 {
-   byte x=find(mac);
-   if (x==0){
-     if(count>=MAXTableRouting){
-      count= MAXTableRouting /2;
+  byte x = find(mac);
+  if (x == 0)
+  {
+    if (count >= MAXTableRouting)
+    {
+      count = MAXTableRouting / 2;
       return false;
-     }
+    }
 
-     MACARRAY[count]=mac;
-     WARD[count]=ward;
-     ORIGIN[count]=0;
-//     CHANNEL[count]=0;
-      ++count;
-   DBGINFO("\r\nROUTING");
-   DBGINFO(count);
-   DBGINFO(":");
-   DBGINFO(mac);
-   DBGINFO(">");
-   }
-   return true;
+    MACARRAY[count] = mac;
+    WARD[count] = ward;
+    ORIGIN[count] = 0;
+    //     CHANNEL[count]=0;
+    ++count;
+    DBGINFO("\r\nROUTING");
+    DBGINFO(count);
+    DBGINFO(":");
+    DBGINFO(mac);
+    DBGINFO(">");
+  }
+  return true;
 }
 
-byte IMRouting::addAddress(IMMAC mac,IMAddress addr,byte channel)
+byte IMRouting::addAddress(IMMAC mac, IMAddress addr, byte channel)
 {
-   byte x=find(mac);
-   if (x){
+  byte x = find(mac);
+  if (x)
+  {
 
-      ORIGIN[x]=addr;
-//      CHANNEL[x]=channel;
-      return WARD[x];
-
-   }
-   return 0xFF;
+    ORIGIN[x] = addr;
+    //      CHANNEL[x]=channel;
+    return WARD[x];
+  }
+  return 0xFF;
 }
 
 void IMRouting::reset()
 {
-  count=0;
+  count = 0;
 }

@@ -13,18 +13,19 @@
 #include <inttypes.h>
 #include <Wire.h>
 
-#define Sht2xAddr		0x40
-#define Sht2xTempCmd	0xE3
-#define Sht2xHumCmd		0xE5
+#define Sht2xAddr 0x40
+#define Sht2xTempCmd 0xE3
+#define Sht2xHumCmd 0xE5
 
 class IMSht2x
 {
-	private:
-		uint16_t ReadData(uint8_t command);
-	public:
-		float GetHumidity(void);
-		float GetTemperature(void);
-		uint16_t GetHumidityBin(void);
-		uint16_t GetTemperatureBin(void);
+  private:
+	uint16_t ReadData(uint8_t command);
+
+  public:
+	float GetHumidity(void);
+	float GetTemperature(void);
+	uint16_t GetHumidityBin(void);
+	uint16_t GetTemperatureBin(void);
 };
 #endif
