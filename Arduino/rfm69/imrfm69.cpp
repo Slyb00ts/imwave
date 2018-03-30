@@ -322,7 +322,7 @@ void RFM69::waitSend()
 {
   uint16_t ttt=0;
 //  while (digitalRead(RF69_IRQ_PIN) == 0 && ((millisT2() - txStart) < RF69_TX_LIMIT_MS)); // wait for DIO0 to turn HIGH signalling transmission finish
-  while ((digitalRead(RF69_IRQ_PIN) == 0) && (ttt<10000)) {++ttt;}; // wait for DIO0 to turn HIGH signalling transmission finish
+  while ((digitalRead(RF69_IRQ_PIN) == 0) && (ttt<20000)) {++ttt;}; // wait for DIO0 to turn HIGH signalling transmission finish
   //while (readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PACKETSENT == 0x00); // wait for ModeReady
   setMode(RF69_MODE_STANDBY);
  //  receiveBegin();

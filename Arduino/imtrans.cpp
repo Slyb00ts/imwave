@@ -84,6 +84,7 @@ void Transceiver::Init(IMBuffer & buf)
   buffer->setFunction(&timer.doneReceived);
   TimerSetup(0);
   LoadSetup();
+  hostRssiListen=31;
   Deconnect();
 //  startMAC=myMAC;
   LoadSetup();
@@ -341,6 +342,9 @@ bool Transceiver::CheckListenBroadcast()
    if (timer.Watchdog(3600+_rateHello*4))  //3hours
    {
       DBGINFO("WATCHDOG");
+      hostRssiListen=17;
+      SendKnock(true);
+
       Deconnect();
       buffer->Reboot();
       return true;
@@ -357,14 +361,13 @@ bool Transceiver::CheckListenBroadcast()
         _calibrated=false;
         _KnockCycle=timer.Cycle();
 
-        if (_doSleep){
-          SendKnock(true);
+      hostRssiListen=24;
+             SendKnock(true);
           _doSleep=false;
           if (_noSync) {
             _doSleep=true;
             _helloCycle+=1200;
           }
-        }
      }
    } else {
 
@@ -373,6 +376,7 @@ bool Transceiver::CheckListenBroadcast()
          if (!_doSleep)
          {
               _helloCycle=timer.Cycle()+1200;
+              hostRssiListen=23;
               SendKnock(true);
               _doSleep=true;
               TimerSetupKnock();
@@ -475,7 +479,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
               }
                 timer.Calibrate(millisTNow()-BroadcastDelay-knockShift-_broadcastshift);
                 _calibrated=true;
-                hsequence--;
+                hsequence-=10;
            }
            if (_noSync) {
              return true; //knock between sendHello and receiveWelcome
@@ -514,13 +518,21 @@ bool Transceiver::SendKnock(bool invalid)
      tube.PrepareInvalid(*setup);
      setup->salt=0;
      setup->mode=myMode;
+     setup->mode=hostId;
+     setup->MAC2=hostMAC;
+
      setup->hostchannel=IMVERSION;
+   if (!Connected())
+      setup->hostchannel=0;
+
      setup->rssi=hostRssiListen;
      if (_doSleep)          //_helloCycle+4
        setup->rssi=0;
      if (tube.invalidSequence>30){
         DBGINFO("WATCHDOG");
-        Deconnect();
+        setup->rssi=19;
+        Send(_frame);
+          Deconnect();
         buffer->Reboot();
         Send(_frame);
         return Send(_frame);
@@ -545,7 +557,7 @@ void Transceiver::Knock()
           }
       } else {
          if (bb)
-          hsequence++;
+          hsequence+=10;
          if (_noSync){
               if (timer.Cycle()>_helloCycle){
                     SendHello();
@@ -566,9 +578,6 @@ bool Transceiver::ResponseHello(IMFrame & frame)
    if (timer.Cycle()>_helloCycle){
  //      xr+=((timer.Cycle()-_helloCycle)*10) ;
    }
-  //     random(100);
-   if (xr>0)
-     delaySleepT2(xr);
 
 
    IMFrameSetup *sp=frame.Setup();
@@ -597,13 +606,12 @@ bool Transceiver::ResponseHello(IMFrame & frame)
   //  setup->mode=Deviation();
   //  t_Time  xcc=timer.getTime()leDuration;
     setup->device2=xr;
-    setup->mode=timer.getTime();
+    setup->mode=lastWelcome-lastWakeup;
     setup->hostchannel=IMVERSION;
     if (!Connected())
       setup->hostchannel=0;
     setup->slavechannel=hsequence;
  //   setup->address=wsequence;//debug
- //   setup->slavechannel=timer.SynchronizeCycle / 10;//debug sake
   //   setup->rssi =hsequence;   //debug sake
 
    Send(_frame);
@@ -632,7 +640,6 @@ void Transceiver::SendHello()
       setup->hostchannel=0;
     setup->slavechannel=hsequence++;
 //    setup->slavechannel=timer.SynchronizeCycle / 10;
-//     setup->rssi =hsequence;  //DEBUG SAKE
 
    Send(_frame);
  //  return true;
@@ -708,6 +715,9 @@ bool Transceiver::ForwardHello(IMFrame & frame)
     }
     if (!router.addMAC(setup_recv.MAC,a)){
               DBGERR("ERRADDMAC");
+              hostRssiListen=18;
+              SendKnock(true);
+
               Deconnect();
               buffer->Reboot();
     }
@@ -742,7 +752,7 @@ void Transceiver::setupMode(uint16_t aMode)
 
   uint8_t xCycle= aMode & 0xFF;
   _noSync=false;
-  _broadcastshift=10;
+  _broadcastshift=0;
   if (xCycle==1) {
     _rateData=3;
   } else if (xCycle==2)   {
@@ -761,23 +771,23 @@ void Transceiver::setupMode(uint16_t aMode)
   } else if (xCycle==2)   {
     _rateHello=1200*6;           //6h
     _noSync=true;
-    _broadcastshift=-20;
+ //   _broadcastshift=-20;
   } else if (xCycle==3)   {
     _rateHello=1200*12;              //12h
     _noSync=true;
-    _broadcastshift=-20;
+  //  _broadcastshift=-20;
   } else if (xCycle==4)   {
     _rateHello=1199*24;         //24h
 //    DisableWatchdog();
-    _broadcastshift=-20;
+ //   _broadcastshift=-20;
     _noSync=true;
   } else if (xCycle==5)   {
     _rateHello=1199*24;         //24h
  //   DisableWatchdog();
-    _broadcastshift=-20;
+//    _broadcastshift=-20;
     _noSync=true;
   } else {
-    _rateHello=60;
+    _rateHello=100;
   }
 //  if ((timer.SynchronizeCycle==0) &&(_rateHello <360))
 //     _rateHello=29;                                   // cycle>1h -> no sync
@@ -869,6 +879,7 @@ bool Transceiver::ReceiveConfig(IMFrame & frame)
    myId=0;
    myMode=0;
    imEConfig.MacLo=xMacLo;
+   hostRssiListen=32;
    StoreSetup();
    Deconnect();
    return true;
@@ -959,6 +970,9 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
            {
               DBGINFO(" sendHello ");
               return true;         //send hello and listening
+           }  else{
+              hostRssiListen=81;
+              SendKnock(true);
            }
         }
         else if (rxFrame.Hello())
