@@ -20,14 +20,14 @@ static struct IMConfig
 {
 	uint32_t MacAddress1;
 	uint32_t MacAddress2;
-}imConfig;
+} imConfig;
 
 class IMEeprom
 {
-	private:
-	public:
-		void ReadConfig(void);
-		void WriteConfig(void);
-		void WriteConfigIfNotExists(void);
+  private:
+  public:
+	void ReadConfig(void);
+	void WriteConfig(void);
+	void WriteConfigIfNotExists(void);
 };
 #endif
