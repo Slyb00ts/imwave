@@ -5,6 +5,9 @@
 
 #include "imatmega.h"
 #include "imdebug.h"
+#include <avr/io.h>
+#include <avr/boot.h>
+
 
 
 volatile t_Time counterTimer2=0;
@@ -258,6 +261,7 @@ void  ShutOffADC(void)
 {   // https://www.gammon.com.au/power
     //https://www.seanet.com/~karllunt/atmegapowerdown.html
     ACSR = (1<<ACD);                        // disable A/D comparator
+    ADCSRA |= ADIF;
     ADCSRA = (0<<ADEN);                     // disable A/D converter
 //    DIDR0 = 0x3f;                           // disable all A/D inputs (ADC0-ADC5)
 //    DIDR1 = 0x03;                           // disable AIN0 and AIN1
@@ -278,24 +282,30 @@ void  SetupADC(void)
 void disableADCB()
 {
   ShutOffADC();
+  ADCSRB|=ACME;
   ADCSRA = 0;                  //disable ADC
    DIDR0 = 0xff;                           // disable all A/D inputs (ADC0-ADC5)
    DIDR1 = 0x03;                           // disable AIN0 and AIN1
+   ADMUX=0;
 
    // turn off brown-out enable in software
   MCUCR = bit (BODS) | bit (BODSE);  // turn on brown-out enable select
   MCUCR = bit (BODS);        // this must be done within 4 clock cycles of above
 //ower Reduction Register (PRR)
+    power_all_disable();
     power_adc_disable(); // ADC converter
 //    power_spi_enable(); // SPI
 #if DBGLVL<1
       power_usart0_disable(); // Serial (USART)
+#else
+   //   power_usart0_enable(); // Serial (USART)
+
 #endif
     power_timer1_disable();
 //    power_timer0_enable(); // Timer 0
     power_twi_disable(); // TWI (I2C)
     power_timer2_enable();
-    power_spi_enable();
+//    power_spi_enable();
 }
 
 
@@ -435,6 +445,77 @@ void reboot(){
 //  while (1) {}
   }while(0);
 }
+
+/* Delay for the given number of microseconds.  Assumes a 8 or 16 MHz clock. */
+void delayMicros(unsigned int us)
+{
+        // calling avrlib's delay_us() function with low values (e.g. 1 or
+        // 2 microseconds) gives delays longer than desired.
+        //delay_us(us);
+        // for the 16 MHz clock on most Arduino boards
+
+        // for a one-microsecond delay, simply return.  the overhead
+        // of the function call yields a delay of approximately 1 1/8 us.
+        if (--us == 0)
+                return;
+
+        // the following loop takes a quarter of a microsecond (4 cycles)
+        // per iteration, so execute it four times for each microsecond of
+        // delay requested.
+        us <<= 2;
+
+        // account for the time taken in the preceeding commands.
+        us -= 2;
+
+        // busy wait
+        __asm__ __volatile__ (
+                "1: sbiw %0,1" "\n\t" // 2 cycles
+                "brne 1b" : "=w" (us) : "0" (us) // 2 cycles
+        );
+}
+
+#define READ_SIG_BYTE(idx)                       \
+({                                               \
+    uint8_t val = _BV(SPMEN) | _BV(SIGRD);       \
+    uint8_t *sigPtr = (uint8_t *)(uint16_t)idx;  \
+    __asm__                                      \
+    (                                            \
+        "out %2, %0"        "\n\t"               \
+        "lpm %0, Z"         "\n\t"               \
+        : "=r" (val)                             \
+        : "z" (sigPtr),                          \
+          "I" (_SFR_IO_ADDR(SPMCSR)),            \
+          "0" (val)                              \
+    );                                           \
+    val;                                         \
+})
+
+
+#define BOOT_signature_byte_get(addr) \
+(__extension__({                      \
+      uint8_t __result;                         \
+      __asm__ __volatile__                      \
+      (                                         \
+        "sts %1, %2\n\t"                        \
+        "lpm %0, Z" "\n\t"                      \
+        : "=r" (__result)                       \
+        : "i" (_SFR_MEM_ADDR(__SPM_REG)),       \
+          "r" ((uint8_t)(__BOOT_SIGROW_READ)),  \
+          "z" ((uint16_t)(addr))                \
+      );                                        \
+      __result;                                 \
+}))
+
+unsigned long bootSignature(){
+ unsigned long x=0;
+//http://www.avrfreaks.net/forum/unique-id-atmega328pb
+  for (int i=0 ;i<4;i++){
+         x=x <<8;
+    //    x=boot_signature_byte_get(i);
+  }
+  return x;
+}
+
 
 unsigned int sqrt32(unsigned long n)
 {

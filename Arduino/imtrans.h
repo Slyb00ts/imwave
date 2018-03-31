@@ -81,7 +81,6 @@ private:
     long _KnockCycle;
     byte myHop;
     IMAddress myId;
-    uint16_t myMode;
   //  uint16_t mySynchronize;
     uint16_t _salt;
   //  uint16_t _calibrateshift;
@@ -138,6 +137,7 @@ public:
     IMMAC hostMAC;
     IMMAC serverMAC;
  //   uint16_t myMacLo;
+    uint16_t myMode;
     byte myChannel;
     byte myDevice;
  //   byte HostChannel;
@@ -157,7 +157,6 @@ public:
     bool Parse();
     void Wakeup();
 
-//    bool TestLow();
     void Deconnect();
     void Knock();
     bool ContinueListen();
@@ -187,12 +186,9 @@ public:
     void printCycle();
     bool CycleData();
     bool CycleDataPrev();
-//    float Rssi(byte h); //compute Rssi from byte
-//    float Rssi(); //return last Rssi
     void DisableWatchdog();
     static short ClassTest();
 
-private:
 };
 
 

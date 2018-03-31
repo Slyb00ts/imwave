@@ -192,6 +192,8 @@ void RFM69::setMode(uint8_t newMode)
       writeReg(REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF |  RF_OPMODE_STANDBY);
       break;
     case RF69_MODE_SLEEP:
+      writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO1_11+RF_DIOMAPPING1_DIO2_01+RF_DIOMAPPING1_DIO3_01); // DIO0 is "Packet Sent"
+
       writeReg(REG_OPMODE, (readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_SLEEP);
       break;
     default:
