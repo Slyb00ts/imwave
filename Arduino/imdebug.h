@@ -10,12 +10,13 @@
 #define DBGLVL 0
 #define DBGLED 9
 #define DBGPIN 0
+#define DBGCLOCK 6
 #ifndef DBGCLOCK
- #define DBGCLOCK 0
+// #define DBGCLOCK 0
 #endif
 
 #ifndef DBGLED
-  #define DBGLED 1
+  #define DBGLED 9
 #endif
 
 #define ERRLEDNO 13

@@ -284,9 +284,12 @@ void IMTimer::doneWrite()
 }
 
 void IMTimer::StepTimerNull(){
+  #ifdef DBGCLOCK
     toggle = ~toggle;
     digitalWrite(DBGCLOCK,toggle);
+  #endif;
 }
+
 short IMTimer::ClassTest()
 {
     IMTimer t;
