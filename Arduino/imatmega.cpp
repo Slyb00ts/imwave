@@ -263,6 +263,7 @@ void  ShutOffADC(void)
     ACSR = (1<<ACD);                        // disable A/D comparator
     ADCSRA |= ADIF;
     ADCSRA = (0<<ADEN);                     // disable A/D converter
+   ADMUX=0;                                //internal Vref off
 //    DIDR0 = 0x3f;                           // disable all A/D inputs (ADC0-ADC5)
 //    DIDR1 = 0x03;                           // disable AIN0 and AIN1
 }
@@ -273,6 +274,7 @@ void  SetupADC(void)
     power_adc_enable(); // ADC converter
     ACSR = 48;                        // enable A/D comparator    ACI+ACO
 //    ADCSRA = (1<<ADEN)+7;                     // ADPS2, ADPS1 and ADPS0 prescaler
+    ADCSRB&=~ACME;
     ADCSRA = (1<<ADEN)| (1 << ADPS2) |  (1 << ADPS1);                     // ADPS2, ADPS1 and ADPS0 prescaler 64
 //    DIDR0 = 0x00;                           // disable all A/D inputs (ADC0-ADC5)
 //    DIDR1 = 0x00;                           // disable AIN0 and AIN1
@@ -283,10 +285,9 @@ void disableADCB()
 {
   ShutOffADC();
   ADCSRB|=ACME;
-  ADCSRA = 0;                  //disable ADC
+ // ADCSRA = 0;                  //disable ADC
    DIDR0 = 0xff;                           // disable all A/D inputs (ADC0-ADC5)
    DIDR1 = 0x03;                           // disable AIN0 and AIN1
-   ADMUX=0;
 
    // turn off brown-out enable in software
   MCUCR = bit (BODS) | bit (BODSE);  // turn on brown-out enable select
