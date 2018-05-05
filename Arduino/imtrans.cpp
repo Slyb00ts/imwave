@@ -339,7 +339,7 @@ void Transceiver::Wakeup()
 
 bool Transceiver::CheckListenBroadcast()
 {
-   if (timer.Watchdog(3600+_rateHello*4))  //3hours
+   if (timer.Watchdog(3600+_rateHello))  //3hours
    {
       DBGINFO("WATCHDOG");
       hostRssiListen=17;
@@ -754,7 +754,7 @@ void Transceiver::setupMode(uint16_t aMode)
   _noSync=false;
   _broadcastshift=0;
   if (xCycle==1) {
-    _rateData=3;
+    _rateData=4;
   } else if (xCycle==2)   {
     _rateData=20;            //1min
   } else if (xCycle==3)   {
@@ -767,7 +767,7 @@ void Transceiver::setupMode(uint16_t aMode)
     _rateData=1;
   }
   if (xCycle==1) {
-    _rateHello=180;             //9min
+    _rateHello=200;             //10min
   } else if (xCycle==2)   {
     _rateHello=1200*6;           //6h
     _noSync=true;
