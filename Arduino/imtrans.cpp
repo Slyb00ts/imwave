@@ -37,7 +37,7 @@
   #define knockShift 30
 #endif
 
-#define IMVERSION 37
+#define IMVERSION 38
 
 #define DBGSLEEP 0
 
@@ -51,7 +51,8 @@
 #endif
 
 Transceiver* Transceiver::ptr = 0;
-
+t_Time lastWelcome;
+t_Time lastWakeup;
 Transceiver::Transceiver()
 {
   noInterrupts();
@@ -478,6 +479,13 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                         return false;
               }
                 timer.Calibrate(millisTNow()-BroadcastDelay-knockShift-_broadcastshift);
+                lastWelcome=timer.getTime();
+                int x=(lastWelcome % 100) -frame.Header.Sequence;
+                if (x<0){
+                  _cycleshift=x+100;
+                } else{
+                  _cycleshift=x;
+                }
                 _calibrated=true;
                 hsequence-=10;
            }
@@ -566,6 +574,8 @@ void Transceiver::Knock()
          }
       }
       if (bb) {
+        lastWakeup=timer.getTime();
+
         Wakeup();
         DoListenBroadcast();
       }
@@ -831,8 +841,8 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
 
    hostRssiSend=setup->rssi;
    PrepareTransmission();
-   if (!_connected)
-      _cycleshift=(timer.Cycle()+myId) % _rateData; //only on first connection
+//   if (!_connected)
+//      _cycleshift=(timer.Cycle()+myId) % _rateData; //only on first connection
 
    _connected=1;
    _doSleep=true;
@@ -1077,7 +1087,7 @@ short Transceiver::ClassTest()
 
 bool Transceiver::CycleData()
 {
-  return       (timer.Cycle() % _rateData) ==_cycleshift;
+  return       ((timer.Cycle()+myId+_cycleshift) % _rateData) ==0;
 }
 
 void Transceiver::printCycle()
@@ -1091,7 +1101,7 @@ void Transceiver::printCycle()
 
 bool Transceiver::CycleDataPrev()
 {
-  return       ((timer.Cycle()+1) % _rateData) ==_cycleshift;
+  return       ((timer.Cycle()+myId+_cycleshift+1) % _rateData) ==0;
 }
 
 void Transceiver::DisableWatchdog()
