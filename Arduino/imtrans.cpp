@@ -120,7 +120,6 @@ void Transceiver::TimerSetupKnock()
 {
   return ;
    t_Time cal;
-   // _calibrate=cal;
    cal=0;
    if (_noSync)
      cal=50;
@@ -551,6 +550,31 @@ bool Transceiver::SendKnock(bool invalid)
    return Send(_frame);
 }
 
+bool Transceiver::SendStatus(uint16_t v1)
+{
+   Wakeup();
+   IMFrame _frame;
+   IMFrameSetup *setup=_frame.Setup();
+   _frame.Reset();
+   _frame.Header.Function=IMF_STATUS;
+   ksequence++;
+   _frame.Header.Sequence=ksequence;
+   _frame.Header.SourceId=myId;
+   PrepareSetup(*setup);
+   setup->address=myHop;
+     setup->salt=0;
+//     setup->mode=v1;
+    setup->mode=timer.getTime()-lastWakeup;
+     setup->MAC2=hostMAC;
+
+     setup->hostchannel=IMVERSION;
+   if (!Connected()) {
+      setup->hostchannel=0;
+   }
+   setup->rssi=v1;
+
+   return Send(_frame);
+}
 
 
 void Transceiver::Knock()
@@ -856,6 +880,10 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    DBGINFO("CONNECT%");
    StopListenBroadcast(); // no listen until data stage
    StoreSetup();
+   tube.invalidSequence /=2;
+  // hostRssiListen=66;
+   SendStatus(66);
+   StopListenBroadcast();
    return true;
 }
 

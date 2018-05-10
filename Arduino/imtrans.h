@@ -105,6 +105,7 @@ private:
     bool BackwardWelcome(IMFrame & frame);
     void PrepareSetup(IMFrameSetup &se);
     bool SendKnock(bool invalid);
+    bool SendStatus(uint16_t v1);
     void SendHello();
     bool myHost(IMFrame & frame);
     bool forMe(IMFrame & frame);
