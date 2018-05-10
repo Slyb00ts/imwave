@@ -26,8 +26,8 @@ IMTimer::IMTimer()
         _synchronizeStart=0;
         nearTime=0;
         nearTimeTT=0;
-        SynchronizeStep=0;
-        SynchronizeCycle=0;
+//        SynchronizeStep=0;
+//        SynchronizeCycle=0;
         for (byte i=0;i<maxStages;i++)
           stages[i]=0;
         Setup(IMTimer::PERIOD,CycleDuration);
@@ -54,6 +54,7 @@ void IMTimer::Calibrate(t_Time time)
    DeviationPlus=del;
    if (del==0)         //xStep==0
      return;
+     /*
    if ((xCycle>6*syncRate)&& (xCycle<1500*syncRate)&& (xStep>-200)&&(xStep<200))
    {
        if ((xCycle>48*syncRate)&&(xStep>80))  //bypass then sync >0066
@@ -88,6 +89,7 @@ void IMTimer::Calibrate(t_Time time)
         SynchronizeStep=1;
       }
    }
+   */
 
 
 

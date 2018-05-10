@@ -80,8 +80,8 @@ class  IMTimer
         static funStepTimer funStep;
         uint16_t DeviationPlus;                       //sum deviation in calibrate
         uint16_t DeviationMinus;                     //separate for shorter and longer
-        uint16_t SynchronizeCycle;
-        int8_t SynchronizeStep;
+  //      uint16_t SynchronizeCycle;
+  //      int8_t SynchronizeStep;
         static const byte IDDLESTAGE = 100;
         static const byte PERIOD = 0;
         static const byte LAP = 8;
