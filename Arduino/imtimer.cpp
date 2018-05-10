@@ -245,16 +245,6 @@ byte IMTimer::WaitStage()
   byte r= nearStage;
   if (r==PERIOD) {
      cycle++;
-     _synchronizeStart+=syncRate;
-     if (_synchronizeStart >SynchronizeCycle){
-        _synchronizeStart-=SynchronizeCycle;
- //       syncTimer2(SynchronizeStep);
-     }
-//     _synchronizeStart+=syncRate;
-//     watchdog++;
-//     if (((_synchronizeStart) % SynchronizeCycle)==0)
-  //     syncTimer2(SynchronizeStep);
-//     delaySleepT2(30);
        if ((cycle % CycleHour()) ==0){
          r=CRONHOUR;
      }
