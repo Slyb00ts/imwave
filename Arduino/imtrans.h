@@ -48,7 +48,7 @@
 #if DBGLVL>=1
   #define BroadcastDuration 200
 #else
-  #define BroadcastDuration 100
+  #define BroadcastDuration 150
 #endif
 
 
@@ -87,7 +87,7 @@ private:
     uint16_t _broadcastshift;
     long _rateData;
     long _rateHello;
-    uint16_t _cycleshift;
+    byte _cycleshift;
     byte seqnr;
     byte ksequence;
     byte hsequence;

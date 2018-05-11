@@ -14,11 +14,14 @@ class IMTube
 private:
 public:
   uint16_t invalidSequence;
-  byte wsequence;
+  byte wSequence;
+  byte sSequence;
 
   IMTube();
   void PrepareInvalid(IMFrameSetup &se);
+  void PrepareStatus(IMFrameSetup &se);
   void Reset();
+  void OnWelcome();
 };
 
 #endif

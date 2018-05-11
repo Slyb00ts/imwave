@@ -360,9 +360,10 @@ bool Transceiver::CheckListenBroadcast()
      if (timer.Cycle()>(_helloCycle+4)){
         _calibrated=false;
         _KnockCycle=timer.Cycle();
-
-      hostRssiListen=24;
-             SendKnock(true);
+        byte xs=24;
+        if (_doSleep)
+           xs=25;
+        SendStatus(xs);
           _doSleep=false;
           if (_noSync) {
             _doSleep=true;
@@ -376,8 +377,7 @@ bool Transceiver::CheckListenBroadcast()
          if (!_doSleep)
          {
               _helloCycle=timer.Cycle()+1200;
-              hostRssiListen=23;
-              SendKnock(true);
+              SendStatus(23);
               _doSleep=true;
               TimerSetupKnock();
           }
@@ -478,6 +478,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                         return false;
               }
                 timer.Calibrate(millisTNow()-BroadcastDelay-knockShift-_broadcastshift);
+                SendStatus(77);
                 lastWelcome=timer.getTime();
                 int x=(lastWelcome % 100) -frame.Header.Sequence;
                 if (x<0){
@@ -557,13 +558,13 @@ bool Transceiver::SendStatus(uint16_t v1)
    IMFrameSetup *setup=_frame.Setup();
    _frame.Reset();
    _frame.Header.Function=IMF_STATUS;
+   tube.PrepareStatus(*setup);
    ksequence++;
    _frame.Header.Sequence=ksequence;
    _frame.Header.SourceId=myId;
    PrepareSetup(*setup);
    setup->address=myHop;
-     setup->salt=0;
-//     setup->mode=v1;
+   setup->salt=0;
     setup->mode=timer.getTime()-lastWakeup;
      setup->MAC2=hostMAC;
 
@@ -608,10 +609,6 @@ void Transceiver::Knock()
 
 bool Transceiver::ResponseHello(IMFrame & frame)
 {
-   byte xr=0;
-   if (timer.Cycle()>_helloCycle){
- //      xr+=((timer.Cycle()-_helloCycle)*10) ;
-   }
 
 
    IMFrameSetup *sp=frame.Setup();
@@ -620,7 +617,6 @@ bool Transceiver::ResponseHello(IMFrame & frame)
   // serverMAC=sp->MAC2;
    myHop=sp->address;
    myHop++;
-  // _cycleshift=1;
    hostId=frame.Header.SenderId;
 
    Wakeup();
@@ -639,7 +635,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
  //   setup->mode=myMode;
   //  setup->mode=Deviation();
   //  t_Time  xcc=timer.getTime()leDuration;
-    setup->device2=xr;
+    setup->device2=0;
     setup->mode=lastWelcome-lastWakeup;
     setup->hostchannel=IMVERSION;
     if (!Connected())
@@ -870,7 +866,7 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
 
    _connected=1;
    _doSleep=true;
-   tube.wsequence++;
+   tube.OnWelcome();
    _helloCycle=timer.Cycle()+_rateHello;//setup next Hello
    if (myHop==2) {
 //     _calibrateshift=200;
@@ -880,8 +876,6 @@ bool Transceiver::ReceiveWelcome(IMFrame & frame)
    DBGINFO("CONNECT%");
    StopListenBroadcast(); // no listen until data stage
    StoreSetup();
-   tube.invalidSequence /=2;
-  // hostRssiListen=66;
    SendStatus(66);
    StopListenBroadcast();
    return true;
