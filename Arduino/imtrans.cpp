@@ -217,6 +217,7 @@ void Transceiver::Deconnect()
 
   timer.Watchdog();
   SendKnock(true);
+  hostRssiListen=2;
   delaySleepT2(20); //if too short wait : error on serial yyyyy***yyyy
   DoListenBroadcast();
 }
@@ -344,6 +345,7 @@ bool Transceiver::CheckListenBroadcast()
       DBGINFO("WATCHDOG");
       hostRssiListen=17;
       SendKnock(true);
+      hostRssiListen=98;
 
       Deconnect();
       buffer->Reboot();
@@ -526,7 +528,7 @@ bool Transceiver::SendKnock(bool invalid)
      tube.PrepareInvalid(*setup);
      setup->salt=0;
      setup->mode=myMode;
-     setup->mode=hostId;
+     setup->mode=(uint16_t)timer.DeviationMinus;
      setup->MAC2=hostMAC;
 
      setup->hostchannel=IMVERSION;
@@ -534,13 +536,12 @@ bool Transceiver::SendKnock(bool invalid)
       setup->hostchannel=0;
 
      setup->rssi=hostRssiListen;
-     if (_doSleep)          //_helloCycle+4
-       setup->rssi=0;
      if (tube.invalidSequence>30){
         DBGINFO("WATCHDOG");
         setup->rssi=19;
         Send(_frame);
-          Deconnect();
+        hostRssiListen=97;
+        Deconnect();
         buffer->Reboot();
         Send(_frame);
         return Send(_frame);
@@ -747,6 +748,7 @@ bool Transceiver::ForwardHello(IMFrame & frame)
               DBGERR("ERRADDMAC");
               hostRssiListen=18;
               SendKnock(true);
+               hostRssiListen=96;
 
               Deconnect();
               buffer->Reboot();
@@ -1004,7 +1006,8 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
               return true;         //send hello and listening
            }  else{
               hostRssiListen=81;
-              SendKnock(true);
+             // SendKnock(true);
+              return true;
            }
         }
         else if (rxFrame.Hello())
