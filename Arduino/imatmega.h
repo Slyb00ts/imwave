@@ -83,7 +83,8 @@ unsigned int sqrt32(unsigned long n);
 #define  __sleepT2  1
 #define  CRYSTAL32K
 void disableADCB();
-void  ShutOffADC(void);
+void ShutOffADC(void);
+void ShutDownADC(void);
 void  SetupADC(void);
 void waitASSR(void);
 #endif

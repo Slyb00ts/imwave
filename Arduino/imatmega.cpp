@@ -268,6 +268,13 @@ void  ShutOffADC(void)
 //    DIDR1 = 0x03;                           // disable AIN0 and AIN1
 }
 
+void ShutDownADC(){
+  ShutOffADC();
+  DIDR0 = 0xff;                           // disable all A/D inputs (ADC0-ADC5)
+  ADCSRB|=ACME;
+  power_adc_disable();
+}
+
 void  SetupADC(void)
 {
     //https://www.seanet.com/~karllunt/atmegapowerdown.html

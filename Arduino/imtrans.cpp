@@ -112,7 +112,7 @@ void Transceiver::TimerSetup(t_Time cal)
    // _calibrate=cal;
     timer.Setup(STARTDATA,DataDelay+cal);
     timer.Setup(STOPDATA,DataDelay+DataDuration+cal);
-    TimerSetupKnock();
+ //   TimerSetupKnock();
     timer.Setup(STOPBROADCAST,BroadcastDelay+BroadcastDuration); //when shift knock
 }
 
