@@ -132,6 +132,7 @@ public:
 
     IMAddress hostId;
     IMAddress serverId;
+    IMAddress shadowId;
     IMMAC startMAC;
     IMMAC myMAC;
 

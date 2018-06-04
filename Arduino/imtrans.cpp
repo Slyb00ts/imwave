@@ -37,7 +37,7 @@
   #define knockShift 30
 #endif
 
-#define IMVERSION 38
+#define IMVERSION 39
 
 #define DBGSLEEP 0
 
@@ -66,7 +66,7 @@ Transceiver::Transceiver()
 //  _calibrate=0;
   _calibrated=false;
   _doSleep=false;
-  _rateData=3;
+  _rateData=1;
   _rateHello=20;
   funOrder=NULL;
 //  _calibrateshift=0;
@@ -93,7 +93,6 @@ void Transceiver::Init(IMBuffer & buf)
   _noSync=true;
   TimerSetupKnock();
   hostRssiListen=0;
-
 }
 
 void Transceiver::setPower(byte power)
@@ -145,7 +144,7 @@ uint8_t Transceiver::GetData()
 bool Transceiver::GetFrame(IMFrame& frame)
 {
        frame=buffer->RX_buffer.packet;
-       bool io =( (frame.Header.ReceiverId==myId) ||  (frame.Header.ReceiverId==0)||  (frame.Header.DestinationId==0));
+       bool io =( (frame.Header.ReceiverId==myId) ||  (frame.Header.ReceiverId==0)||  (frame.Header.DestinationId==shadowId));
        if (!io) {
           DBGERR("Address");
           DBGERR(frame.Header.ReceiverId);
@@ -758,6 +757,10 @@ bool Transceiver::ForwardHello(IMFrame & frame)
 
 bool Transceiver::BackwardWelcome(IMFrame & frame)
 {
+    if (!BroadcastEnable){
+              DBGERR("&NOTBCE");
+              return false;
+    }
     IMFrameSetup setup_recv;
     frame.Get(&setup_recv);
     byte x=router.addAddress(setup_recv.MAC,setup_recv.address,setup_recv.slavechannel);
