@@ -150,6 +150,7 @@ public:
     void Init(IMBuffer & buf);
     friend void PCINT0_vect(void);
     uint8_t GetData();
+    bool myShadow(IMFrame & frame);
     bool GetFrame(IMFrame&frame);
     void Rupture();
     bool Parse();

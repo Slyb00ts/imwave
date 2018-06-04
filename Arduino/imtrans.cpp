@@ -223,6 +223,12 @@ bool Transceiver::myHost(IMFrame & frame)
      return (hostId== frame.Header.SenderId)||(  hostMAC==frame.Setup()->MAC);
 }
 
+bool Transceiver::myShadow(IMFrame & frame)
+{
+     return (shadowId== frame.Header.DestinationId);
+}
+
+
 
 void Transceiver::Prepare(IMFrame & frame)
 {
