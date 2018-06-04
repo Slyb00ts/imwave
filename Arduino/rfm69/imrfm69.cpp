@@ -106,6 +106,10 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   digitalWrite(RF69_RESET_PIN, LOW);
   pinMode(RF69_RESET_PIN, OUTPUT);
   digitalWrite(_slaveSelectPin, HIGH);
+  digitalWrite(RF69_RESET_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(RF69_RESET_PIN, LOW);
+
   pinMode(_slaveSelectPin, OUTPUT);
   SPI.begin();
   SPI.setDataMode(SPI_MODE0);
@@ -282,9 +286,9 @@ bool RFM69::send( const void* buffer, uint8_t bufferSize)
     return false;
   ++_lock;
     // receiveDone();
-  sendFrame(0, buffer, bufferSize);
+  bool bb=sendFrame(0, buffer, bufferSize);
   --_lock;
-  return true;
+  return bb;
 }
 
 // to increase the chance of getting a packet across, call this function instead of send
@@ -296,11 +300,13 @@ bool RFM69::send( const void* buffer, uint8_t bufferSize)
 
 
 // internal function
-void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize)
+bool RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize)
 {
   setMode(RF69_MODE_STANDBY); // turn off receiver to prevent reception while filling fifo
   uint16_t ttt=0;
   while (((readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00) &&(ttt<2000)) {++ttt;}; // wait for ModeReady
+  if (ttt>1900)
+     return false;
   writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_00); // DIO0 is "Packet Sent"
 //  if (bufferSize > RF69_MAX_DATA_LEN) bufferSize = RF69_MAX_DATA_LEN;
 
@@ -315,18 +321,19 @@ void RFM69::sendFrame(uint8_t toAddress, const void* buffer, uint8_t bufferSize)
   // no need to wait for transmit mode to be ready since its handled by the radio
   setMode(RF69_MODE_TX);
  // delaySleepT2(3);  // delay can be 40ms on interrups
-  waitSend();
+  return waitSend();
 //  IRNN=0;
 //   t_Time txStart = millisT2();
 }
 
-void RFM69::waitSend()
+bool RFM69::waitSend()
 {
   uint16_t ttt=0;
 //  while (digitalRead(RF69_IRQ_PIN) == 0 && ((millisT2() - txStart) < RF69_TX_LIMIT_MS)); // wait for DIO0 to turn HIGH signalling transmission finish
   while ((digitalRead(RF69_IRQ_PIN) == 0) && (ttt<20000)) {++ttt;}; // wait for DIO0 to turn HIGH signalling transmission finish
   //while (readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PACKETSENT == 0x00); // wait for ModeReady
   setMode(RF69_MODE_STANDBY);
+  return (ttt<20000);
  //  receiveBegin();
 
 }

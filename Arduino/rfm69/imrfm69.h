@@ -119,7 +119,7 @@ class RFM69 {
     void setNetwork(uint8_t networkID);
     bool canSend();
     bool canRead();
-    void waitSend();
+    bool waitSend();
     bool send( const void* buffer, uint8_t bufferSize);
     virtual bool receiveDone();
     virtual void receiveBegin();
@@ -130,8 +130,8 @@ class RFM69 {
     void encrypt(const char* key);
     int16_t readRSSI(bool forceTrigger=false);
     void promiscuous(bool onOff=true);
-    virtual void setHighPower(bool onOFF=true); // has to be called after initialize() for RFM69HW
-    virtual void setPowerLevel(uint8_t level); // reduce/increase transmit power level
+    void setHighPower(bool onOFF=true); // has to be called after initialize() for RFM69HW
+    void setPowerLevel(uint8_t level); // reduce/increase transmit power level
     void sleep();
     void idle();
     void reset();
@@ -147,7 +147,7 @@ class RFM69 {
     static void isr0();
     void virtual interruptHandler();
     virtual void interruptHook(uint8_t CTLbyte) {};
-    virtual void sendFrame(uint8_t toAddress, const void* buffer, uint8_t size);
+    bool sendFrame(uint8_t toAddress, const void* buffer, uint8_t size);
 
     static RFM69* selfPointer;
     uint8_t _slaveSelectPin;
@@ -161,8 +161,8 @@ class RFM69 {
 
     virtual void setMode(uint8_t mode);
     virtual void setHighPowerRegs(bool onOff);
-    virtual void select();
-    virtual void unselect();
+    void select();
+    void unselect();
 
 };
 
