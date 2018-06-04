@@ -142,15 +142,11 @@ public:
     uint16_t myMode;
     byte myChannel;
     byte myDevice;
- //   byte HostChannel;
- //   byte BroadcastChannel;
     bool NoRadio;
     bool NoSleep;
     bool BroadcastEnable;
     bool SteeringEnable;
     void setTimerFunction(funStepTimer fun);
-//    funTransceiver onEvent;
-//    void Init(IMCC1101 & cc);
     void Init(IMBuffer & buf);
     friend void PCINT0_vect(void);
     uint8_t GetData();
@@ -185,7 +181,6 @@ public:
     bool Connected();
     void printStatus();
     void printTime();
-    void printCycle();
     bool CycleData();
     bool CycleDataPrev();
     void DisableWatchdog();
