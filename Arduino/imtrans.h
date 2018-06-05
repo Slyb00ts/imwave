@@ -158,7 +158,7 @@ public:
 
     void Deconnect();
     void Knock();
-    bool ContinueListen();
+   // bool ContinueListen();
    // void ListenData();
     void ListenBroadcast();
     void StopListen();

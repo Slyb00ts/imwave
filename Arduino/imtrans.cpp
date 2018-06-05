@@ -34,7 +34,7 @@
 #if DBGLVL>=1
   #define knockShift 40
 #else
-  #define knockShift 30
+  #define knockShift 50
 #endif
 
 #define IMVERSION 39
@@ -466,8 +466,9 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                         DBGINFO(" alien host ");
                         return false;
               }
-                timer.Calibrate(millisTNow()-BroadcastDelay-knockShift-_broadcastshift);
+                lastWelcome=millisTNow();
                 SendStatus(77);
+                timer.Calibrate(lastWelcome-BroadcastDelay-knockShift-_broadcastshift);
                 lastWelcome=timer.getTime();
                 int x=(lastWelcome % 100) -frame.Header.Sequence;
                 if (x<0){
@@ -1018,7 +1019,7 @@ bool Transceiver::ParseFrame(IMFrame & rxFrame)
         }
         return false;
 }
-
+/*
 bool Transceiver::ContinueListen(){
       if (CheckListenBroadcast()) {
         Wakeup();
@@ -1029,7 +1030,7 @@ bool Transceiver::ContinueListen(){
       StopListenBroadcast();
       return false;
 }
-
+*/
 
 void Transceiver::printStatus()
 {
