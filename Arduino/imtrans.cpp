@@ -70,6 +70,7 @@ Transceiver::Transceiver()
   funOrder=NULL;
   _broadcastshift=0;
   NoSleep=false;
+  NoConnection=false;
   TimerSetupAll();
 }
 
@@ -198,8 +199,8 @@ void Transceiver::Deconnect()
   TimerSetupKnock();
 
 //  _helloCycle=0;   //on Deconnect reset skipping
-  _KnockCycle=timer.Cycle();
-  _helloCycle=_KnockCycle;
+  _knockCycle=timer.Cycle();
+  _helloCycle=_knockCycle;
   _inSleep=true;
   tube.Reset();
   router.reset();
@@ -348,7 +349,7 @@ bool Transceiver::CheckListenBroadcast()
        return false;
      if (timer.Cycle()>(_helloCycle+4)){
         _calibrated=false;
-        _KnockCycle=timer.Cycle();
+        _knockCycle=timer.Cycle();
         byte xs=24;
         if (_doSleep)
            xs=25;
@@ -357,15 +358,21 @@ bool Transceiver::CheckListenBroadcast()
           if (_noSync) {
             _doSleep=true;
             _helloCycle+=1200;
-          }
+            if (NoConnection)
+                _helloCycle+=120000;
+            }
      }
    } else {
 
-     if (timer.Cycle()>(_KnockCycle+7))   {
+     if (timer.Cycle()>(_knockCycle+7))   {
          _noSync=true;
          if (!_doSleep)
          {
               _helloCycle=timer.Cycle()+1200;
+              if (NoConnection){
+                _helloCycle+=120000;
+                _knockCycle=_helloCycle;
+              }
               SendStatus(23);
               _doSleep=true;
               TimerSetupKnock();
@@ -397,8 +404,8 @@ void Transceiver::StopListen()
 //          Idle();
 
       if (timer.Cycle()>_helloCycle+7) { //after 45s without knock
-         _KnockCycle=timer.Cycle();
-         _helloCycle=_KnockCycle+1;  // next 10min waiting
+         _knockCycle=timer.Cycle();
+         _helloCycle=_knockCycle+1;  // next 10min waiting
          _connected=false;
          _doSleep=false;
          hostMAC=0;
@@ -408,10 +415,10 @@ void Transceiver::StopListen()
      }
 
    } else {
-     if (timer.Cycle() >(_KnockCycle+1200)){   // after  15 min    check Knock
+     if (timer.Cycle() >(_knockCycle+1200)){   // after  15 min    check Knock
         DBGINFO("StopListen");
-        _KnockCycle=timer.Cycle();
-        _helloCycle=_KnockCycle+1;
+        _knockCycle=timer.Cycle();
+        _helloCycle=_knockCycle+1;
 
         _doSleep=false;
         _noSync=true;
@@ -453,7 +460,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                     _calibrated=false;
                     _noSync=true;
                     TimerSetupKnock();
-                     _KnockCycle=timer.Cycle();
+                     _knockCycle=timer.Cycle();
                      if (sp->salt==0)
                        {    //received invalid knock
                          return true;
@@ -574,7 +581,7 @@ void Transceiver::Knock()
           }
       } else {
          if (bb)
-          hsequence+=10;
+           hsequence+=10;
          if (_noSync){
               if (timer.Cycle()>_helloCycle){
                     SendHello();
@@ -688,6 +695,9 @@ bool Transceiver::Onward(IMFrame & frame)
         }
         else
         {
+           if (shadowId >0){
+             return false; //this frame should be parsed
+           }
            if (!BroadcastEnable){
               DBGERR("&NOTBCE");
               return true;
@@ -784,7 +794,7 @@ void Transceiver::setupMode(uint16_t aMode)
     _rateData=1;
   }
   if (xCycle==1) {
-    _rateHello=200;             //10min
+    _rateHello=200;             //20min
   } else if (xCycle==2)   {
     _rateHello=1200*6;           //6h
     _noSync=true;
@@ -809,6 +819,10 @@ void Transceiver::setupMode(uint16_t aMode)
 //  if ((timer.SynchronizeCycle==0) &&(_rateHello <360))
 //     _rateHello=29;                                   // cycle>1h -> no sync
   if (BroadcastEnable)_broadcastshift=100;
+  if (NoConnection){
+    _noSync=true;
+    _rateHello=1200*24*7;
+  }
   //if (_noSync) _calibrated=true;
 }
 

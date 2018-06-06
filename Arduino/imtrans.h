@@ -78,7 +78,7 @@ private:
     bool _noSync;
 
     long _helloCycle;
-    long _KnockCycle;
+    long _knockCycle;
     byte myHop;
     IMAddress myId;
   //  uint16_t mySynchronize;
@@ -146,6 +146,7 @@ public:
     bool NoSleep;
     bool BroadcastEnable;
     bool SteeringEnable;
+    bool NoConnection;
     void setTimerFunction(funStepTimer fun);
     void Init(IMBuffer & buf);
     friend void PCINT0_vect(void);
