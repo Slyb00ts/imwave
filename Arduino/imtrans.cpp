@@ -275,7 +275,9 @@ bool Transceiver::SendData(IMFrame & frame)
    frame.Header.Sequence = seqnr++;
    frame.Header.DestinationId=serverId;
    if (myId==0){
-    frame.Data()->w[8]=myMAC >> 16;
+    frame.Header.ReceiverId=1;
+    frame.Header.DestinationId=1;
+    frame.Data()->w[10]=myMAC >> 16;
     frame.Data()->w[9]=myMAC;
    }
    return Send(frame);
