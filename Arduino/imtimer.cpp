@@ -279,7 +279,7 @@ void IMTimer::StepTimerNull(){
   #ifdef DBGCLOCK
     toggle = ~toggle;
     digitalWrite(DBGCLOCK,toggle);
-  #endif;
+  #endif
 }
 
 short IMTimer::ClassTest()

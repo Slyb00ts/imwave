@@ -823,7 +823,7 @@ void Transceiver::setupMode(uint16_t aMode)
   if (BroadcastEnable)_broadcastshift=100;
   if (NoConnection){
     _noSync=true;
-    _rateHello=1200*24*7;
+    _rateHello=1200*24;
   }
   //if (_noSync) _calibrated=true;
 }
