@@ -226,7 +226,7 @@ bool Transceiver::myHost(IMFrame & frame)
 
 bool Transceiver::myShadow(IMFrame & frame)
 {
-     return (shadowId== frame.Header.DestinationId);
+     return (frame.DATA() &&(shadowId== frame.Header.DestinationId));
 }
 
 
