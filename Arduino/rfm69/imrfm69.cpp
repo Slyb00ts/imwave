@@ -116,8 +116,8 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   SPI.setBitOrder(MSBFIRST);
 //  SPI.setClockDivider(SPI_CLOCK_DIV4); // decided to slow down from DIV2 after SPI stalling in some instances, especially visible on mega1284p when RFM69 and FLASH chip both present
   _lock=0;
-  long start = millis();
-  long timeout = 150;
+  unsigned long start = millis();
+  unsigned long timeout = 150;
   do writeReg(REG_SYNCVALUE1, 0xAA); while (readReg(REG_SYNCVALUE1) != 0xaa && millis()-start < timeout);
   start = millis();
   do writeReg(REG_SYNCVALUE1, 0x55); while (readReg(REG_SYNCVALUE1) != 0x55 && millis()-start < timeout);
@@ -134,7 +134,7 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   setMode(RF69_MODE_STANDBY);
   start = millis();
   while (((readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00) && millis()-start < timeout); // wait for ModeReady
-  if (millis()-start >= timeout)
+  if ((millis()-start) >= timeout)
     return false;
   DBGINFO("RFM initialize");
   readAllRegs();
@@ -860,7 +860,7 @@ void RFM69::readAllRegs()
 uint8_t RFM69::readTemperature(uint8_t calFactor) // returns centigrade
 {
 
-  uint8_t oldMode = _mode;
+//  uint8_t oldMode = _mode;
   setMode(RF69_MODE_STANDBY);
   writeReg(REG_TEMP1, RF_TEMP1_MEAS_START);
   while ((readReg(REG_TEMP1) & RF_TEMP1_MEAS_RUNNING));
