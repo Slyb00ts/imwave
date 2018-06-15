@@ -226,6 +226,9 @@ bool Transceiver::myHost(IMFrame & frame)
 
 bool Transceiver::myShadow(IMFrame & frame)
 {
+   if (frame.MESSAGE()) {
+     return true;
+   }
      return (frame.DATA() &&(shadowId== frame.Header.DestinationId));
 }
 
@@ -233,7 +236,6 @@ bool Transceiver::myShadow(IMFrame & frame)
 
 void Transceiver::Prepare(IMFrame & frame)
 {
-  frame.Header.SenderId=myId;
   frame.Header.crc=0;
   frame.Header.crc=frame.CRC();
 }
@@ -271,6 +273,7 @@ bool Transceiver::SendData(IMFrame & frame)
 {
    frame.Header.Function = IMF_DATA;
    frame.Header.SourceId=myId;
+   frame.Header.SenderId=myId;
    frame.Header.ReceiverId=hostId;
    frame.Header.Sequence = seqnr++;
    frame.Header.DestinationId=serverId;
@@ -280,6 +283,21 @@ bool Transceiver::SendData(IMFrame & frame)
     frame.Data()->w[10]=myMAC >> 16;
     frame.Data()->w[9]=myMAC;
    }
+   return Send(frame);
+}
+
+bool Transceiver::SendMessage(IMFrame & frame)
+{
+   frame.Header.Function = IMF_MESSAGE;
+   frame.Header.SourceId=myMAC ;
+   frame.Header.SenderId=myId;
+   frame.Header.ReceiverId=myMAC >> 8;
+   frame.Header.Sequence = seqnr++;
+   frame.Header.DestinationId=serverId;
+    frame.Header.ReceiverId=1;
+    frame.Header.DestinationId=1;
+    frame.Data()->w[10]=myMAC >> 16;
+    frame.Data()->w[9]=myMAC;
    return Send(frame);
 }
 
@@ -519,7 +537,8 @@ bool Transceiver::SendKnock(bool invalid)
    ksequence++;
    _frame.Header.Sequence=ksequence;
    _frame.Header.SourceId=myId;
-   PrepareSetup(*setup);
+   _frame.Header.SenderId=myId;
+  PrepareSetup(*setup);
    setup->address=myHop;
    if (invalid){
      tube.PrepareInvalid(*setup);
@@ -555,6 +574,7 @@ bool Transceiver::SendStatus(uint16_t v1)
    ksequence++;
    _frame.Header.Sequence=ksequence;
    _frame.Header.SourceId=myId;
+   _frame.Header.SenderId=myId;
    PrepareSetup(*setup);
    setup->address=myHop;
    setup->salt=0;
@@ -616,6 +636,7 @@ bool Transceiver::ResponseHello(IMFrame & frame)
 
    _frame.Reset();
    _frame.Header.SourceId=myId;   //if not registerred then myId==0
+   _frame.Header.SenderId=myId;
    _frame.Header.Function=IMF_HELLO;
    _frame.Header.ReceiverId=frame.Header.SenderId;
    _frame.Header.DestinationId=frame.Header.SourceId;
@@ -645,6 +666,7 @@ void Transceiver::SendHello()
   Wakeup();
    _frame.Reset();
    _frame.Header.SourceId=myId;   //if not registerred then myId==0
+   _frame.Header.SenderId=myId;
    _frame.Header.Function=IMF_HELLO;
    _frame.Header.ReceiverId=hostId;
    _frame.Header.DestinationId=serverId;
@@ -675,6 +697,7 @@ bool Transceiver::Backward(IMFrame & frame)
    DBGINFO("BACKWARD");
    _frame.Header.Function=frame.Header.Function | IMF_FORWARD;
    _frame.Header.ReceiverId=router.Repeater(frame.Header.DestinationId);
+   _frame.Header.SenderId=myId;
    return Send(_frame);
 }
 
@@ -686,7 +709,8 @@ bool Transceiver::Forward(IMFrame & frame)
    DBGINFO("FORWARD");
    _frame.Header.Function=frame.Header.Function | IMF_FORWARD;
    _frame.Header.ReceiverId=hostId;
-   return Send(_frame);
+   _frame.Header.SenderId=myId;
+  return Send(_frame);
 }
 
 bool Transceiver::Onward(IMFrame & frame)
@@ -768,6 +792,8 @@ bool Transceiver::BackwardWelcome(IMFrame & frame)
     } else {
       frame.Header.ReceiverId=x;          //transmiter hop
     }
+     frame.Header.SenderId=myId;
+
     return Send(frame);
 }
 
@@ -900,6 +926,7 @@ bool Transceiver::ReceiveConfig(IMFrame & frame)
 
    _frame.Header.Function = IMF_HELLO;
    _frame.Header.SourceId=myId;
+   _frame.Header.SenderId=myId;
    _frame.Header.ReceiverId=frame.Header.SenderId;
    _frame.Header.DestinationId=frame.Header.SourceId;
    _frame.Header.Sequence=frame.Header.Sequence;
@@ -944,6 +971,7 @@ bool Transceiver::ReceiveOrder(IMFrame & frame)
    _frame.Reset();
    _frame.Header.Function = IMF_ORDERREP;
    _frame.Header.SourceId=myId;
+   _frame.Header.SenderId=myId;
    _frame.Header.ReceiverId=frame.Header.SenderId;
    _frame.Header.DestinationId=frame.Header.SourceId;
    _frame.Header.Sequence=frame.Header.Sequence;
@@ -974,6 +1002,7 @@ void Transceiver::SendACK(IMFrame & frame)
   _f.Header.Function=IMF_ACK  ;
   _f.Header.DestinationId=frame.Header.SourceId;
   _f.Header.SourceId=myId;
+  _f.Header.SenderId=myId;
   Send(_f);
 }
 

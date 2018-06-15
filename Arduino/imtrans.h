@@ -179,6 +179,7 @@ public:
     bool ForwardHello(IMFrame & frame);
     void SendACK(IMFrame & frame);
     bool SendData(IMFrame & frame);
+    bool SendMessage(IMFrame & frame);
 //    bool Routing(IMFrame & frame);
     bool Connected();
     void printStatus();

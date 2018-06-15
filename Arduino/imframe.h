@@ -11,6 +11,7 @@
 #define IMF_ORDER 0x0A
 #define IMF_STATUS 0x0B //internal status
 #define IMF_CONFIG 0x0C // MAC setup
+#define IMF_MESSAGE 0x0D // DATA without connect
 #define IMF_REPEAT 0x80
 #define IMF_FORWARD 0x20
 #define IMF_ORDERREP 0x8A
@@ -172,6 +173,14 @@ typedef struct
   bool CONFIG()
   {
     return Header.Function == IMF_CONFIG;
+  }
+  bool DATA()
+  {
+    return Header.Function == IMF_DATA;
+  }
+  bool MESSAGE()
+  {
+    return Header.Function == IMF_MESSAGE;
   }
   bool Order()
   {

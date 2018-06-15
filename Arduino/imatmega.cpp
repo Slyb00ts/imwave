@@ -219,6 +219,7 @@ void delayT2()
    waitASSR();
    goSleep();
  #else
+   waitASSR();
    // if (F_CPU==16000000L)
        incTimer2();
    if (F_CPU==8000000L)
