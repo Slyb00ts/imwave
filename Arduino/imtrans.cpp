@@ -207,10 +207,16 @@ void Transceiver::Deconnect()
   router.addMAC(myMAC,0xFF);
   BroadcastEnable=false;
   timer.Watchdog();
+  if (NoConnection){
+    _helloCycle+=4;
+    StopListenBroadcast();
+    return;
+  }
   SendKnock(true);
   hostRssiListen=2;
   delaySleepT2(20); //if too short wait : error on serial yyyyy***yyyy
-  DoListenBroadcast();
+ // DoListenBroadcast();
+ StopListenBroadcast();
 }
 
 bool Transceiver::Connected()
@@ -523,6 +529,9 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                  DoListenBroadcast();      //return to broadcas channel (wait to WELCOME)
                  return true;
            }
+           if (NoSleep){
+              DoListenBroadcast();
+           }
     //       StopListenBroadcast(); // no listen until data stage
            return false;
 }
@@ -587,7 +596,11 @@ bool Transceiver::SendStatus(uint16_t v1)
    }
    setup->rssi=v1;
 
-   return Send(_frame);
+   bool bb= Send(_frame);
+   if (NoSleep){
+     DoListenBroadcast();
+   }
+   return bb;
 }
 
 
@@ -608,6 +621,12 @@ void Transceiver::Knock()
               if (timer.Cycle()>_helloCycle){
                     SendHello();
                     bb=true;
+                    if (NoConnection){
+                          _helloCycle+=120000;
+                          bb=false;
+                    }
+
+
               }
          }
       }
@@ -736,6 +755,7 @@ bool Transceiver::Onward(IMFrame & frame)
              else {
                 Backward(frame);
              }
+             Transmit();
            } else {
               DBGERR("&NOTMY");
            }

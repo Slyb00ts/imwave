@@ -37,7 +37,7 @@ IMTimer::IMTimer()
 void IMTimer::Calibrate(t_Time time)
 {
   t_Time del=start;
-  t_Time  xCycle=((time-start)*syncRate)/CycleDuration;
+  //t_Time  xCycle=((time-start)*syncRate)/CycleDuration;
   start=time;
   if (time> 10000)
    start=time-CycleDuration;
@@ -131,7 +131,6 @@ void IMTimer::printTime()
    DBGINFO(getTime());
           DBGINFO(">");
 }
-
 
 long IMTimer::CycleHour()
 {
