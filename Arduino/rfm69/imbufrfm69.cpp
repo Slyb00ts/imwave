@@ -21,14 +21,12 @@ RFM69  radio;  //The CC1101 device
 
 void IMBuffer::Init(byte channel)
 {
-//  cc1101=&cc;
   bool promiscuousMode = true; //set to 'true' to sniff all packets on the same network
     radio.initialize(FREQUENCY,NODEID,NETWORKID);
     radio.promiscuous(promiscuousMode);
     radio.setChannel(channel);
-//  radio.readAllRegs();
-
 }
+
 bool IMBuffer::Send()
 {
   if (ruptures[TransceiverRead]){
@@ -36,19 +34,18 @@ bool IMBuffer::Send()
   }
   state=TransceiverWrite;
   TX_buffer.len=sizeof(TX_buffer.packet);
+  TX_buffer.packet.Header.crc=0;
+  TX_buffer.packet.Header.crc=TX_buffer.packet.CRC();
+
   if (radio.send( (const void*)(&TX_buffer.packet), sizeof(IMFrame))) {
 
 //  if  (cc1101.SendData((uint8_t*)&(TX_buffer.packet),TX_buffer.len)) {
 
     return true;
   } else  {
-    DBGERR("! SEND");
 //    DBGERR(radio.errState);
-//    state=TransceiverIdle;
-//    cc1101.Reinit();
     return false;
   }
-
 }
 
 void IMBuffer::setFunction(funTransceiver fun)
@@ -58,23 +55,10 @@ void IMBuffer::setFunction(funTransceiver fun)
 
 bool IMBuffer::Received()
 {
-//      DBGINFO("[=]");
-
   bool b= radio.canRead();
-///  bool b=(rSize>0);
       if (b) {
          b= TestFrame();
       }
-//  rSize=0;
-/*
-  if (!b){
-    DBGINFO("[");
-    DBGINFO(state);
-    DBGINFO(":EE:");
-    DBGINFO(millis());
-    DBGINFO("] ");
-  }
-  */
   return b;
 }
 
@@ -94,9 +78,7 @@ bool IMBuffer::TestFrame()
         DBGINFO("=");
       bool io=1;
       if (io) {
-//          io=(rSize==sizeof(IMFrame));
       } else {
-//        DBGERR("!Size");
 
       }
 //      memcpy(&(radio.DATA),&(RX_buffer.packet),sizeof(IMFrame));
@@ -108,23 +90,6 @@ bool IMBuffer::TestFrame()
             }
       return io;
 }
-/*
-
-void IMBuffer::setRssi()
-{
-//            crc = RX_buffer.packet.Body[_frameBodySize+1];
-//            rssiH = RX_buffer.packet.Body[_frameBodySize];
-//            rssiH=c;
-//             DBGINFO(c);
-//            DBGINFO("&");
-//            rssi = c;
-//            if (c&0x80) rssi -= 256;
-//            rssi /= 2;
-//            rssi -= 74;
-
-}
-
-*/
 
 
 void IMBuffer::StartReceive()
@@ -137,16 +102,12 @@ void IMBuffer::Sleep()
 {
   radio.sleep();
   state=TransceiverSleep;
-//   DBGINFO("{{");
-//   DBGINFO(millisT2());
 }
 
 void IMBuffer::Wakeup()
 {
   radio.idle();
   state=TransceiverIdle;
-//   DBGINFO("}}");
-//   DBGINFO(millisT2());
 }
 
 void IMBuffer::Reboot()
@@ -158,7 +119,6 @@ void IMBuffer::Reboot()
 void IMBuffer::setChannel(byte channel)
 {
 //  DBGINFO("CHN");  DBGINFO(channel);  DBGINFO("_");
-//  cc1101.SetChannel(channel);
 }
 
 void IMBuffer::setPower(byte power)
@@ -168,9 +128,6 @@ void IMBuffer::setPower(byte power)
     radio.setPowerLevel(power);
   else
      radio.setHighPower(false);
-
-//  DBGINFO("CHN");  DBGINFO(channel);  DBGINFO("_");
-//  cc1101.SetChannel(channel);
 }
 
 
