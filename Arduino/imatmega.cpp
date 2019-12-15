@@ -286,6 +286,7 @@ void  SetupADC(void)
     ADCSRA = (1<<ADEN)| (1 << ADPS2) |  (1 << ADPS1);                     // ADPS2, ADPS1 and ADPS0 prescaler 64
 //    DIDR0 = 0x00;                           // disable all A/D inputs (ADC0-ADC5)
 //    DIDR1 = 0x00;                           // disable AIN0 and AIN1
+// set ADMUX after
 }
 
 

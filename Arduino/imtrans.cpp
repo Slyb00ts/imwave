@@ -6,6 +6,7 @@
 // DATASHEET:
 //
 // HISTORY:
+// 0.8 by Dariusz Mazur (28/11/2019)     status frame
 // 0.7 by Dariusz Mazur (12/09/2017)     noSync
 // 0.6 by Dariusz Mazur (01/03/2016)     imEConfig
 // 0.5 by Dariusz Mazur (11/01/2016)
@@ -37,7 +38,7 @@
   #define knockShift 50
 #endif
 
-#define IMVERSION 39
+#define IMVERSION 41
 
 #define DBGSLEEP 0
 
@@ -400,8 +401,10 @@ bool Transceiver::CheckListenBroadcast()
                 _knockCycle=_helloCycle;
               }
               SendStatus(23);
+              SendKnock(true);
               _doSleep=true;
               TimerSetupKnock();
+              StopListenBroadcast(); // no listen until data stage
           }
          _calibrated=false;
          return false;
@@ -500,7 +503,7 @@ bool Transceiver::ReceiveKnock(IMFrame & frame)
                         return false;
               }
                 lastWelcome=millisTNow();
-                SendStatus(77);
+                //SendStatus(77);
                 timer.Calibrate(lastWelcome-BroadcastDelay-knockShift-_broadcastshift);
                 lastWelcome=timer.getTime();
                 int x=(lastWelcome % 100) -frame.Header.Sequence;
@@ -842,7 +845,7 @@ void Transceiver::setupMode(uint16_t aMode)
     _rateData=1;
   }
   if (xCycle==1) {
-    _rateHello=200;             //20min
+    _rateHello=400;             //20min
   } else if (xCycle==2)   {
     _rateHello=1200*6;           //6h
     _noSync=true;
