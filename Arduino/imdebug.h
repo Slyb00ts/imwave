@@ -8,15 +8,15 @@
 #define imDebug_h
 
 #define DBGLVL 0
-#define DBGLED 9
+//#define DBGLED 9
 #define DBGPIN 0
-#define DBGCLOCK 6
-#ifndef DBGCLOCK
-// #define DBGCLOCK 0
+//#define DBGCLOCK 6
+#ifndef NODBGCLOCK
+// #define DBGCLOCK 8
 #endif
 
 #ifndef DBGLED
-  #define DBGLED 9
+  #define DBGLED 9  //normall 9 round 5
 #endif
 
 #define ERRLEDNO 13

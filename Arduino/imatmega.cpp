@@ -231,7 +231,7 @@ void delayT2()
 void delaySleepT2( t_Time t)
 {
  #if defined(__sleepT2)
-   t_Time startMillis = millisT2();
+   t_Time startMillis = millisTNow();
    #ifdef CRYSTAL32K
      stopTimer2(startMillis+t);
    #endif
@@ -240,7 +240,7 @@ void delaySleepT2( t_Time t)
    {
        delayT2();
    }
-   while( (millisT2() - startMillis) <= t);
+   while( (millisTNow() - startMillis) <= t);
  #else
    delaySleep(t);
  #endif
