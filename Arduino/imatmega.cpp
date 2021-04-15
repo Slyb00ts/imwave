@@ -157,9 +157,18 @@ t_Time millisTNow(){
  #endif
 }
 
+
+void syncTimerDebug(int8_t step)
+{
+  for (int8_t i=step;i>0;i--){
+   PORTD|=(B00100000);
+   PORTD&=~(B00100000);
+  }
+}
 void syncTimer2(int8_t step)
 {
   counterTimer2+=step;
+ // syncTimerDebug(step);
 }
 
 
@@ -385,6 +394,7 @@ void waitASSR(){
 #ifdef CRYSTAL32K
 byte addTimer2(byte aTime){
   counterTimer2+=(aTime+1);
+  //syncTimerDebug(aTime+1);
   if ((counterTimer2) >= counterTimer2Stop)
    return 0;
   t_Time xDiv=counterTimer2Stop-counterTimer2;
